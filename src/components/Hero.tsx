@@ -17,12 +17,12 @@ export const Hero: React.FC<HeroProps> = ({ onStartQuiz }) => {
         <div className="text-center mb-16">
         <div className="mb-8">
           <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
-          <h1 className="text-5xl font-black text-foreground mb-4 whitespace-nowrap">
-            Identity Readiness Simulator
+          <h1 className="text-5xl font-black text-foreground mb-4">
+            AdFixus ROI Calculator
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Discover how much revenue you're losing to non-addressable inventory and ID durability gaps. 
-            Get your Identity Health Score and calculate your potential uplift.
+            Calculate your potential revenue uplift from improved addressability, CAPI capabilities, 
+            and premium media performance. Model your ROI with realistic risk scenarios.
           </p>
         </div>
         
@@ -39,26 +39,26 @@ export const Hero: React.FC<HeroProps> = ({ onStartQuiz }) => {
       <div className="grid md:grid-cols-3 gap-8 mb-16">
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-200">
           <CardContent className="p-6 text-center">
-            <Shield className="w-12 h-12 text-accent mx-auto mb-4" />
+            <Globe className="w-12 h-12 text-brand-secondary mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-3">
-              Identity Health Quiz
+              Domain Selection
             </h3>
             <p className="text-muted-foreground leading-relaxed">
-              Evaluate your current identity setup across durability, compliance, 
-              and cross-domain visibility with our expert scorecard.
+              Select from your Vox Media properties and configure your 
+              CPM rates to get tailored revenue projections.
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-200">
           <CardContent className="p-6 text-center">
-            <Globe className="w-12 h-12 text-brand-secondary mx-auto mb-4" />
+            <Shield className="w-12 h-12 text-accent mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-3">
-              Revenue Impact Calculator
+              Risk Scenario Modeling
             </h3>
             <p className="text-muted-foreground leading-relaxed">
-              Input your traffic data and see exactly how much revenue 
-              you're leaving on the table due to ID durability gaps.
+              Choose between conservative, moderate, or optimistic scenarios 
+              to account for implementation challenges and adoption timelines.
             </p>
           </CardContent>
         </Card>
@@ -67,11 +67,11 @@ export const Hero: React.FC<HeroProps> = ({ onStartQuiz }) => {
           <CardContent className="p-6 text-center">
             <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-3">
-              Actionable Insights
+              Revenue Projection
             </h3>
             <p className="text-muted-foreground leading-relaxed">
-              Get detailed recommendations and see your potential uplift 
-              with AdFixus's ID durability technology.
+              See your monthly, annual, and 3-year uplift from ID infrastructure, 
+              CAPI capabilities, and enhanced media performance.
             </p>
           </CardContent>
         </Card>
@@ -80,28 +80,28 @@ export const Hero: React.FC<HeroProps> = ({ onStartQuiz }) => {
       {/* Stats Section */}
       <div className="bg-card rounded-2xl shadow-lg p-8">
         <h2 className="text-2xl font-bold text-center text-foreground mb-8">
-          Industry Benchmarks
+          Key Value Drivers
         </h2>
         <div className="grid md:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="text-3xl font-bold text-revenue-loss mb-2">{INDUSTRY_BENCHMARKS.SAFARI_TRAFFIC_AVERAGE}%</div>
-            <div className="text-muted-foreground text-sm">Safari Traffic Average</div>
+            <div className="text-3xl font-bold text-revenue-gain mb-2">65%</div>
+            <div className="text-muted-foreground text-sm">Safari Addressability Gain</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-warning mb-2">{INDUSTRY_BENCHMARKS.UNAUTHENTICATED_USERS}%</div>
-            <div className="text-muted-foreground text-sm">Unauthenticated Users</div>
+            <div className="text-3xl font-bold text-primary mb-2">25%</div>
+            <div className="text-muted-foreground text-sm">CPM Uplift on Premium</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-warning mb-2">{INDUSTRY_BENCHMARKS.TYPICAL_MATCH_RATE}%</div>
-            <div className="text-muted-foreground text-sm">Typical Match Rate</div>
+            <div className="text-3xl font-bold text-accent mb-2">35%</div>
+            <div className="text-muted-foreground text-sm">CDP Cost Reduction</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-revenue-gain mb-2">{INDUSTRY_BENCHMARKS.AVERAGE_YIELD_UPLIFT}%</div>
-            <div className="text-muted-foreground text-sm">Average Yield Uplift</div>
+            <div className="text-3xl font-bold text-brand-secondary mb-2">12.5%</div>
+            <div className="text-muted-foreground text-sm">CAPI Service Fees</div>
           </div>
         </div>
         <p className="text-xs italic text-muted-foreground mt-6 text-center">
-          *Sources: StatCounter (Safari share, Jul 2025); Piano "Subscription Performance Benchmarks 2024"; Clearcode; PubMatic; Amazon Publisher Services.
+          *Industry benchmarks based on AdFixus deployments and publisher performance data
         </p>
       </div>
       </CardContent>
