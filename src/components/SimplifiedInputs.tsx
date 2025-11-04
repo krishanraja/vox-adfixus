@@ -29,6 +29,14 @@ export const SimplifiedInputsForm = ({ inputs, onChange }: SimplifiedInputsProps
     onChange({ ...inputs, displayVideoSplit: value[0] });
   };
 
+  const handleCapiCampaignsChange = (value: number[]) => {
+    onChange({ ...inputs, capiCampaignsPerMonth: value[0] });
+  };
+
+  const handleAvgCampaignSpendChange = (value: number[]) => {
+    onChange({ ...inputs, avgCampaignSpend: value[0] });
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-6">
@@ -94,6 +102,46 @@ export const SimplifiedInputsForm = ({ inputs, onChange }: SimplifiedInputsProps
           <div className="flex justify-between text-sm text-muted-foreground mt-1">
             <span>Display</span>
             <span>Video</span>
+          </div>
+        </div>
+
+        {/* CAPI Campaign Configuration - shown for all scopes */}
+        <div className="pt-6 border-t border-border">
+          <h3 className="text-base font-semibold mb-4">CAPI Campaign Configuration</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Configure expected CAPI campaigns using AdFixus Stream. Each campaign requires individual deployment.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label className="text-base font-semibold mb-2 block">
+                CAPI Campaigns per Month: {inputs.capiCampaignsPerMonth}
+              </Label>
+              <Slider
+                value={[inputs.capiCampaignsPerMonth]}
+                onValueChange={handleCapiCampaignsChange}
+                min={1}
+                max={50}
+                step={1}
+                className="mt-2"
+              />
+              <p className="text-sm text-muted-foreground mt-1">Number of campaigns using AdFixus CAPI</p>
+            </div>
+
+            <div>
+              <Label className="text-base font-semibold mb-2 block">
+                Average Campaign Spend: {formatNumberWithCommas(inputs.avgCampaignSpend)}
+              </Label>
+              <Slider
+                value={[inputs.avgCampaignSpend]}
+                onValueChange={handleAvgCampaignSpendChange}
+                min={10000}
+                max={500000}
+                step={10000}
+                className="mt-2"
+              />
+              <p className="text-sm text-muted-foreground mt-1">Average spend per CAPI campaign</p>
+            </div>
           </div>
         </div>
       </div>

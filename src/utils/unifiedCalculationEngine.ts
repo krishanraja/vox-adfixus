@@ -88,10 +88,12 @@ export class UnifiedCalculationEngine {
   ) {
     const { displayCPM, videoCPM } = inputs;
 
-    // Addressability calculations
+    // Safari addressability: Binary improvement with durable ID
+    // Without AdFixus: Safari users lose identity after 7 days
+    // With AdFixus: Durable ID recognizes returning users beyond 7 days
     const safariShare = ADDRESSABILITY_BENCHMARKS.SAFARI_IOS_SHARE;
-    const currentSafariAddressability = ADDRESSABILITY_BENCHMARKS.CURRENT_SAFARI_ADDRESSABILITY;
-    const improvedSafariAddressability = ADDRESSABILITY_BENCHMARKS.IMPROVED_SAFARI_ADDRESSABILITY;
+    const currentSafariAddressability = ADDRESSABILITY_BENCHMARKS.WITHOUT_ADFIXUS;
+    const improvedSafariAddressability = ADDRESSABILITY_BENCHMARKS.WITH_ADFIXUS;
 
     const currentAddressability =
       ADDRESSABILITY_BENCHMARKS.CHROME_SHARE +
@@ -119,18 +121,17 @@ export class UnifiedCalculationEngine {
     const videoUplift = (newlyAddressableVideo / 1000) * improvedVideoCPM;
     const cpmImprovement = displayUplift + videoUplift;
 
-    // CDP cost savings from ID reduction
-    const currentUsers = inputs.monthlyPageviews * 0.8; // 80% unique users
-    const currentMonthlyIds = currentUsers * OPERATIONAL_BENCHMARKS.BASELINE_ID_MULTIPLIER;
-    const optimizedMonthlyIds = currentUsers * OPERATIONAL_BENCHMARKS.IMPROVED_ID_MULTIPLIER;
-    const idsReduced = currentMonthlyIds - optimizedMonthlyIds;
-    const monthlyCdpSavings = idsReduced * OPERATIONAL_BENCHMARKS.COST_PER_ID;
+    // CDP cost savings: Percentage-based model (Benefit #5: 30-40% lower platform costs)
+    const estimatedMonthlyCdpCosts = OPERATIONAL_BENCHMARKS.ESTIMATED_MONTHLY_CDP_COSTS;
+    const cdpCostReduction = OPERATIONAL_BENCHMARKS.CDP_COST_REDUCTION_PERCENTAGE;
+    const monthlyCdpSavings = estimatedMonthlyCdpCosts * cdpCostReduction;
 
-    // Apply scenario multipliers
+    // Apply deployment multiplier only (addressability is binary - either you have durable ID or you don't)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
-    const addressabilityMultiplier = this.getAddressabilityMultiplier(scenario.addressability);
 
-    const monthlyUplift = (cpmImprovement + monthlyCdpSavings) * deploymentMultiplier * addressabilityMultiplier;
+    const addressabilityRevenue = cpmImprovement * deploymentMultiplier;
+    const cdpSavingsRevenue = monthlyCdpSavings * deploymentMultiplier;
+    const monthlyUplift = addressabilityRevenue + cdpSavingsRevenue;
     const annualUplift = monthlyUplift * 12;
 
     return {
@@ -143,6 +144,8 @@ export class UnifiedCalculationEngine {
         currentAddressability: currentAddressability * 100,
         improvedAddressability: improvedAddressability * 100,
         newlyAddressableImpressions,
+        addressabilityRevenue, // Separated for transparency
+        cdpSavingsRevenue, // Separated for transparency
         idReductionPercentage: OPERATIONAL_BENCHMARKS.ID_REDUCTION_PERCENTAGE * 100,
         monthlyCdpSavings,
       },
@@ -161,8 +164,9 @@ export class UnifiedCalculationEngine {
 
     // Campaign-based service fees (Benefit #4: Ad Performance/CAPI)
     // CAPI benefits come from individual campaigns sold with AdFixus Stream
-    const estimatedCapiCampaigns = CAPI_CAMPAIGN_VALUES.ESTIMATED_CAPI_CAMPAIGNS_PER_MONTH;
-    const avgCampaignSpend = CAPI_CAMPAIGN_VALUES.AVG_CAMPAIGN_SPEND;
+    // Now using user-configurable inputs instead of hardcoded values
+    const estimatedCapiCampaigns = inputs.capiCampaignsPerMonth;
+    const avgCampaignSpend = inputs.avgCampaignSpend;
     const campaignServiceFees = estimatedCapiCampaigns * avgCampaignSpend * CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
 
     // Operational labor savings from CAPI (reduced troubleshooting, better data quality)
@@ -172,11 +176,10 @@ export class UnifiedCalculationEngine {
     const conversionImprovement = CAPI_CAMPAIGN_VALUES.CONVERSION_RATE_MULTIPLIER - 1;
     const conversionTrackingRevenue = campaignServiceFees * conversionImprovement;
 
-    // Apply scenario multipliers
+    // Apply deployment multiplier only (CAPI works the same regardless of addressability)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
-    const addressabilityMultiplier = this.getAddressabilityMultiplier(scenario.addressability);
 
-    const monthlyUplift = (campaignServiceFees + capiLaborSavings) * deploymentMultiplier * addressabilityMultiplier;
+    const monthlyUplift = (campaignServiceFees + capiLaborSavings) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
@@ -230,11 +233,10 @@ export class UnifiedCalculationEngine {
     const improvedROAS = MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_ROAS;
     const roasImprovement = ((improvedROAS - baselineROAS) / baselineROAS) * 100;
 
-    // Apply scenario multipliers
+    // Apply deployment multiplier only (media performance scales with deployment)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
-    const addressabilityMultiplier = this.getAddressabilityMultiplier(scenario.addressability);
 
-    const monthlyUplift = (premiumPricingPower + makeGoodSavings) * deploymentMultiplier * addressabilityMultiplier;
+    const monthlyUplift = (premiumPricingPower + makeGoodSavings) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
@@ -261,19 +263,6 @@ export class UnifiedCalculationEngine {
         return SCENARIO_MULTIPLIERS.DEPLOYMENT.MULTI;
       case 'full':
         return SCENARIO_MULTIPLIERS.DEPLOYMENT.FULL;
-      default:
-        return 1;
-    }
-  }
-
-  private static getAddressabilityMultiplier(addressability: string): number {
-    switch (addressability) {
-      case 'limited':
-        return SCENARIO_MULTIPLIERS.ADDRESSABILITY.LIMITED;
-      case 'partial':
-        return SCENARIO_MULTIPLIERS.ADDRESSABILITY.PARTIAL;
-      case 'full':
-        return SCENARIO_MULTIPLIERS.ADDRESSABILITY.FULL;
       default:
         return 1;
     }

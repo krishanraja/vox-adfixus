@@ -1,11 +1,13 @@
-import { Card } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator } from 'lucide-react';
 import type { UnifiedResults } from '@/types/scenarios';
-import { formatCurrency, formatPercentage } from '@/utils/formatting';
+import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { Separator } from './ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SimplifiedResultsProps {
   results: UnifiedResults;
@@ -25,12 +27,10 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
   const getScenarioLabel = () => {
     const deployment = results.scenario.deployment === 'single' ? 'Single Domain' :
                        results.scenario.deployment === 'multi' ? 'Multi-Domain' : 'Full Network';
-    const addressability = results.scenario.addressability === 'limited' ? 'Limited Safari' :
-                           results.scenario.addressability === 'partial' ? 'Partial Safari' : 'Full Safari';
     const scope = results.scenario.scope === 'id-only' ? 'ID Only' :
                   results.scenario.scope === 'id-capi' ? 'ID + CAPI' : 'All Features';
     
-    return `${deployment} | ${addressability} | ${scope}`;
+    return `${deployment} | ${scope}`;
   };
 
   return (
@@ -153,24 +153,65 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
             </CollapsibleTrigger>
             
             <CollapsibleContent>
-              <div className="p-6 pt-0 space-y-3 border-t border-border">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Addressability Recovery</div>
-                    <div className="text-lg font-semibold">{formatPercentage(results.idInfrastructure.addressabilityRecovery, 1)}</div>
+              <div className="p-6 pt-0 space-y-4 border-t border-border">
+                {/* Sub-section 1: Safari/iOS Addressability Recovery */}
+                <div className="border-l-4 border-primary/50 pl-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Safari/iOS Addressability Recovery</span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm">
+                            <div className="space-y-2 text-xs">
+                              <p><strong>Durable ID Benefit:</strong></p>
+                              <p>• Safari traffic: 35% of {formatNumberWithCommas(results.inputs.monthlyPageviews)} pageviews</p>
+                              <p>• Without AdFixus: 20% addressable (IDs expire after 7 days)</p>
+                              <p>• With AdFixus: 85% addressable (durable ID recognizes returning users)</p>
+                              <p>• Newly addressable: {formatPercentage(results.idInfrastructure.addressabilityRecovery, 1)} of Safari traffic</p>
+                              <p>• CPM uplift: ${results.inputs.displayCPM} → ${(results.inputs.displayCPM * 1.25).toFixed(2)} (25%)</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <span className="font-semibold">{formatCurrency(results.idInfrastructure.details.addressabilityRevenue)}/mo</span>
                   </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">CPM Improvement</div>
-                    <div className="text-lg font-semibold">{formatCurrency(results.idInfrastructure.cpmImprovement)}/mo</div>
+                </div>
+
+                {/* Sub-section 2: CDP/Martech Cost Reduction */}
+                <div className="border-l-4 border-primary/30 pl-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">CDP/Martech Cost Reduction</span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm">
+                            <div className="space-y-2 text-xs">
+                              <p><strong>Benefit #5: Platform Cost Savings</strong></p>
+                              <p>• Estimated current CDP costs: $50K/month</p>
+                              <p>• AdFixus reduces ID bloat by {formatPercentage(results.idInfrastructure.details.idReductionPercentage, 0)}</p>
+                              <p>• Cost reduction: 35% of platform fees (30-40% range)</p>
+                              <p>• Monthly savings: $50K × 35% = {formatCurrency(results.idInfrastructure.cdpSavings)}</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <span className="font-semibold">{formatCurrency(results.idInfrastructure.details.cdpSavingsRevenue)}/mo</span>
                   </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">CDP Cost Savings</div>
-                    <div className="text-lg font-semibold">{formatCurrency(results.idInfrastructure.cdpSavings)}/mo</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">ID Reduction</div>
-                    <div className="text-lg font-semibold">{formatPercentage(results.idInfrastructure.details.idReductionPercentage, 0)}</div>
-                  </div>
+                </div>
+
+                <Separator />
+                
+                <div className="flex items-center justify-between font-semibold pt-2">
+                  <span>Total ID Infrastructure</span>
+                  <span className="text-primary">{formatCurrency(results.idInfrastructure.monthlyUplift)}/mo</span>
                 </div>
               </div>
             </CollapsibleContent>
@@ -191,7 +232,7 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold">CAPI Capabilities</h3>
-                    <p className="text-sm text-muted-foreground">{formatCurrency(results.capiCapabilities.monthlyUplift)}/month from ~10 campaigns</p>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(results.capiCapabilities.monthlyUplift)}/month from {results.inputs.capiCampaignsPerMonth} campaigns</p>
                   </div>
                 </div>
                 <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('capi') ? 'rotate-180' : ''}`} />
@@ -200,7 +241,7 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
               <CollapsibleContent>
                 <div className="p-6 pt-0 space-y-3 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Based on ~10 campaigns per month using AdFixus Stream (CAPI). Each campaign requires individual deployment.
+                    Based on {results.inputs.capiCampaignsPerMonth} campaigns per month at {formatCurrency(results.inputs.avgCampaignSpend)} average spend using AdFixus Stream (CAPI). Each campaign requires individual deployment.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -274,6 +315,73 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
             </Card>
           </Collapsible>
         )}
+
+        {/* Calculation Methodology */}
+        <Collapsible
+          open={expandedSections.includes('methodology')}
+          onOpenChange={() => toggleSection('methodology')}
+        >
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calculator className="h-5 w-5" />
+                    How We Calculated This
+                  </CardTitle>
+                  {expandedSections.includes('methodology') ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Data Sources</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• Industry benchmarks from public research (IAB, eMarketer)</li>
+                    <li>• AdFixus case studies (Carsales, Seven West Media)</li>
+                    <li>• Browser market share: Chrome 50%, Safari/iOS 35%, Other 15%</li>
+                    <li>• CDP vendor pricing models (estimated)</li>
+                  </ul>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Your Inputs</h4>
+                  <ul className="text-sm space-y-1">
+                    <li>• Monthly Pageviews: {formatNumberWithCommas(results.inputs.monthlyPageviews)}</li>
+                    <li>• Display CPM: ${results.inputs.displayCPM.toFixed(2)}</li>
+                    <li>• Video CPM: ${results.inputs.videoCPM.toFixed(2)}</li>
+                    <li>• Display/Video Split: {results.inputs.displayVideoSplit}% / {100 - results.inputs.displayVideoSplit}%</li>
+                    <li>• CAPI Campaigns: {results.inputs.capiCampaignsPerMonth} per month</li>
+                    <li>• Avg Campaign Spend: {formatCurrency(results.inputs.avgCampaignSpend)}</li>
+                  </ul>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Key Assumptions</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• Safari addressability: 20% without durable ID → 85% with AdFixus</li>
+                    <li>• Durable ID enables user recognition beyond 7-day cookie limit</li>
+                    <li>• CPM uplift: 25% on newly addressable inventory</li>
+                    <li>• CDP cost reduction: 35% of platform fees (from reduced ID bloat)</li>
+                    <li>• CAPI service fee: 12.5% of campaign spend</li>
+                    <li>• Premium inventory: 30% of total (receives 25% yield uplift)</li>
+                    <li>• Ramp-up schedule: 15% (M1-3), 35% (M4-6), 100% (M7+)</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       </div>
     </div>
   );

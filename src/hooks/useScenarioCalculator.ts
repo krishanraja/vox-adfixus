@@ -8,11 +8,12 @@ export const useScenarioCalculator = () => {
     displayCPM: 4.50,
     videoCPM: 12,
     displayVideoSplit: 80,
+    capiCampaignsPerMonth: 10,
+    avgCampaignSpend: 100000,
   });
 
   const [scenario, setScenario] = useState<ScenarioState>({
     deployment: 'multi',
-    addressability: 'full',
     scope: 'id-capi-performance',
   });
 
@@ -30,10 +31,11 @@ export const useScenarioCalculator = () => {
       displayCPM: 4.50,
       videoCPM: 12,
       displayVideoSplit: 80,
+      capiCampaignsPerMonth: 10,
+      avgCampaignSpend: 100000,
     });
     setScenario({
       deployment: 'multi',
-      addressability: 'full',
       scope: 'id-capi-performance',
     });
     setResults(null);

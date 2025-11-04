@@ -1,12 +1,10 @@
 // Scenario-based calculator types
 
 export type DeploymentType = 'single' | 'multi' | 'full';
-export type AddressabilityType = 'limited' | 'partial' | 'full';
 export type ScopeType = 'id-only' | 'id-capi' | 'id-capi-performance';
 
 export interface ScenarioState {
   deployment: DeploymentType;
-  addressability: AddressabilityType;
   scope: ScopeType;
 }
 
@@ -15,6 +13,8 @@ export interface SimplifiedInputs {
   displayCPM: number;
   videoCPM: number;
   displayVideoSplit: number; // 0-100, percentage of display
+  capiCampaignsPerMonth: number;
+  avgCampaignSpend: number;
 }
 
 export interface UnifiedResults {
@@ -32,6 +32,8 @@ export interface UnifiedResults {
       currentAddressability: number;
       improvedAddressability: number;
       newlyAddressableImpressions: number;
+      addressabilityRevenue: number; // Separated from CDP
+      cdpSavingsRevenue: number; // Separated from addressability
       idReductionPercentage: number;
       monthlyCdpSavings: number;
     };
