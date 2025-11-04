@@ -7,7 +7,7 @@ import { SimplifiedResults } from '@/components/SimplifiedResults';
 import { Button } from '@/components/ui/button';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowRight, LogOut } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { LeadData } from '@/types';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
@@ -86,14 +86,7 @@ const ScenarioModeler = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation currentStep={navStep} onReset={handleReset} />
-      
-      <div className="absolute top-4 right-4 z-50">
-        <Button onClick={handleLogout} variant="outline" size="sm" className="gap-2">
-          <LogOut className="h-4 w-4" />
-          Logout
-        </Button>
-      </div>
+      <Navigation currentStep={navStep} onReset={handleReset} onLogout={handleLogout} />
       
       <div className="container mx-auto px-4 py-8">
         {currentStep === 'hero' && (

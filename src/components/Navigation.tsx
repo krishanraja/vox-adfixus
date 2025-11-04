@@ -1,14 +1,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Home, Calculator, FileText } from 'lucide-react';
+import { BarChart3, Home, Calculator, FileText, LogOut } from 'lucide-react';
 import type { StepType } from '@/types';
 
 interface NavigationProps {
   currentStep: StepType;
   onReset: () => void;
+  onLogout?: () => void;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ currentStep, onReset }) => {
+export const Navigation: React.FC<NavigationProps> = ({ currentStep, onReset, onLogout }) => {
   const steps = [
     { id: 'hero', label: 'Home', icon: Home },
     { id: 'quiz', label: 'Identity Health', icon: FileText },
@@ -77,6 +78,17 @@ export const Navigation: React.FC<NavigationProps> = ({ currentStep, onReset }) 
             >
               Reset
             </Button>
+            {onLogout && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onLogout}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            )}
           </div>
         </div>
       </div>
