@@ -1,0 +1,102 @@
+// Scenario-based calculator types
+
+export type DeploymentType = 'single' | 'multi' | 'full';
+export type AddressabilityType = 'limited' | 'partial' | 'full';
+export type ScopeType = 'id-only' | 'id-capi' | 'id-capi-performance';
+
+export interface ScenarioState {
+  deployment: DeploymentType;
+  addressability: AddressabilityType;
+  scope: ScopeType;
+}
+
+export interface SimplifiedInputs {
+  monthlyPageviews: number;
+  displayCPM: number;
+  videoCPM: number;
+  displayVideoSplit: number; // 0-100, percentage of display
+}
+
+export interface UnifiedResults {
+  scenario: ScenarioState;
+  inputs: SimplifiedInputs;
+  
+  // ID Infrastructure
+  idInfrastructure: {
+    addressabilityRecovery: number;
+    cpmImprovement: number;
+    cdpSavings: number;
+    monthlyUplift: number;
+    annualUplift: number;
+    details: {
+      currentAddressability: number;
+      improvedAddressability: number;
+      newlyAddressableImpressions: number;
+      idReductionPercentage: number;
+      monthlyCdpSavings: number;
+    };
+  };
+  
+  // CAPI Capabilities (optional)
+  capiCapabilities?: {
+    matchRateImprovement: number;
+    conversionTrackingRevenue: number;
+    campaignServiceFees: number;
+    monthlyUplift: number;
+    annualUplift: number;
+    details: {
+      baselineMatchRate: number;
+      improvedMatchRate: number;
+      conversionImprovement: number;
+      ctrImprovement: number;
+    };
+  };
+  
+  // Media Performance (optional)
+  mediaPerformance?: {
+    advertiserROASImprovement: number;
+    makeGoodReduction: number;
+    premiumPricingPower: number;
+    monthlyUplift: number;
+    annualUplift: number;
+    details: {
+      baselineROAS: number;
+      improvedROAS: number;
+      baselineMakeGoodRate: number;
+      improvedMakeGoodRate: number;
+      makeGoodSavings: number;
+    };
+  };
+  
+  // Totals
+  totals: {
+    currentMonthlyRevenue: number;
+    totalMonthlyUplift: number;
+    totalAnnualUplift: number;
+    threeYearProjection: number;
+    percentageImprovement: number;
+  };
+  
+  // Breakdown
+  breakdown: {
+    idInfrastructurePercent: number;
+    capiPercent: number;
+    performancePercent: number;
+  };
+}
+
+export interface MonthlyProjection {
+  month: number;
+  monthLabel: string;
+  currentRevenue: number;
+  projectedRevenue: number;
+  uplift: number;
+  rampUpFactor: number;
+}
+
+export interface ComparisonData {
+  metric: string;
+  current: string | number;
+  withAdFixus: string | number;
+  improvement: string | number;
+}

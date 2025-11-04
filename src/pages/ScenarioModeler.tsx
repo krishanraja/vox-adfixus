@@ -1,0 +1,143 @@
+import { useState } from 'react';
+import { Navigation } from '@/components/Navigation';
+import { Hero } from '@/components/Hero';
+import { SimplifiedInputsForm } from '@/components/SimplifiedInputs';
+import { ScenarioToggle } from '@/components/ScenarioToggle';
+import { SimplifiedResults } from '@/components/SimplifiedResults';
+import { Button } from '@/components/ui/button';
+import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
+import { ArrowRight } from 'lucide-react';
+import type { LeadData } from '@/types';
+import { LeadCaptureModal } from '@/components/LeadCaptureModal';
+import { useToast } from '@/hooks/use-toast';
+
+type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
+
+const ScenarioModeler = () => {
+  const [currentStep, setCurrentStep] = useState<StepType>('hero');
+  const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const { inputs, setInputs, scenario, setScenario, results, calculateResults, reset } = useScenarioCalculator();
+  const { toast } = useToast();
+
+  const handleStartModeler = () => {
+    setCurrentStep('inputs');
+  };
+
+  const handleInputsComplete = () => {
+    setCurrentStep('scenarios');
+  };
+
+  const handleScenariosComplete = () => {
+    calculateResults();
+    setCurrentStep('results');
+  };
+
+  const handleReset = () => {
+    reset();
+    setCurrentStep('hero');
+  };
+
+  const handleDownloadPDF = () => {
+    setShowLeadCapture(true);
+  };
+
+  const handleLeadCapture = async (data: LeadData) => {
+    try {
+      // Store lead data for future PDF generation
+      localStorage.setItem('leadData', JSON.stringify(data));
+      
+      toast({
+        title: 'Information Saved',
+        description: 'Your details have been saved. PDF generation coming soon.',
+      });
+      
+      setShowLeadCapture(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save information. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Map to existing StepType for Navigation
+  const navStep = currentStep === 'hero' ? 'hero' : 
+                  currentStep === 'inputs' || currentStep === 'scenarios' ? 'calculator' : 
+                  'results';
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation currentStep={navStep} onReset={handleReset} />
+      
+      <div className="container mx-auto px-4 py-8">
+        {currentStep === 'hero' && (
+          <Hero onStartQuiz={handleStartModeler} />
+        )}
+
+        {currentStep === 'inputs' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="text-center space-y-2 mb-8">
+              <h1 className="text-3xl font-bold">Configure Your Inputs</h1>
+              <p className="text-muted-foreground">Enter your basic metrics to model your ROI</p>
+            </div>
+
+            <SimplifiedInputsForm inputs={inputs} onChange={setInputs} />
+
+            <div className="flex justify-center gap-4">
+              <Button onClick={() => setCurrentStep('hero')} variant="outline">
+                Back
+              </Button>
+              <Button onClick={handleInputsComplete} size="lg" className="gap-2">
+                Next: Select Scenarios <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'scenarios' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="text-center space-y-2 mb-8">
+              <h1 className="text-3xl font-bold">Select Your Scenario</h1>
+              <p className="text-muted-foreground">Choose your deployment, addressability target, and capability scope</p>
+            </div>
+
+            <ScenarioToggle scenario={scenario} onChange={setScenario} />
+
+            <div className="flex justify-center gap-4">
+              <Button onClick={() => setCurrentStep('inputs')} variant="outline">
+                Back
+              </Button>
+              <Button onClick={handleScenariosComplete} size="lg" className="gap-2">
+                Calculate ROI <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'results' && results && (
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center space-y-2 mb-8">
+              <h1 className="text-3xl font-bold">Your ROI Projection</h1>
+              <p className="text-muted-foreground">Based on your inputs and selected scenario</p>
+            </div>
+
+            <SimplifiedResults 
+              results={results} 
+              onReset={() => setCurrentStep('scenarios')}
+              onDownloadPDF={handleDownloadPDF}
+            />
+          </div>
+        )}
+      </div>
+
+      <LeadCaptureModal
+        open={showLeadCapture}
+        onOpenChange={setShowLeadCapture}
+        onSubmitSuccess={handleLeadCapture}
+      />
+    </div>
+  );
+};
+
+export default ScenarioModeler;
