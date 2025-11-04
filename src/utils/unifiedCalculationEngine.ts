@@ -135,11 +135,11 @@ export class UnifiedCalculationEngine {
     
     const adjustmentPercentage = ((unadjustedMonthlyUplift - totalMonthlyUplift) / unadjustedMonthlyUplift) * 100;
 
-    // Calculate breakdown percentages
+    // Calculate breakdown percentages (use baseMonthlyUplift before adoption rate)
     const breakdown = {
-      idInfrastructurePercent: (idInfrastructure.monthlyUplift / totalMonthlyUplift) * 100,
-      capiPercent: ((capiCapabilities?.monthlyUplift || 0) / totalMonthlyUplift) * 100,
-      performancePercent: ((mediaPerformance?.monthlyUplift || 0) / totalMonthlyUplift) * 100,
+      idInfrastructurePercent: (idInfrastructure.monthlyUplift / baseMonthlyUplift) * 100,
+      capiPercent: ((capiCapabilities?.monthlyUplift || 0) / baseMonthlyUplift) * 100,
+      performancePercent: ((mediaPerformance?.monthlyUplift || 0) / baseMonthlyUplift) * 100,
     };
 
     return {

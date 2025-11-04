@@ -6,10 +6,12 @@ import { ScenarioToggle } from '@/components/ScenarioToggle';
 import { SimplifiedResults } from '@/components/SimplifiedResults';
 import { Button } from '@/components/ui/button';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
-import { ArrowRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { ArrowRight, LogOut } from 'lucide-react';
 import type { LeadData } from '@/types';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
 
@@ -17,7 +19,14 @@ const ScenarioModeler = () => {
   const [currentStep, setCurrentStep] = useState<StepType>('hero');
   const [showLeadCapture, setShowLeadCapture] = useState(false);
   const { inputs, setInputs, scenario, setScenario, riskScenario, setRiskScenario, results, calculateResults, reset } = useScenarioCalculator();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const handleStartModeler = () => {
     setCurrentStep('inputs');
@@ -78,6 +87,13 @@ const ScenarioModeler = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation currentStep={navStep} onReset={handleReset} />
+      
+      <div className="absolute top-4 right-4 z-50">
+        <Button onClick={handleLogout} variant="outline" size="sm" className="gap-2">
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      </div>
       
       <div className="container mx-auto px-4 py-8">
         {currentStep === 'hero' && (
