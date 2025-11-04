@@ -24,7 +24,11 @@ interface SimplifiedResultsProps {
 
 export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange, onReset, onDownloadPDF }: SimplifiedResultsProps) => {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
-  const aggregated = aggregateDomainInputs(results.inputs.selectedDomains);
+  const aggregated = aggregateDomainInputs(
+    results.inputs.selectedDomains, 
+    results.inputs.displayCPM, 
+    results.inputs.videoCPM
+  );
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -295,7 +299,7 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                               <p>• Without AdFixus: 20% addressable (IDs expire after 7 days)</p>
                               <p>• With AdFixus: 85% addressable (durable ID recognizes returning users)</p>
                               <p>• Newly addressable: {formatPercentage(results.idInfrastructure.addressabilityRecovery, 1)} of Safari traffic</p>
-                              <p>• CPM uplift: ${aggregated.weightedDisplayCPM.toFixed(2)} → ${(aggregated.weightedDisplayCPM * 1.25).toFixed(2)} (25%)</p>
+                              <p>• CPM uplift: ${aggregated.displayCPM.toFixed(2)} → ${(aggregated.displayCPM * 1.25).toFixed(2)} (25%)</p>
                             </div>
                           </TooltipContent>
                         </Tooltip>
@@ -481,8 +485,8 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                   <ul className="text-sm space-y-1">
                     <li>• Selected Domains: {results.inputs.selectedDomains.length} ({aggregated.selectedDomains.map(d => d.name).join(', ')})</li>
                     <li>• Total Monthly Pageviews: {formatNumberWithCommas(aggregated.totalMonthlyPageviews)}</li>
-                    <li>• Weighted Display CPM: ${aggregated.weightedDisplayCPM.toFixed(2)}</li>
-                    <li>• Weighted Video CPM: ${aggregated.weightedVideoCPM.toFixed(2)}</li>
+                    <li>• Display CPM: ${aggregated.displayCPM.toFixed(2)}</li>
+                    <li>• Video CPM: ${aggregated.videoCPM.toFixed(2)}</li>
                     <li>• Display/Video Split: {aggregated.weightedDisplayVideoSplit.toFixed(0)}% / {(100 - aggregated.weightedDisplayVideoSplit).toFixed(0)}%</li>
                     <li>• CAPI Campaigns: {results.inputs.capiCampaignsPerMonth} per month</li>
                     <li>• Avg Campaign Spend: {formatCurrency(results.inputs.avgCampaignSpend)}</li>

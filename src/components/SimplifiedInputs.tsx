@@ -36,6 +36,69 @@ export const SimplifiedInputsForm = ({
         onChange={(domains) => onInputChange('selectedDomains', domains)}
       />
 
+      {/* CPM Configuration */}
+      {showCapiInputs && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">CPM Configuration</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Enter your average CPM rates for modeling purposes
+          </p>
+          
+          <div className="space-y-6">
+            {/* Display CPM */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="displayCPM" className="text-sm font-medium">
+                  Display CPM
+                </Label>
+                <span className="text-sm font-semibold text-primary">
+                  ${inputs.displayCPM.toFixed(2)}
+                </span>
+              </div>
+              <Slider
+                id="displayCPM"
+                min={1}
+                max={15}
+                step={0.25}
+                value={[inputs.displayCPM]}
+                onValueChange={(value) => onInputChange('displayCPM', value[0])}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>$1.00</span>
+                <span>$15.00</span>
+              </div>
+            </div>
+
+            {/* Video CPM */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="videoCPM" className="text-sm font-medium">
+                  Video CPM
+                </Label>
+                <span className="text-sm font-semibold text-primary">
+                  ${inputs.videoCPM.toFixed(2)}
+                </span>
+              </div>
+              <Slider
+                id="videoCPM"
+                min={5}
+                max={30}
+                step={0.50}
+                value={[inputs.videoCPM]}
+                onValueChange={(value) => onInputChange('videoCPM', value[0])}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>$5.00</span>
+                <span>$30.00</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* CAPI Configuration */}
       {showCapiInputs && (
         <Card className="p-6">
           <div className="space-y-6">

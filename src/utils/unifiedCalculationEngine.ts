@@ -16,12 +16,16 @@ export class UnifiedCalculationEngine {
     scenario: ScenarioState,
     riskScenario: RiskScenario = 'moderate'
   ): UnifiedResults {
-    // Aggregate domain inputs
-    const aggregated = aggregateDomainInputs(inputs.selectedDomains);
+    // Aggregate domain inputs with user-provided CPMs
+    const aggregated = aggregateDomainInputs(
+      inputs.selectedDomains, 
+      inputs.displayCPM, 
+      inputs.videoCPM
+    );
     const { 
       totalMonthlyPageviews, 
-      weightedDisplayCPM, 
-      weightedVideoCPM, 
+      displayCPM, 
+      videoCPM, 
       weightedDisplayVideoSplit 
     } = aggregated;
     
@@ -36,15 +40,15 @@ export class UnifiedCalculationEngine {
     const videoImpressions = totalImpressions * videoShare;
 
     // Current revenue
-    const currentDisplayRevenue = (displayImpressions / 1000) * weightedDisplayCPM;
-    const currentVideoRevenue = (videoImpressions / 1000) * weightedVideoCPM;
+    const currentDisplayRevenue = (displayImpressions / 1000) * displayCPM;
+    const currentVideoRevenue = (videoImpressions / 1000) * videoCPM;
     const currentMonthlyRevenue = currentDisplayRevenue + currentVideoRevenue;
 
     // Calculate ID Infrastructure (always included) - BASE before risk adjustment
     const baseIdInfrastructure = this.calculateIdInfrastructure(
       totalMonthlyPageviews,
-      weightedDisplayCPM,
-      weightedVideoCPM,
+      displayCPM,
+      videoCPM,
       scenario,
       currentMonthlyRevenue,
       displayImpressions,
@@ -83,8 +87,8 @@ export class UnifiedCalculationEngine {
     if (scenario.scope === 'id-capi-performance') {
       const baseMediaPerformance = this.calculateMediaPerformance(
         totalMonthlyPageviews,
-        weightedDisplayCPM,
-        weightedVideoCPM,
+        displayCPM,
+        videoCPM,
         weightedDisplayVideoSplit,
         scenario,
         currentMonthlyRevenue,
@@ -119,8 +123,8 @@ export class UnifiedCalculationEngine {
       (capiCapabilities ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue).monthlyUplift : 0) +
       (mediaPerformance ? this.calculateMediaPerformance(
         totalMonthlyPageviews,
-        weightedDisplayCPM,
-        weightedVideoCPM,
+        displayCPM,
+        videoCPM,
         weightedDisplayVideoSplit,
         scenario,
         currentMonthlyRevenue,

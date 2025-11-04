@@ -125,10 +125,8 @@ export const DomainSelector = ({ selectedDomains, onChange }: DomainSelectorProp
                               {formatPageviews(domain.monthlyPageviews)}/mo
                             </Badge>
                           </div>
-                          <div className="text-xs text-muted-foreground flex gap-3">
-                            <span>Display: ${domain.displayCPM}</span>
-                            <span>Video: ${domain.videoCPM}</span>
-                            <span>Safari: {(domain.audienceProfile.safariShare * 100).toFixed(0)}%</span>
+                          <div className="text-xs text-muted-foreground">
+                            Safari: {(domain.audienceProfile.safariShare * 100).toFixed(0)}% of traffic
                           </div>
                         </div>
                       </div>
@@ -143,30 +141,18 @@ export const DomainSelector = ({ selectedDomains, onChange }: DomainSelectorProp
         {/* Summary */}
         {selectedDomains.length > 0 && (
           <div className="pt-4 border-t">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-primary">
                   {selectedDomains.length}
                 </div>
-                <div className="text-xs text-muted-foreground">Domains</div>
+                <div className="text-xs text-muted-foreground">Domains Selected</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-primary">
                   {formatPageviews(aggregated.totalMonthlyPageviews)}
                 </div>
-                <div className="text-xs text-muted-foreground">Total Pageviews</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-primary">
-                  ${aggregated.weightedDisplayCPM.toFixed(2)}
-                </div>
-                <div className="text-xs text-muted-foreground">Avg Display CPM</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-primary">
-                  ${aggregated.weightedVideoCPM.toFixed(2)}
-                </div>
-                <div className="text-xs text-muted-foreground">Avg Video CPM</div>
+                <div className="text-xs text-muted-foreground">Total Monthly Pageviews</div>
               </div>
             </div>
           </div>

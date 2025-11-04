@@ -5,8 +5,6 @@ export interface VoxDomain {
   id: string;
   name: string;
   monthlyPageviews: number;
-  displayCPM: number;
-  videoCPM: number;
   displayVideoSplit: number;
   category: 'news-tech' | 'lifestyle-food' | 'entertainment' | 'sports' | 'real-estate';
   audienceProfile: {
@@ -20,8 +18,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'the-verge',
     name: 'The Verge',
     monthlyPageviews: 40000000,
-    displayCPM: 5.50,
-    videoCPM: 18,
     displayVideoSplit: 75,
     category: 'news-tech',
     audienceProfile: {
@@ -33,8 +29,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'vox',
     name: 'Vox',
     monthlyPageviews: 35000000,
-    displayCPM: 4.75,
-    videoCPM: 15,
     displayVideoSplit: 70,
     category: 'news-tech',
     audienceProfile: {
@@ -46,8 +40,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'polygon',
     name: 'Polygon',
     monthlyPageviews: 25000000,
-    displayCPM: 5.00,
-    videoCPM: 16,
     displayVideoSplit: 80,
     category: 'news-tech',
     audienceProfile: {
@@ -59,8 +51,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'eater',
     name: 'Eater',
     monthlyPageviews: 20000000,
-    displayCPM: 4.25,
-    videoCPM: 12,
     displayVideoSplit: 85,
     category: 'lifestyle-food',
     audienceProfile: {
@@ -72,8 +62,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'sbnation',
     name: 'SB Nation',
     monthlyPageviews: 30000000,
-    displayCPM: 3.75,
-    videoCPM: 10,
     displayVideoSplit: 90,
     category: 'sports',
     audienceProfile: {
@@ -85,8 +73,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'curbed',
     name: 'Curbed',
     monthlyPageviews: 12000000,
-    displayCPM: 4.50,
-    videoCPM: 14,
     displayVideoSplit: 85,
     category: 'real-estate',
     audienceProfile: {
@@ -98,8 +84,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'the-cut',
     name: 'The Cut',
     monthlyPageviews: 18000000,
-    displayCPM: 5.25,
-    videoCPM: 16,
     displayVideoSplit: 80,
     category: 'entertainment',
     audienceProfile: {
@@ -111,8 +95,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'grub-street',
     name: 'Grub Street',
     monthlyPageviews: 10000000,
-    displayCPM: 4.00,
-    videoCPM: 13,
     displayVideoSplit: 85,
     category: 'lifestyle-food',
     audienceProfile: {
@@ -124,8 +106,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'vulture',
     name: 'Vulture',
     monthlyPageviews: 22000000,
-    displayCPM: 5.00,
-    videoCPM: 15,
     displayVideoSplit: 75,
     category: 'entertainment',
     audienceProfile: {
@@ -137,8 +117,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     id: 'thrillist',
     name: 'Thrillist',
     monthlyPageviews: 15000000,
-    displayCPM: 3.50,
-    videoCPM: 11,
     displayVideoSplit: 88,
     category: 'lifestyle-food',
     audienceProfile: {

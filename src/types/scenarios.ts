@@ -10,6 +10,8 @@ export interface ScenarioState {
 
 export interface SimplifiedInputs {
   selectedDomains: string[]; // Array of domain IDs from VOX_MEDIA_DOMAINS
+  displayCPM: number;
+  videoCPM: number;
   capiCampaignsPerMonth: number;
   avgCampaignSpend: number;
 }

@@ -4,7 +4,9 @@ import { UnifiedCalculationEngine } from '@/utils/unifiedCalculationEngine';
 
 export const useScenarioCalculator = () => {
   const [inputs, setInputs] = useState<SimplifiedInputs>({
-    selectedDomains: ['the-verge', 'vox', 'polygon'], // Default: News Network
+    selectedDomains: ['the-verge', 'vox', 'polygon'],
+    displayCPM: 4.50,
+    videoCPM: 15.00,
     capiCampaignsPerMonth: 10,
     avgCampaignSpend: 100000,
   });
@@ -34,6 +36,8 @@ export const useScenarioCalculator = () => {
   const reset = () => {
     setInputs({
       selectedDomains: ['the-verge', 'vox', 'polygon'],
+      displayCPM: 4.50,
+      videoCPM: 15.00,
       capiCampaignsPerMonth: 10,
       avgCampaignSpend: 100000,
     });
