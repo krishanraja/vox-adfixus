@@ -51,9 +51,11 @@ export const SimplifiedInputsForm = ({
                 <Label htmlFor="displayCPM" className="text-sm font-medium">
                   Display CPM
                 </Label>
-                <span className="text-sm font-semibold text-primary">
-                  ${(inputs.displayCPM || 4.50).toFixed(2)}
-                </span>
+                <div className="px-3 py-1 bg-primary/10 rounded-md">
+                  <span className="text-lg font-bold text-primary">
+                    ${(inputs.displayCPM || 4.50).toFixed(2)}
+                  </span>
+                </div>
               </div>
               <Slider
                 id="displayCPM"
@@ -66,6 +68,9 @@ export const SimplifiedInputsForm = ({
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>$1.00</span>
+                <span className="text-xs text-muted-foreground">Low</span>
+                <span className="text-xs text-muted-foreground">Average</span>
+                <span className="text-xs text-muted-foreground">High</span>
                 <span>$15.00</span>
               </div>
             </div>
@@ -76,9 +81,11 @@ export const SimplifiedInputsForm = ({
                 <Label htmlFor="videoCPM" className="text-sm font-medium">
                   Video CPM
                 </Label>
-                <span className="text-sm font-semibold text-primary">
-                  ${(inputs.videoCPM || 15.00).toFixed(2)}
-                </span>
+                <div className="px-3 py-1 bg-primary/10 rounded-md">
+                  <span className="text-lg font-bold text-primary">
+                    ${(inputs.videoCPM || 15.00).toFixed(2)}
+                  </span>
+                </div>
               </div>
               <Slider
                 id="videoCPM"
@@ -91,6 +98,9 @@ export const SimplifiedInputsForm = ({
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>$5.00</span>
+                <span className="text-xs text-muted-foreground">Low</span>
+                <span className="text-xs text-muted-foreground">Average</span>
+                <span className="text-xs text-muted-foreground">High</span>
                 <span>$30.00</span>
               </div>
             </div>

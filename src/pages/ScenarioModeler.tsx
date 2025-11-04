@@ -24,7 +24,16 @@ const ScenarioModeler = () => {
   };
 
   const handleInputsComplete = () => {
-    setCurrentStep('scenarios');
+    // Auto-determine deployment based on number of domains
+    const numDomains = inputs.selectedDomains.length;
+    const deployment = numDomains === 1 ? 'single' : numDomains <= 5 ? 'multi' : 'full';
+    
+    // Auto-determine scope based on CAPI configuration
+    const scope = inputs.capiCampaignsPerMonth > 0 ? 'id-capi-performance' : 'id-only';
+    
+    setScenario({ deployment, scope });
+    calculateResults();
+    setCurrentStep('results');
   };
 
   const handleScenariosComplete = () => {
@@ -92,29 +101,6 @@ const ScenarioModeler = () => {
               <Button onClick={() => setCurrentStep('hero')} variant="outline">
                 Back
               </Button>
-              <Button onClick={handleInputsComplete} size="lg" className="gap-2">
-                Next: Select Scenarios <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 'scenarios' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-bold">Select Your Scenario</h1>
-              <p className="text-muted-foreground">Choose your deployment, addressability target, and capability scope</p>
-            </div>
-
-            <ScenarioToggle scenario={scenario} onChange={setScenario} />
-
-            <div className="flex justify-center gap-4">
-              <Button onClick={() => setCurrentStep('inputs')} variant="outline">
-                Back
-              </Button>
-              <Button onClick={handleScenariosComplete} size="lg" className="gap-2">
-                Calculate ROI <ArrowRight className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         )}
@@ -130,7 +116,7 @@ const ScenarioModeler = () => {
               results={results} 
               riskScenario={riskScenario}
               onRiskScenarioChange={setRiskScenario}
-              onReset={() => setCurrentStep('scenarios')}
+              onReset={() => setCurrentStep('inputs')}
               onDownloadPDF={handleDownloadPDF}
             />
           </div>
