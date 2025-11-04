@@ -14,11 +14,10 @@ export const CAPI_BENCHMARKS = {
 export const MEDIA_PERFORMANCE_BENCHMARKS = {
   BASELINE_ROAS: 2.5,
   IMPROVED_ROAS: 3.5, // 40% improvement
-  PUBLISHER_VALUE_CAPTURE: 0.30, // 30% of advertiser uplift
   BASELINE_MAKEGOOD_RATE: 0.08, // 8%
   IMPROVED_MAKEGOOD_RATE: 0.02, // 2%
-  PREMIUM_CPM_MULTIPLIER: 1.15, // 15% premium for better performance
-  ADVERTISER_RETENTION_VALUE: 1.25, // 25% higher LTV from better performance
+  PREMIUM_INVENTORY_SHARE: 0.30, // 30% of inventory sold as premium
+  YIELD_UPLIFT_PERCENTAGE: 0.25, // 25% yield uplift on premium inventory
 };
 
 export const ADDRESSABILITY_BENCHMARKS = {
@@ -58,9 +57,10 @@ export const SCENARIO_MULTIPLIERS = {
   },
 };
 
-// Average campaign values for CAPI calculations
-export const CAMPAIGN_VALUES = {
-  AVG_CAMPAIGN_SPEND: 50000, // $50K average campaign
-  CAMPAIGN_CONVERSION_RATE: 0.02, // 2% of pageviews lead to campaign interest
-  CAPI_ADOPTION_RATE: 0.20, // 20% of campaigns use CAPI
+// Campaign-specific CAPI values (benefit #4 from AdFixus_Benefits.xlsx)
+export const CAPI_CAMPAIGN_VALUES = {
+  ESTIMATED_CAPI_CAMPAIGNS_PER_MONTH: 10, // Conservative: 10 campaigns/month using CAPI
+  AVG_CAMPAIGN_SPEND: 100000, // $100K average campaign spend
+  SERVICE_FEE_PERCENTAGE: 0.125, // 12.5% service fee
+  CONVERSION_RATE_MULTIPLIER: 1.40, // 40% conversion improvement
 };

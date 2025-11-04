@@ -191,7 +191,7 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold">CAPI Capabilities</h3>
-                    <p className="text-sm text-muted-foreground">{formatCurrency(results.capiCapabilities.monthlyUplift)}/month</p>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(results.capiCapabilities.monthlyUplift)}/month from ~10 campaigns</p>
                   </div>
                 </div>
                 <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('capi') ? 'rotate-180' : ''}`} />
@@ -199,6 +199,9 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
               
               <CollapsibleContent>
                 <div className="p-6 pt-0 space-y-3 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Based on ~10 campaigns per month using AdFixus Stream (CAPI). Each campaign requires individual deployment.
+                  </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-sm text-muted-foreground">Match Rate</div>
@@ -209,7 +212,7 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                       <div className="text-lg font-semibold">+{formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)}</div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Campaign Revenue</div>
+                      <div className="text-sm text-muted-foreground">Campaign Service Fees</div>
                       <div className="text-lg font-semibold">{formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo</div>
                     </div>
                     <div>
@@ -237,7 +240,7 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold">Media Performance</h3>
-                    <p className="text-sm text-muted-foreground">{formatCurrency(results.mediaPerformance.monthlyUplift)}/month</p>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(results.mediaPerformance.monthlyUplift)}/month from premium inventory</p>
                   </div>
                 </div>
                 <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('performance') ? 'rotate-180' : ''}`} />
@@ -245,6 +248,9 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
               
               <CollapsibleContent>
                 <div className="p-6 pt-0 space-y-3 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    25% yield uplift applied to 30% of inventory sold as premium/performance campaigns.
+                  </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-sm text-muted-foreground">ROAS Improvement</div>
@@ -255,7 +261,7 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                       <div className="text-lg font-semibold">{formatPercentage(results.mediaPerformance.makeGoodReduction, 0)}</div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Premium Pricing</div>
+                      <div className="text-sm text-muted-foreground">Premium Pricing Uplift</div>
                       <div className="text-lg font-semibold">{formatCurrency(results.mediaPerformance.premiumPricingPower)}/mo</div>
                     </div>
                     <div>

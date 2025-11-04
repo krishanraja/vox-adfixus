@@ -5,7 +5,7 @@ import {
   ADDRESSABILITY_BENCHMARKS,
   OPERATIONAL_BENCHMARKS,
   SCENARIO_MULTIPLIERS,
-  CAMPAIGN_VALUES,
+  CAPI_CAMPAIGN_VALUES,
 } from '@/constants/industryBenchmarks';
 
 export class UnifiedCalculationEngine {
@@ -154,28 +154,29 @@ export class UnifiedCalculationEngine {
     scenario: ScenarioState,
     currentMonthlyRevenue: number
   ) {
-    const { monthlyPageviews } = inputs;
-
     // Match rate improvement
     const baselineMatchRate = CAPI_BENCHMARKS.BASELINE_MATCH_RATE;
     const improvedMatchRate = CAPI_BENCHMARKS.IMPROVED_MATCH_RATE;
     const matchRateImprovement = (improvedMatchRate / baselineMatchRate - 1) * 100;
 
-    // Campaign service revenue from CAPI adoption
-    const potentialCampaigns = monthlyPageviews * CAMPAIGN_VALUES.CAMPAIGN_CONVERSION_RATE;
-    const capiAdoptedCampaigns = potentialCampaigns * CAMPAIGN_VALUES.CAPI_ADOPTION_RATE;
-    const avgCampaignSpend = CAMPAIGN_VALUES.AVG_CAMPAIGN_SPEND;
-    const campaignServiceFees = capiAdoptedCampaigns * avgCampaignSpend * CAPI_BENCHMARKS.SERVICE_FEE_PERCENTAGE;
+    // Campaign-based service fees (Benefit #4: Ad Performance/CAPI)
+    // CAPI benefits come from individual campaigns sold with AdFixus Stream
+    const estimatedCapiCampaigns = CAPI_CAMPAIGN_VALUES.ESTIMATED_CAPI_CAMPAIGNS_PER_MONTH;
+    const avgCampaignSpend = CAPI_CAMPAIGN_VALUES.AVG_CAMPAIGN_SPEND;
+    const campaignServiceFees = estimatedCapiCampaigns * avgCampaignSpend * CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
 
-    // Conversion tracking revenue improvement
-    const conversionImprovement = CAPI_BENCHMARKS.CONVERSION_MULTIPLIER - 1;
-    const conversionTrackingRevenue = currentMonthlyRevenue * conversionImprovement * 0.2; // 20% of revenue is performance-based
+    // Operational labor savings from CAPI (reduced troubleshooting, better data quality)
+    const capiLaborSavings = OPERATIONAL_BENCHMARKS.MANUAL_LABOR_HOURS_SAVED * OPERATIONAL_BENCHMARKS.HOURLY_RATE;
+
+    // Conversion tracking revenue improvement (40% better conversion rates)
+    const conversionImprovement = CAPI_CAMPAIGN_VALUES.CONVERSION_RATE_MULTIPLIER - 1;
+    const conversionTrackingRevenue = campaignServiceFees * conversionImprovement;
 
     // Apply scenario multipliers
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
     const addressabilityMultiplier = this.getAddressabilityMultiplier(scenario.addressability);
 
-    const monthlyUplift = (campaignServiceFees + conversionTrackingRevenue) * deploymentMultiplier * addressabilityMultiplier;
+    const monthlyUplift = (campaignServiceFees + capiLaborSavings) * deploymentMultiplier * addressabilityMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
@@ -198,20 +199,36 @@ export class UnifiedCalculationEngine {
     scenario: ScenarioState,
     currentMonthlyRevenue: number
   ) {
-    // Advertiser ROAS improvement
-    const baselineROAS = MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_ROAS;
-    const improvedROAS = MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_ROAS;
-    const roasImprovement = ((improvedROAS - baselineROAS) / baselineROAS) * 100;
+    const { monthlyPageviews, displayCPM, videoCPM, displayVideoSplit } = inputs;
 
-    // Publisher captures value through premium pricing
-    const estimatedAdvertiserSpend = currentMonthlyRevenue * 2; // Rough proxy
-    const advertiserValueIncrease = estimatedAdvertiserSpend * (improvedROAS - baselineROAS);
-    const premiumPricingPower = advertiserValueIncrease * MEDIA_PERFORMANCE_BENCHMARKS.PUBLISHER_VALUE_CAPTURE;
+    // Calculate base metrics
+    const displayShare = displayVideoSplit / 100;
+    const videoShare = 1 - displayShare;
+    const totalImpressions = monthlyPageviews * 2.5;
+    const displayImpressions = totalImpressions * displayShare;
+    const videoImpressions = totalImpressions * videoShare;
 
-    // Make-good reduction savings
+    // Premium CPM uplift on premium inventory subset (Benefit #3: Higher CPMs)
+    // Only applies to inventory sold as premium/performance campaigns
+    const premiumInventoryShare = MEDIA_PERFORMANCE_BENCHMARKS.PREMIUM_INVENTORY_SHARE;
+    const yieldUplift = MEDIA_PERFORMANCE_BENCHMARKS.YIELD_UPLIFT_PERCENTAGE;
+
+    const premiumDisplayImpressions = displayImpressions * premiumInventoryShare;
+    const premiumVideoImpressions = videoImpressions * premiumInventoryShare;
+
+    const displayPremiumUplift = (premiumDisplayImpressions / 1000) * displayCPM * yieldUplift;
+    const videoPremiumUplift = (premiumVideoImpressions / 1000) * videoCPM * yieldUplift;
+    const premiumPricingPower = displayPremiumUplift + videoPremiumUplift;
+
+    // Make-good reduction savings (applies to all inventory)
     const baselineMakeGoods = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_MAKEGOOD_RATE;
     const improvedMakeGoods = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_MAKEGOOD_RATE;
     const makeGoodSavings = baselineMakeGoods - improvedMakeGoods;
+
+    // Advertiser ROAS improvement (for reference/reporting)
+    const baselineROAS = MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_ROAS;
+    const improvedROAS = MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_ROAS;
+    const roasImprovement = ((improvedROAS - baselineROAS) / baselineROAS) * 100;
 
     // Apply scenario multipliers
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
