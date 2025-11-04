@@ -52,7 +52,7 @@ export const SimplifiedInputsForm = ({
                   Display CPM
                 </Label>
                 <span className="text-sm font-semibold text-primary">
-                  ${inputs.displayCPM.toFixed(2)}
+                  ${(inputs.displayCPM || 4.50).toFixed(2)}
                 </span>
               </div>
               <Slider
@@ -60,7 +60,7 @@ export const SimplifiedInputsForm = ({
                 min={1}
                 max={15}
                 step={0.25}
-                value={[inputs.displayCPM]}
+                value={[inputs.displayCPM || 4.50]}
                 onValueChange={(value) => onInputChange('displayCPM', value[0])}
                 className="w-full"
               />
@@ -77,7 +77,7 @@ export const SimplifiedInputsForm = ({
                   Video CPM
                 </Label>
                 <span className="text-sm font-semibold text-primary">
-                  ${inputs.videoCPM.toFixed(2)}
+                  ${(inputs.videoCPM || 15.00).toFixed(2)}
                 </span>
               </div>
               <Slider
@@ -85,7 +85,7 @@ export const SimplifiedInputsForm = ({
                 min={5}
                 max={30}
                 step={0.50}
-                value={[inputs.videoCPM]}
+                value={[inputs.videoCPM || 15.00]}
                 onValueChange={(value) => onInputChange('videoCPM', value[0])}
                 className="w-full"
               />
