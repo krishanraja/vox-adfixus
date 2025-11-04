@@ -7,53 +7,129 @@ import {
   SCENARIO_MULTIPLIERS,
   CAPI_CAMPAIGN_VALUES,
 } from '@/constants/industryBenchmarks';
+import { aggregateDomainInputs } from '@/utils/domainAggregation';
+import { RISK_SCENARIOS, type RiskScenario } from '@/constants/riskScenarios';
 
 export class UnifiedCalculationEngine {
-  static calculate(inputs: SimplifiedInputs, scenario: ScenarioState): UnifiedResults {
-    const { monthlyPageviews, displayCPM, videoCPM, displayVideoSplit } = inputs;
+  static calculate(
+    inputs: SimplifiedInputs, 
+    scenario: ScenarioState,
+    riskScenario: RiskScenario = 'moderate'
+  ): UnifiedResults {
+    // Aggregate domain inputs
+    const aggregated = aggregateDomainInputs(inputs.selectedDomains);
+    const { 
+      totalMonthlyPageviews, 
+      weightedDisplayCPM, 
+      weightedVideoCPM, 
+      weightedDisplayVideoSplit 
+    } = aggregated;
+    
+    // Get risk multipliers
+    const risk = RISK_SCENARIOS[riskScenario];
 
     // Calculate base metrics
-    const displayShare = displayVideoSplit / 100;
+    const displayShare = weightedDisplayVideoSplit / 100;
     const videoShare = 1 - displayShare;
-    const totalImpressions = monthlyPageviews * 2.5; // Avg 2.5 ad impressions per pageview
+    const totalImpressions = totalMonthlyPageviews * 2.5; // Avg 2.5 ad impressions per pageview
     const displayImpressions = totalImpressions * displayShare;
     const videoImpressions = totalImpressions * videoShare;
 
     // Current revenue
-    const currentDisplayRevenue = (displayImpressions / 1000) * displayCPM;
-    const currentVideoRevenue = (videoImpressions / 1000) * videoCPM;
+    const currentDisplayRevenue = (displayImpressions / 1000) * weightedDisplayCPM;
+    const currentVideoRevenue = (videoImpressions / 1000) * weightedVideoCPM;
     const currentMonthlyRevenue = currentDisplayRevenue + currentVideoRevenue;
 
-    // Calculate ID Infrastructure (always included)
-    const idInfrastructure = this.calculateIdInfrastructure(
-      inputs,
+    // Calculate ID Infrastructure (always included) - BASE before risk adjustment
+    const baseIdInfrastructure = this.calculateIdInfrastructure(
+      totalMonthlyPageviews,
+      weightedDisplayCPM,
+      weightedVideoCPM,
       scenario,
       currentMonthlyRevenue,
       displayImpressions,
       videoImpressions
     );
 
-    // Calculate CAPI Capabilities (if enabled)
-    const capiCapabilities =
-      scenario.scope === 'id-capi' || scenario.scope === 'id-capi-performance'
-        ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue)
-        : undefined;
+    // Apply risk adjustments to ID infrastructure
+    const idInfrastructure = {
+      ...baseIdInfrastructure,
+      monthlyUplift: baseIdInfrastructure.monthlyUplift * risk.addressabilityEfficiency * risk.cdpSavingsRealization,
+      annualUplift: baseIdInfrastructure.annualUplift * risk.addressabilityEfficiency * risk.cdpSavingsRealization,
+      details: {
+        ...baseIdInfrastructure.details,
+        addressabilityRevenue: baseIdInfrastructure.details.addressabilityRevenue * risk.addressabilityEfficiency * risk.cpmUpliftRealization,
+        cdpSavingsRevenue: baseIdInfrastructure.details.cdpSavingsRevenue * risk.cdpSavingsRealization,
+      }
+    };
 
-    // Calculate Media Performance (if enabled)
-    const mediaPerformance =
-      scenario.scope === 'id-capi-performance'
-        ? this.calculateMediaPerformance(inputs, scenario, currentMonthlyRevenue)
-        : undefined;
+    // Calculate CAPI Capabilities (if enabled) - BASE before risk adjustment
+    let capiCapabilities;
+    if (scenario.scope === 'id-capi' || scenario.scope === 'id-capi-performance') {
+      const baseCapiCapabilities = this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue);
+      
+      // Apply risk adjustments to CAPI
+      capiCapabilities = {
+        ...baseCapiCapabilities,
+        monthlyUplift: baseCapiCapabilities.monthlyUplift * risk.capiDeploymentRate * risk.salesEffectiveness,
+        annualUplift: baseCapiCapabilities.annualUplift * risk.capiDeploymentRate * risk.salesEffectiveness,
+        conversionTrackingRevenue: baseCapiCapabilities.conversionTrackingRevenue * risk.capiDeploymentRate,
+        campaignServiceFees: baseCapiCapabilities.campaignServiceFees * risk.salesEffectiveness,
+      };
+    }
 
-    // Calculate totals
-    const totalMonthlyUplift =
+    // Calculate Media Performance (if enabled) - BASE before risk adjustment
+    let mediaPerformance;
+    if (scenario.scope === 'id-capi-performance') {
+      const baseMediaPerformance = this.calculateMediaPerformance(
+        totalMonthlyPageviews,
+        weightedDisplayCPM,
+        weightedVideoCPM,
+        weightedDisplayVideoSplit,
+        scenario,
+        currentMonthlyRevenue,
+        displayImpressions,
+        videoImpressions
+      );
+      
+      // Apply risk adjustments to media performance
+      mediaPerformance = {
+        ...baseMediaPerformance,
+        monthlyUplift: baseMediaPerformance.monthlyUplift * (risk.premiumInventoryShare / 0.30) * risk.cpmUpliftRealization,
+        annualUplift: baseMediaPerformance.annualUplift * (risk.premiumInventoryShare / 0.30) * risk.cpmUpliftRealization,
+        premiumPricingPower: baseMediaPerformance.premiumPricingPower * (risk.premiumInventoryShare / 0.30),
+      };
+    }
+
+    // Calculate totals with adoption rate applied
+    const baseMonthlyUplift =
       idInfrastructure.monthlyUplift +
       (capiCapabilities?.monthlyUplift || 0) +
       (mediaPerformance?.monthlyUplift || 0);
-
+    
+    const totalMonthlyUplift = baseMonthlyUplift * risk.adoptionRate;
     const totalAnnualUplift = totalMonthlyUplift * 12;
     const threeYearProjection = totalAnnualUplift * 3;
     const percentageImprovement = (totalMonthlyUplift / currentMonthlyRevenue) * 100;
+
+    // Calculate unadjusted values for comparison (what it would be with optimistic)
+    const optimisticRisk = RISK_SCENARIOS.optimistic;
+    const unadjustedMonthlyUplift = (
+      baseIdInfrastructure.monthlyUplift +
+      (capiCapabilities ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue).monthlyUplift : 0) +
+      (mediaPerformance ? this.calculateMediaPerformance(
+        totalMonthlyPageviews,
+        weightedDisplayCPM,
+        weightedVideoCPM,
+        weightedDisplayVideoSplit,
+        scenario,
+        currentMonthlyRevenue,
+        displayImpressions,
+        videoImpressions
+      ).monthlyUplift : 0)
+    ) * optimisticRisk.adoptionRate;
+    
+    const adjustmentPercentage = ((unadjustedMonthlyUplift - totalMonthlyUplift) / unadjustedMonthlyUplift) * 100;
 
     // Calculate breakdown percentages
     const breakdown = {
@@ -65,6 +141,12 @@ export class UnifiedCalculationEngine {
     return {
       scenario,
       inputs,
+      riskScenario,
+      riskAdjustmentSummary: {
+        unadjustedMonthlyUplift,
+        adjustedMonthlyUplift: totalMonthlyUplift,
+        adjustmentPercentage,
+      },
       idInfrastructure,
       capiCapabilities,
       mediaPerformance,
@@ -80,14 +162,14 @@ export class UnifiedCalculationEngine {
   }
 
   private static calculateIdInfrastructure(
-    inputs: SimplifiedInputs,
+    monthlyPageviews: number,
+    displayCPM: number,
+    videoCPM: number,
     scenario: ScenarioState,
     currentMonthlyRevenue: number,
     displayImpressions: number,
     videoImpressions: number
   ) {
-    const { displayCPM, videoCPM } = inputs;
-
     // Safari addressability: Binary improvement with durable ID
     // Without AdFixus: Safari users lose identity after 7 days
     // With AdFixus: Durable ID recognizes returning users beyond 7 days
@@ -198,19 +280,15 @@ export class UnifiedCalculationEngine {
   }
 
   private static calculateMediaPerformance(
-    inputs: SimplifiedInputs,
+    monthlyPageviews: number,
+    displayCPM: number,
+    videoCPM: number,
+    displayVideoSplit: number,
     scenario: ScenarioState,
-    currentMonthlyRevenue: number
+    currentMonthlyRevenue: number,
+    displayImpressions: number,
+    videoImpressions: number
   ) {
-    const { monthlyPageviews, displayCPM, videoCPM, displayVideoSplit } = inputs;
-
-    // Calculate base metrics
-    const displayShare = displayVideoSplit / 100;
-    const videoShare = 1 - displayShare;
-    const totalImpressions = monthlyPageviews * 2.5;
-    const displayImpressions = totalImpressions * displayShare;
-    const videoImpressions = totalImpressions * videoShare;
-
     // Premium CPM uplift on premium inventory subset (Benefit #3: Higher CPMs)
     // Only applies to inventory sold as premium/performance campaigns
     const premiumInventoryShare = MEDIA_PERFORMANCE_BENCHMARKS.PREMIUM_INVENTORY_SHARE;
@@ -270,17 +348,32 @@ export class UnifiedCalculationEngine {
 
   static generateMonthlyProjection(results: UnifiedResults): MonthlyProjection[] {
     const { currentMonthlyRevenue, totalMonthlyUplift } = results.totals;
+    
+    // Get ramp-up months from risk scenario
+    const rampUpMonths = results.riskScenario ? RISK_SCENARIOS[results.riskScenario].rampUpMonths : 12;
 
     return Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
       let rampUpFactor = 1;
 
-      if (month <= 3) {
-        rampUpFactor = SCENARIO_MULTIPLIERS.RAMP_UP.MONTH_1_3;
-      } else if (month <= 6) {
-        rampUpFactor = SCENARIO_MULTIPLIERS.RAMP_UP.MONTH_4_6;
+      // Adjust ramp-up based on risk scenario timeline
+      if (rampUpMonths <= 6) {
+        // Optimistic: 6-month ramp
+        if (month <= 2) rampUpFactor = 0.30;
+        else if (month <= 4) rampUpFactor = 0.60;
+        else rampUpFactor = 1.0;
+      } else if (rampUpMonths <= 12) {
+        // Moderate: 12-month ramp
+        if (month <= 3) rampUpFactor = 0.25;
+        else if (month <= 6) rampUpFactor = 0.50;
+        else if (month <= 9) rampUpFactor = 0.75;
+        else rampUpFactor = 1.0;
       } else {
-        rampUpFactor = SCENARIO_MULTIPLIERS.RAMP_UP.MONTH_7_12;
+        // Conservative: 18-month ramp (only shows first 12 months)
+        if (month <= 3) rampUpFactor = 0.15;
+        else if (month <= 6) rampUpFactor = 0.30;
+        else if (month <= 9) rampUpFactor = 0.50;
+        else rampUpFactor = 0.70; // Still ramping at month 12
       }
 
       const monthlyUplift = totalMonthlyUplift * rampUpFactor;

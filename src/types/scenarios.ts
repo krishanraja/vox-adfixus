@@ -9,10 +9,7 @@ export interface ScenarioState {
 }
 
 export interface SimplifiedInputs {
-  monthlyPageviews: number;
-  displayCPM: number;
-  videoCPM: number;
-  displayVideoSplit: number; // 0-100, percentage of display
+  selectedDomains: string[]; // Array of domain IDs from VOX_MEDIA_DOMAINS
   capiCampaignsPerMonth: number;
   avgCampaignSpend: number;
 }
@@ -20,6 +17,14 @@ export interface SimplifiedInputs {
 export interface UnifiedResults {
   scenario: ScenarioState;
   inputs: SimplifiedInputs;
+  
+  // Risk scenario metadata
+  riskScenario?: 'conservative' | 'moderate' | 'optimistic';
+  riskAdjustmentSummary?: {
+    unadjustedMonthlyUplift: number;
+    adjustedMonthlyUplift: number;
+    adjustmentPercentage: number;
+  };
   
   // ID Infrastructure
   idInfrastructure: {

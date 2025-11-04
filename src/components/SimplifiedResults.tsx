@@ -1,22 +1,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator } from 'lucide-react';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle } from 'lucide-react';
 import type { UnifiedResults } from '@/types/scenarios';
 import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Separator } from './ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
+import { Alert, AlertDescription } from './ui/alert';
+import { RISK_SCENARIO_DESCRIPTIONS, type RiskScenario } from '@/constants/riskScenarios';
+import { aggregateDomainInputs } from '@/utils/domainAggregation';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SimplifiedResultsProps {
   results: UnifiedResults;
+  riskScenario: RiskScenario;
+  onRiskScenarioChange: (scenario: RiskScenario) => void;
   onReset: () => void;
   onDownloadPDF: () => void;
 }
 
-export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: SimplifiedResultsProps) => {
+export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange, onReset, onDownloadPDF }: SimplifiedResultsProps) => {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const aggregated = aggregateDomainInputs(results.inputs.selectedDomains);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -35,6 +43,122 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
 
   return (
     <div className="space-y-6">
+      {/* Risk Scenario Toggle */}
+      <Card className="p-6 border-2 border-primary/20">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Projection Scenario</h3>
+              <p className="text-sm text-muted-foreground">
+                Adjust for implementation risk and organizational readiness
+              </p>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-md">
+                  <div className="space-y-2 text-xs">
+                    <p><strong>Risk scenarios reflect real-world challenges:</strong></p>
+                    <p>• Sales training & enablement gaps</p>
+                    <p>• Technical integration delays</p>
+                    <p>• Organizational change management</p>
+                    <p>• Advertiser adoption timelines</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <RadioGroup value={riskScenario} onValueChange={(value) => onRiskScenarioChange(value as RiskScenario)}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Conservative */}
+              <div 
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  riskScenario === 'conservative' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => onRiskScenarioChange('conservative')}
+              >
+                <div className="flex items-start gap-3">
+                  <RadioGroupItem value="conservative" id="conservative" />
+                  <div className="space-y-1 flex-1">
+                    <Label htmlFor="conservative" className="font-semibold cursor-pointer">
+                      Conservative
+                    </Label>
+                    <p className="text-xs text-muted-foreground leading-tight">
+                      {RISK_SCENARIO_DESCRIPTIONS.conservative}
+                    </p>
+                    <div className="mt-2 text-xs space-y-1">
+                      <div className="font-medium">18-month ramp</div>
+                      <div className="text-muted-foreground">60% adoption</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Moderate */}
+              <div 
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  riskScenario === 'moderate' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => onRiskScenarioChange('moderate')}
+              >
+                <div className="flex items-start gap-3">
+                  <RadioGroupItem value="moderate" id="moderate" />
+                  <div className="space-y-1 flex-1">
+                    <Label htmlFor="moderate" className="font-semibold cursor-pointer">
+                      Moderate
+                    </Label>
+                    <p className="text-xs text-muted-foreground leading-tight">
+                      {RISK_SCENARIO_DESCRIPTIONS.moderate}
+                    </p>
+                    <div className="mt-2 text-xs space-y-1">
+                      <div className="font-medium">12-month ramp</div>
+                      <div className="text-muted-foreground">80% adoption</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Optimistic */}
+              <div 
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  riskScenario === 'optimistic' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => onRiskScenarioChange('optimistic')}
+              >
+                <div className="flex items-start gap-3">
+                  <RadioGroupItem value="optimistic" id="optimistic" />
+                  <div className="space-y-1 flex-1">
+                    <Label htmlFor="optimistic" className="font-semibold cursor-pointer">
+                      Optimistic
+                    </Label>
+                    <p className="text-xs text-muted-foreground leading-tight">
+                      {RISK_SCENARIO_DESCRIPTIONS.optimistic}
+                    </p>
+                    <div className="mt-2 text-xs space-y-1">
+                      <div className="font-medium">6-month ramp</div>
+                      <div className="text-muted-foreground">100% adoption</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </RadioGroup>
+          
+          {/* Risk adjustment summary */}
+          {results.riskAdjustmentSummary && results.riskAdjustmentSummary.adjustmentPercentage > 0 && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Risk adjustment reduced projections by {results.riskAdjustmentSummary.adjustmentPercentage.toFixed(0)}% from {formatCurrency(results.riskAdjustmentSummary.unadjustedMonthlyUplift)}/mo to {formatCurrency(results.riskAdjustmentSummary.adjustedMonthlyUplift)}/mo
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </Card>
+
       {/* Top-Level Summary */}
       <Card className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
         <div className="text-center space-y-4">
@@ -167,11 +291,11 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                           <TooltipContent className="max-w-sm">
                             <div className="space-y-2 text-xs">
                               <p><strong>Durable ID Benefit:</strong></p>
-                              <p>• Safari traffic: 35% of {formatNumberWithCommas(results.inputs.monthlyPageviews)} pageviews</p>
+                              <p>• Safari traffic: 35% of {formatNumberWithCommas(aggregated.totalMonthlyPageviews)} pageviews</p>
                               <p>• Without AdFixus: 20% addressable (IDs expire after 7 days)</p>
                               <p>• With AdFixus: 85% addressable (durable ID recognizes returning users)</p>
                               <p>• Newly addressable: {formatPercentage(results.idInfrastructure.addressabilityRecovery, 1)} of Safari traffic</p>
-                              <p>• CPM uplift: ${results.inputs.displayCPM} → ${(results.inputs.displayCPM * 1.25).toFixed(2)} (25%)</p>
+                              <p>• CPM uplift: ${aggregated.weightedDisplayCPM.toFixed(2)} → ${(aggregated.weightedDisplayCPM * 1.25).toFixed(2)} (25%)</p>
                             </div>
                           </TooltipContent>
                         </Tooltip>
@@ -355,10 +479,11 @@ export const SimplifiedResults = ({ results, onReset, onDownloadPDF }: Simplifie
                 <div className="space-y-2">
                   <h4 className="font-semibold">Your Inputs</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• Monthly Pageviews: {formatNumberWithCommas(results.inputs.monthlyPageviews)}</li>
-                    <li>• Display CPM: ${results.inputs.displayCPM.toFixed(2)}</li>
-                    <li>• Video CPM: ${results.inputs.videoCPM.toFixed(2)}</li>
-                    <li>• Display/Video Split: {results.inputs.displayVideoSplit}% / {100 - results.inputs.displayVideoSplit}%</li>
+                    <li>• Selected Domains: {results.inputs.selectedDomains.length} ({aggregated.selectedDomains.map(d => d.name).join(', ')})</li>
+                    <li>• Total Monthly Pageviews: {formatNumberWithCommas(aggregated.totalMonthlyPageviews)}</li>
+                    <li>• Weighted Display CPM: ${aggregated.weightedDisplayCPM.toFixed(2)}</li>
+                    <li>• Weighted Video CPM: ${aggregated.weightedVideoCPM.toFixed(2)}</li>
+                    <li>• Display/Video Split: {aggregated.weightedDisplayVideoSplit.toFixed(0)}% / {(100 - aggregated.weightedDisplayVideoSplit).toFixed(0)}%</li>
                     <li>• CAPI Campaigns: {results.inputs.capiCampaignsPerMonth} per month</li>
                     <li>• Avg Campaign Spend: {formatCurrency(results.inputs.avgCampaignSpend)}</li>
                   </ul>

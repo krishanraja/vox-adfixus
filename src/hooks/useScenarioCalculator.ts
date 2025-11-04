@@ -4,10 +4,7 @@ import { UnifiedCalculationEngine } from '@/utils/unifiedCalculationEngine';
 
 export const useScenarioCalculator = () => {
   const [inputs, setInputs] = useState<SimplifiedInputs>({
-    monthlyPageviews: 50000000,
-    displayCPM: 4.50,
-    videoCPM: 12,
-    displayVideoSplit: 80,
+    selectedDomains: ['the-verge', 'vox', 'polygon'], // Default: News Network
     capiCampaignsPerMonth: 10,
     avgCampaignSpend: 100000,
   });
@@ -17,20 +14,26 @@ export const useScenarioCalculator = () => {
     scope: 'id-capi-performance',
   });
 
+  const [riskScenario, setRiskScenario] = useState<'conservative' | 'moderate' | 'optimistic'>('moderate');
   const [results, setResults] = useState<UnifiedResults | null>(null);
 
   const calculateResults = () => {
-    const calculatedResults = UnifiedCalculationEngine.calculate(inputs, scenario);
+    const calculatedResults = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario);
     setResults(calculatedResults);
     return calculatedResults;
+  };
+  
+  const updateRiskScenario = (newRisk: 'conservative' | 'moderate' | 'optimistic') => {
+    setRiskScenario(newRisk);
+    if (results) {
+      const updated = UnifiedCalculationEngine.calculate(inputs, scenario, newRisk);
+      setResults(updated);
+    }
   };
 
   const reset = () => {
     setInputs({
-      monthlyPageviews: 50000000,
-      displayCPM: 4.50,
-      videoCPM: 12,
-      displayVideoSplit: 80,
+      selectedDomains: ['the-verge', 'vox', 'polygon'],
       capiCampaignsPerMonth: 10,
       avgCampaignSpend: 100000,
     });
@@ -38,6 +41,7 @@ export const useScenarioCalculator = () => {
       deployment: 'multi',
       scope: 'id-capi-performance',
     });
+    setRiskScenario('moderate');
     setResults(null);
   };
 
@@ -46,6 +50,8 @@ export const useScenarioCalculator = () => {
     setInputs,
     scenario,
     setScenario,
+    riskScenario,
+    setRiskScenario: updateRiskScenario,
     results,
     calculateResults,
     reset,

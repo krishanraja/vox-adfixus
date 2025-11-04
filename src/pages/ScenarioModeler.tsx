@@ -16,7 +16,7 @@ type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
 const ScenarioModeler = () => {
   const [currentStep, setCurrentStep] = useState<StepType>('hero');
   const [showLeadCapture, setShowLeadCapture] = useState(false);
-  const { inputs, setInputs, scenario, setScenario, results, calculateResults, reset } = useScenarioCalculator();
+  const { inputs, setInputs, scenario, setScenario, riskScenario, setRiskScenario, results, calculateResults, reset } = useScenarioCalculator();
   const { toast } = useToast();
 
   const handleStartModeler = () => {
@@ -82,7 +82,11 @@ const ScenarioModeler = () => {
               <p className="text-muted-foreground">Enter your basic metrics to model your ROI</p>
             </div>
 
-            <SimplifiedInputsForm inputs={inputs} onChange={setInputs} />
+            <SimplifiedInputsForm 
+              inputs={inputs} 
+              onInputChange={(field, value) => setInputs({ ...inputs, [field]: value })}
+              onCalculate={handleInputsComplete}
+            />
 
             <div className="flex justify-center gap-4">
               <Button onClick={() => setCurrentStep('hero')} variant="outline">
@@ -124,6 +128,8 @@ const ScenarioModeler = () => {
 
             <SimplifiedResults 
               results={results} 
+              riskScenario={riskScenario}
+              onRiskScenarioChange={setRiskScenario}
               onReset={() => setCurrentStep('scenarios')}
               onDownloadPDF={handleDownloadPDF}
             />

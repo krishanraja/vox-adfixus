@@ -1,150 +1,109 @@
-import { Card } from './ui/card';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Slider } from './ui/slider';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import type { SimplifiedInputs } from '@/types/scenarios';
-import { formatNumberWithCommas } from '@/utils/formatting';
+import { DomainSelector } from '@/components/DomainSelector';
+import { TrendingUp } from 'lucide-react';
+import { aggregateDomainInputs } from '@/utils/domainAggregation';
 
-interface SimplifiedInputsProps {
+interface SimplifiedInputsFormProps {
   inputs: SimplifiedInputs;
-  onChange: (inputs: SimplifiedInputs) => void;
+  onInputChange: (field: keyof SimplifiedInputs, value: any) => void;
+  onCalculate: () => void;
 }
 
-export const SimplifiedInputsForm = ({ inputs, onChange }: SimplifiedInputsProps) => {
-  const handlePageviewsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/,/g, '');
-    const numValue = parseInt(value) || 0;
-    onChange({ ...inputs, monthlyPageviews: numValue });
-  };
+export const SimplifiedInputsForm = ({
+  inputs,
+  onInputChange,
+  onCalculate,
+}: SimplifiedInputsFormProps) => {
+  const aggregated = aggregateDomainInputs(inputs.selectedDomains);
+  const showCapiInputs = inputs.selectedDomains.length > 0;
 
-  const handleDisplayCPMChange = (value: number[]) => {
-    onChange({ ...inputs, displayCPM: value[0] });
-  };
-
-  const handleVideoCPMChange = (value: number[]) => {
-    onChange({ ...inputs, videoCPM: value[0] });
-  };
-
-  const handleSplitChange = (value: number[]) => {
-    onChange({ ...inputs, displayVideoSplit: value[0] });
-  };
-
-  const handleCapiCampaignsChange = (value: number[]) => {
-    onChange({ ...inputs, capiCampaignsPerMonth: value[0] });
-  };
-
-  const handleAvgCampaignSpendChange = (value: number[]) => {
-    onChange({ ...inputs, avgCampaignSpend: value[0] });
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   };
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
-        <div>
-          <Label htmlFor="pageviews" className="text-base font-semibold mb-2 block">
-            Monthly Pageviews
-          </Label>
-          <Input
-            id="pageviews"
-            type="text"
-            value={formatNumberWithCommas(inputs.monthlyPageviews)}
-            onChange={handlePageviewsChange}
-            className="text-lg"
-            placeholder="e.g., 50,000,000"
-          />
-          <p className="text-sm text-muted-foreground mt-1">Total monthly pageviews across your property(ies)</p>
-        </div>
+    <div className="space-y-6">
+      <DomainSelector
+        selectedDomains={inputs.selectedDomains}
+        onChange={(domains) => onInputChange('selectedDomains', domains)}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label className="text-base font-semibold mb-2 block">
-              Display CPM: ${inputs.displayCPM.toFixed(2)}
-            </Label>
-            <Slider
-              value={[inputs.displayCPM]}
-              onValueChange={handleDisplayCPMChange}
-              min={2}
-              max={15}
-              step={0.25}
-              className="mt-2"
-            />
-            <p className="text-sm text-muted-foreground mt-1">Average CPM for display ads</p>
-          </div>
-
-          <div>
-            <Label className="text-base font-semibold mb-2 block">
-              Video CPM: ${inputs.videoCPM.toFixed(2)}
-            </Label>
-            <Slider
-              value={[inputs.videoCPM]}
-              onValueChange={handleVideoCPMChange}
-              min={8}
-              max={100}
-              step={1}
-              className="mt-2"
-            />
-            <p className="text-sm text-muted-foreground mt-1">Average CPM for video ads</p>
-          </div>
-        </div>
-
-        <div>
-          <Label className="text-base font-semibold mb-2 block">
-            Display/Video Split: {inputs.displayVideoSplit}% / {100 - inputs.displayVideoSplit}%
-          </Label>
-          <Slider
-            value={[inputs.displayVideoSplit]}
-            onValueChange={handleSplitChange}
-            min={0}
-            max={100}
-            step={5}
-            className="mt-2"
-          />
-          <div className="flex justify-between text-sm text-muted-foreground mt-1">
-            <span>Display</span>
-            <span>Video</span>
-          </div>
-        </div>
-
-        {/* CAPI Campaign Configuration - shown for all scopes */}
-        <div className="pt-6 border-t border-border">
-          <h3 className="text-base font-semibold mb-4">CAPI Campaign Configuration</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Configure expected CAPI campaigns using AdFixus Stream. Each campaign requires individual deployment.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {showCapiInputs && (
+        <Card className="p-6">
+          <div className="space-y-6">
             <div>
-              <Label className="text-base font-semibold mb-2 block">
-                CAPI Campaigns per Month: {inputs.capiCampaignsPerMonth}
-              </Label>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                CAPI Campaign Configuration
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Configure your Conversion API (CAPI) campaigns using AdFixus Stream
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="capi-campaigns" className="text-sm font-medium">
+                  CAPI Campaigns per Month
+                </Label>
+                <span className="text-sm font-semibold text-primary">
+                  {inputs.capiCampaignsPerMonth} campaigns
+                </span>
+              </div>
               <Slider
-                value={[inputs.capiCampaignsPerMonth]}
-                onValueChange={handleCapiCampaignsChange}
+                id="capi-campaigns"
                 min={1}
                 max={50}
                 step={1}
-                className="mt-2"
+                value={[inputs.capiCampaignsPerMonth]}
+                onValueChange={(value) =>
+                  onInputChange('capiCampaignsPerMonth', value[0])
+                }
+                className="w-full"
               />
-              <p className="text-sm text-muted-foreground mt-1">Number of campaigns using AdFixus CAPI</p>
             </div>
 
-            <div>
-              <Label className="text-base font-semibold mb-2 block">
-                Average Campaign Spend: {formatNumberWithCommas(inputs.avgCampaignSpend)}
-              </Label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="campaign-spend" className="text-sm font-medium">
+                  Average Campaign Spend
+                </Label>
+                <span className="text-sm font-semibold text-primary">
+                  {formatCurrency(inputs.avgCampaignSpend)}
+                </span>
+              </div>
               <Slider
-                value={[inputs.avgCampaignSpend]}
-                onValueChange={handleAvgCampaignSpendChange}
+                id="campaign-spend"
                 min={10000}
                 max={500000}
                 step={10000}
-                className="mt-2"
+                value={[inputs.avgCampaignSpend]}
+                onValueChange={(value) =>
+                  onInputChange('avgCampaignSpend', value[0])
+                }
+                className="w-full"
               />
-              <p className="text-sm text-muted-foreground mt-1">Average spend per CAPI campaign</p>
             </div>
           </div>
-        </div>
-      </div>
-    </Card>
+        </Card>
+      )}
+
+      {aggregated.totalMonthlyPageviews > 0 && (
+        <button
+          onClick={onCalculate}
+          className="w-full py-4 px-6 bg-primary text-primary-foreground rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors"
+        >
+          Calculate ROI Projection
+        </button>
+      )}
+    </div>
   );
 };
