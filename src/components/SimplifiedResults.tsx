@@ -226,7 +226,7 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                         />
                       </div>
                       <div className="text-sm font-medium whitespace-nowrap">
-                        {formatPercentage(idPercent, 0)} ID Infrastructure ({formatCurrency(results.idInfrastructure.monthlyUplift)}/mo)
+                        {formatPercentage(idPercent, 0)} ID Infrastructure
                       </div>
                     </div>
                     
@@ -239,7 +239,7 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                           />
                         </div>
                         <div className="text-sm font-medium whitespace-nowrap">
-                          {formatPercentage(capiPercent, 0)} CAPI ({formatCurrency(results.capiCapabilities.monthlyUplift)}/mo)
+                          {formatPercentage(capiPercent, 0)} CAPI
                         </div>
                       </div>
                     )}
@@ -253,7 +253,7 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                           />
                         </div>
                         <div className="text-sm font-medium whitespace-nowrap">
-                          {formatPercentage(performancePercent, 0)} Media Performance ({formatCurrency(results.mediaPerformance.monthlyUplift)}/mo)
+                          {formatPercentage(performancePercent, 0)} Media Performance
                         </div>
                       </div>
                     )}
