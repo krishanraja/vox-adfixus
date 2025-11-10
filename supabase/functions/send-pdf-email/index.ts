@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@3.5.0";
+import { decode as base64Decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
+import { Resend } from "https://esm.sh/resend@4.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -754,10 +755,36 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // Validate PDF base64 format
+    if (!pdfBase64 || typeof pdfBase64 !== 'string') {
+      console.error("Invalid PDF data format");
+      return new Response(
+        JSON.stringify({ error: "Invalid PDF data format" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    // Validate PDF size (max ~10MB base64)
+    if (pdfBase64.length > 14000000) {
+      console.error("PDF file too large:", pdfBase64.length);
+      return new Response(
+        JSON.stringify({ error: "PDF file too large. Maximum size is 10MB." }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    console.log("PDF base64 validated, length:", pdfBase64.length);
+
     // Convert base64 to buffer for attachment
-    let pdfBuffer;
+    let pdfBuffer: Uint8Array;
     try {
-      pdfBuffer = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+      pdfBuffer = base64Decode(pdfBase64);
       console.log("PDF buffer created successfully, size:", pdfBuffer.length);
     } catch (error) {
       console.error("Error converting base64 to buffer:", error);
@@ -771,28 +798,50 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Attempting to send email with Resend...");
-    const emailResponse = await resend.emails.send({
-      from: "AdFixus ROI Calculator <onboarding@resend.dev>",
-      to: [userEmail, "hello@krishraja.com"],
-      subject: `New AdFixus Analysis: ${userName} from ${userCompany}`,
-      html: emailBody,
-      attachments: [
-        {
-          filename: `AdFixus_Analysis_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-          content: pdfBuffer,
+    
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "AdFixus ROI Calculator <hello@krishraja.com>",
+        to: ["hello@krishraja.com"],
+        subject: `New AdFixus Analysis: ${userName} from ${userCompany}`,
+        html: emailBody,
+        attachments: [
+          {
+            filename: `AdFixus_Analysis_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+            content: pdfBuffer as any,
+          },
+        ],
+      });
+
+      console.log("Email sent successfully:", emailResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
         },
-      ],
-    });
+      });
+    } catch (emailError: any) {
+      console.error("Resend API error:", emailError);
+      console.error("Resend error details:", {
+        message: emailError.message,
+        statusCode: emailError.statusCode,
+        name: emailError.name
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to send email",
+          details: emailError.message || "Email service error"
+        }),
+        {
+          status: emailError.statusCode || 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
-    console.log("Email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
   } catch (error: any) {
     console.error("Error in send-pdf-email function:", error);
     console.error("Error details:", {
