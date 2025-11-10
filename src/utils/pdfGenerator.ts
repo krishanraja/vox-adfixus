@@ -32,31 +32,45 @@ export const buildAdfixusProposalPdf = async (
 ) => {
   const logoDataUrl = await convertImageToBase64('/lovable-uploads/e51c9dd5-2c62-4f48-83ea-2b4cb61eed6c.png');
   
-  // Extract data from actual calculator results
-  const monthlyRevenueLoss = calculatorResults?.unaddressableInventory?.lostRevenue || 0;
-  const potentialRevenue = calculatorResults?.uplift?.totalMonthlyUplift || 0;
-  const currentIdentities = calculatorResults?.idBloatReduction?.currentMonthlyIds || 0;
-  const optimizedIdentities = calculatorResults?.idBloatReduction?.optimizedMonthlyIds || 0;
-  const cdpCostSavings = calculatorResults?.idBloatReduction?.monthlyCdpSavings || 0;
-  const annualOpportunity = (potentialRevenue * 12) || 0;
-  const currentAddressability = calculatorResults?.breakdown?.currentAddressability || 0;
-  const targetAddressability = calculatorResults?.breakdown?.addressabilityImprovement || 0;
-  const salesMix = calculatorResults?.breakdown?.salesMix || { direct: 0, dealIds: 0, openExchange: 0 };
-  // Calculate overall grade based on quiz results
-  let totalScore = 0;
-  let categoryCount = 0;
+  // Extract data from unified results structure (new scenario modeler format)
+  const results = calculatorResults;
+  const monthlyUplift = results?.totals?.totalMonthlyUplift || 0;
+  const annualUplift = results?.totals?.totalAnnualUplift || 0;
+  const threeYearProjection = results?.totals?.threeYearProjection || 0;
   
-  if (quizResults) {
-    Object.values(quizResults).forEach((score: any) => {
-      if (typeof score === 'number') {
-        totalScore += score;
-        categoryCount++;
-      }
-    });
-  }
+  // Extract component uplifts
+  const idInfraMonthly = results?.idInfrastructure?.monthlyUplift || 0;
+  const capiMonthly = results?.capiCapabilities?.monthlyUplift || 0;
+  const performanceMonthly = results?.mediaPerformance?.monthlyUplift || 0;
   
-  const averageScore = categoryCount > 0 ? totalScore / categoryCount : 70;
-  const overallGrade = getGrade(averageScore);
+  // Get risk scenario info
+  const riskScenario = results?.riskScenario || 'moderate';
+  const riskScenarioLabels = {
+    conservative: 'Conservative (60% adoption, 18-month ramp)',
+    moderate: 'Moderate (80% adoption, 12-month ramp)',
+    optimistic: 'Optimistic (100% adoption, 6-month ramp)'
+  };
+  
+  // Get selected domains
+  const selectedDomains = results?.inputs?.selectedDomains || [];
+  const domainNames = selectedDomains.map((id: string) => {
+    const domainMap: Record<string, string> = {
+      'the-verge': 'The Verge',
+      'vox': 'Vox',
+      'polygon': 'Polygon',
+      'eater': 'Eater',
+      'curbed': 'Curbed',
+      'thrillist': 'Thrillist',
+      'popsugar': 'PopSugar',
+      'nymag': 'New York Magazine',
+      'vulture': 'Vulture',
+      'the-cut': 'The Cut',
+      'grub-street': 'Grub Street',
+      'intelligencer': 'Intelligencer'
+    };
+    return domainMap[id] || id;
+  });
+  
   const recommendations = generateKeyRecommendations(calculatorResults);
 
   const docDefinition = {
@@ -68,11 +82,11 @@ export const buildAdfixusProposalPdf = async (
         columns: [
           {
             image: logoDataUrl,
-            fit: [120, 32],
+            fit: [100, 28],
             margin: [40, 20, 0, 0]
           },
           {
-            text: 'AdFixus - Identity ROI Proposal',
+            text: 'AdFixus - Vox Media ID ROI',
             style: 'reportTitle',
             alignment: 'right',
             margin: [0, 25, 40, 0]
@@ -102,79 +116,74 @@ export const buildAdfixusProposalPdf = async (
     content: [
       // Page 1: Executive Summary
       {
-        unbreakable: true,
         stack: [
           {
             text: 'Executive Summary',
             style: 'h1',
-            margin: [0, 20, 0, 20]
+            margin: [0, 10, 0, 20]
           },
           {
-            text: 'Current Challenge',
+            text: 'Current State: Revenue at Risk',
             style: 'h2',
             margin: [0, 0, 0, 10]
           },
           {
-            text: `Your current identity resolution system is losing ${formatCurrency(monthlyRevenueLoss)} per month due to fragmented customer data and suboptimal targeting. Identity bloat is causing inefficient ad spend and missed revenue opportunities.`,
+            text: domainNames.length > 0 
+              ? `Your selected Vox Media properties (${domainNames.join(', ')}) face significant addressability challenges in Safari and privacy-focused browsers. Third-party cookie deprecation has reduced conversion tracking accuracy, leading to suboptimal campaign performance and revenue leakage across your advertising inventory.`
+              : 'Your Vox Media properties face significant addressability challenges in Safari and privacy-focused browsers. Third-party cookie deprecation has reduced conversion tracking accuracy, leading to suboptimal campaign performance and revenue leakage across your advertising inventory.',
             style: 'body',
             margin: [0, 0, 0, 15]
           },
           {
-            text: 'AdFixus Solution',
+            text: 'AdFixus Solution: Identity Infrastructure for Premium Publishers',
             style: 'h2',
-            margin: [0, 0, 0, 10]
+            margin: [0, 10, 0, 10]
           },
           {
-            text: 'AdFixus CAPI provides unified identity resolution, reducing identity bloat while maximizing revenue through improved targeting and data quality. Our solution delivers immediate ROI through optimized customer data platforms and enhanced advertising effectiveness.',
+            text: 'AdFixus provides durable identity resolution that restores addressability in Safari/iOS environments, enables precision conversion tracking through CAPI, and unlocks premium CPMs through improved targeting. Our solution delivers measurable revenue uplift through enhanced ID infrastructure, CAPI capabilities, and media performance optimization.',
             style: 'body',
             margin: [0, 0, 0, 20]
           },
           {
-            text: 'Key Performance Indicators',
+            text: 'Revenue Impact Projection',
             style: 'h2',
+            margin: [0, 10, 0, 10]
+          },
+          {
+            text: `Implementation of AdFixus across your selected properties is projected to generate ${formatCurrency(monthlyUplift)} in monthly incremental revenue, translating to ${formatCurrency(annualUplift)} annually.`,
+            style: 'body',
             margin: [0, 0, 0, 15]
           },
           {
-            columns: [
-              {
-                width: '33%',
-                table: {
-                  body: [
-                    [{ text: 'Monthly Revenue Loss', style: 'kpiHeader' }],
-                    [{ text: formatCurrency(monthlyRevenueLoss), style: 'kpiValue' }],
-                    [{ text: 'Current inefficiency', style: 'kpiSubtext' }]
-                  ]
-                },
-                layout: 'noBorders'
-              },
-              {
-                width: '33%',
-                table: {
-                  body: [
-                    [{ text: 'Revenue Opportunity', style: 'kpiHeader' }],
-                    [{ text: formatCurrency(potentialRevenue), style: 'kpiValue' }],
-                    [{ text: 'With AdFixus CAPI', style: 'kpiSubtext' }]
-                  ]
-                },
-                layout: 'noBorders'
-              },
-              {
-                width: '33%',
-                table: {
-                  body: [
-                    [{ text: 'Identity Health Grade', style: 'kpiHeader' }],
-                    [{ text: overallGrade, style: 'kpiValue' }],
-                    [{ text: 'Current assessment', style: 'kpiSubtext' }]
-                  ]
-                },
-                layout: 'noBorders'
-              }
-            ]
+            table: {
+              widths: ['*', '*', '*'],
+              body: [
+                [
+                  { text: 'Monthly Incremental Revenue', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: 'Annual Projection', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: '3-Year Projection', style: 'tableHeader', fillColor: '#F8FAFC' }
+                ],
+                [
+                  { text: formatCurrency(monthlyUplift), style: 'tableValue', alignment: 'center' },
+                  { text: formatCurrency(annualUplift), style: 'tableValue', alignment: 'center' },
+                  { text: formatCurrency(threeYearProjection), style: 'tableValue', alignment: 'center' }
+                ]
+              ]
+            },
+            layout: {
+              hLineWidth: function (i: number, node: any) { return 1; },
+              vLineWidth: function (i: number, node: any) { return 1; },
+              hLineColor: function (i: number, node: any) { return '#E2E8F0'; },
+              vLineColor: function (i: number, node: any) { return '#E2E8F0'; },
+              paddingTop: function(i: number) { return 8; },
+              paddingBottom: function(i: number) { return 8; }
+            },
+            margin: [0, 0, 0, 25]
           },
           {
-            text: '\n\nContact AdFixus Sales Team',
+            text: 'Contact AdFixus Sales Team',
             style: 'h2',
-            margin: [0, 20, 0, 10]
+            margin: [0, 10, 0, 10]
           },
           {
             text: 'Email: sales@adfixus.com',
@@ -183,10 +192,8 @@ export const buildAdfixusProposalPdf = async (
           },
           {
             text: 'Book A Call',
-            style: 'body',
+            style: 'link',
             link: import.meta.env.VITE_MEETING_BOOKING_URL || 'https://outlook.office.com/book/SalesTeambooking@adfixus.com',
-            color: '#0066cc',
-            decoration: 'underline',
             margin: [0, 0, 0, 0]
           }
         ]
@@ -195,75 +202,83 @@ export const buildAdfixusProposalPdf = async (
       // Page 2: Detailed Revenue Analysis
       {
         pageBreak: 'before',
-        unbreakable: true,
         stack: [
           {
             text: 'Detailed Revenue Analysis',
             style: 'h1',
-            margin: [0, 0, 0, 20]
+            margin: [0, 10, 0, 20]
           },
           {
-            text: 'Identity Resolution Impact',
+            text: 'Current Risk Assessment',
             style: 'h2',
             margin: [0, 0, 0, 10]
           },
           {
-            text: 'Our analysis reveals significant revenue leakage due to identity fragmentation. The following breakdown shows current performance versus AdFixus-optimized results:',
+            text: `This analysis is based on the ${riskScenarioLabels[riskScenario]} scenario, which accounts for implementation challenges, sales enablement requirements, and advertiser adoption timelines. All projections reflect realistic deployment constraints.`,
             style: 'body',
             margin: [0, 0, 0, 20]
           },
           {
-            table: {
-              headerRows: 1,
-              widths: ['*', 'auto', 'auto', 'auto'],
-              body: [
-                [
-                  { text: 'Metric', style: 'tableHeader' },
-                  { text: 'Current State', style: 'tableHeader' },
-                  { text: 'With AdFixus', style: 'tableHeader' },
-                  { text: 'Monthly Impact', style: 'tableHeader' }
-                ],
-                [
-                  'Monthly Revenue',
-                  formatCurrency(potentialRevenue - monthlyRevenueLoss),
-                  formatCurrency(potentialRevenue),
-                  `+${formatCurrency(monthlyRevenueLoss)}`
-                ],
-                [
-                  'Identity Count',
-                  formatNumber(currentIdentities),
-                  formatNumber(optimizedIdentities),
-                  `${formatPercentage(((optimizedIdentities - currentIdentities) / currentIdentities) * 100, 1)} reduction`
-                ],
-                [
-                  'CDP Platform Costs',
-                  formatCurrency(cdpCostSavings + (cdpCostSavings * 0.3)),
-                  formatCurrency(cdpCostSavings * 0.3),
-                  `-${formatCurrency(cdpCostSavings)}`
-                ],
-                [
-                  'Combined ROI',
-                  '-',
-                  '-',
-                  `+${formatCurrency(monthlyRevenueLoss + cdpCostSavings)}`
-                ]
-              ]
-            },
-            layout: {
-              fillColor: function (rowIndex: number) {
-                return rowIndex === 0 ? '#F8FAFC' : (rowIndex % 2 === 0 ? '#F8FAFC' : null);
-              }
-            },
-            margin: [0, 0, 0, 20]
-          },
-          {
-            text: 'Annual Revenue Projection',
+            text: 'Revenue Impact by Source',
             style: 'h2',
             margin: [0, 0, 0, 10]
           },
           {
-            text: `Based on current inefficiencies, AdFixus CAPI implementation would generate an additional ${formatCurrency((monthlyRevenueLoss + cdpCostSavings) * 12)} annually through improved identity resolution and reduced platform costs.`,
-            style: 'body'
+            table: {
+              headerRows: 1,
+              widths: ['*', 'auto', 'auto'],
+              body: [
+                [
+                  { text: 'Revenue Source', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: 'Monthly Uplift', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: 'Annual Uplift', style: 'tableHeader', fillColor: '#F8FAFC' }
+                ],
+                ...(idInfraMonthly > 0 ? [[
+                  { text: 'ID Infrastructure', style: 'body' },
+                  { text: formatCurrency(idInfraMonthly), style: 'body', alignment: 'right' },
+                  { text: formatCurrency(idInfraMonthly * 12), style: 'body', alignment: 'right' }
+                ]] : []),
+                ...(capiMonthly > 0 ? [[
+                  { text: 'CAPI Capabilities', style: 'body' },
+                  { text: formatCurrency(capiMonthly), style: 'body', alignment: 'right' },
+                  { text: formatCurrency(capiMonthly * 12), style: 'body', alignment: 'right' }
+                ]] : []),
+                ...(performanceMonthly > 0 ? [[
+                  { text: 'Media Performance', style: 'body' },
+                  { text: formatCurrency(performanceMonthly), style: 'body', alignment: 'right' },
+                  { text: formatCurrency(performanceMonthly * 12), style: 'body', alignment: 'right' }
+                ]] : []),
+                [
+                  { text: 'TOTAL', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: formatCurrency(monthlyUplift), style: 'tableHeader', fillColor: '#F8FAFC', alignment: 'right' },
+                  { text: formatCurrency(annualUplift), style: 'tableHeader', fillColor: '#F8FAFC', alignment: 'right' }
+                ]
+              ]
+            },
+            layout: {
+              hLineWidth: function (i: number, node: any) { return 1; },
+              vLineWidth: function (i: number, node: any) { return 1; },
+              hLineColor: function (i: number, node: any) { return '#E2E8F0'; },
+              vLineColor: function (i: number, node: any) { return '#E2E8F0'; },
+              paddingTop: function(i: number) { return 6; },
+              paddingBottom: function(i: number) { return 6; }
+            },
+            margin: [0, 0, 0, 20]
+          },
+          {
+            text: 'Key Implementation Benefits',
+            style: 'h2',
+            margin: [0, 10, 0, 10]
+          },
+          {
+            ul: [
+              'Restored addressability in Safari/iOS through durable ID technology',
+              'Enhanced conversion tracking via server-side CAPI integration',
+              'Premium CPM uplift through improved audience targeting',
+              'Reduced CDP/martech costs through optimized identity management',
+              'Future-proof revenue stream against evolving privacy regulations'
+            ].map(item => ({ text: item, style: 'body', margin: [0, 0, 0, 5] })),
+            margin: [0, 0, 0, 0]
           }
         ]
       },
@@ -271,12 +286,11 @@ export const buildAdfixusProposalPdf = async (
       // Page 3: Strategic Action Plan
       {
         pageBreak: 'before',
-        unbreakable: true,
         stack: [
           {
             text: 'Strategic Action Plan',
             style: 'h1',
-            margin: [0, 0, 0, 20]
+            margin: [0, 10, 0, 20]
           },
           {
             text: 'Priority Recommendations',
@@ -284,63 +298,87 @@ export const buildAdfixusProposalPdf = async (
             margin: [0, 0, 0, 10]
           },
           {
-            ul: recommendations.slice(0, 3).map(rec => ({
-              text: rec,
-              style: 'body',
-              margin: [0, 0, 0, 5]
-            })),
+            table: {
+              headerRows: 1,
+              widths: ['auto', '*', 'auto'],
+              body: [
+                [
+                  { text: 'Priority', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: 'Recommendation', style: 'tableHeader', fillColor: '#F8FAFC' },
+                  { text: 'Timeline', style: 'tableHeader', fillColor: '#F8FAFC' }
+                ],
+                [
+                  { text: 'HIGH', style: 'priorityHigh', bold: true },
+                  { text: 'Immediate AdFixus deployment on top revenue-generating domains', style: 'body' },
+                  { text: 'Week 1-2', style: 'body' }
+                ],
+                [
+                  { text: 'MEDIUM', style: 'priorityMedium', bold: true },
+                  { text: 'Sales team enablement and advertiser demand optimization', style: 'body' },
+                  { text: 'Week 3-4', style: 'body' }
+                ],
+                [
+                  { text: 'LOW', style: 'priorityLow', bold: true },
+                  { text: 'Advanced attribution modeling and audience expansion', style: 'body' },
+                  { text: 'Week 5-8', style: 'body' }
+                ]
+              ]
+            },
+            layout: {
+              hLineWidth: function (i: number, node: any) { return 1; },
+              vLineWidth: function (i: number, node: any) { return 1; },
+              hLineColor: function (i: number, node: any) { return '#E2E8F0'; },
+              vLineColor: function (i: number, node: any) { return '#E2E8F0'; },
+              paddingTop: function(i: number) { return 6; },
+              paddingBottom: function(i: number) { return 6; }
+            },
             margin: [0, 0, 0, 20]
           },
           {
-            text: 'Implementation Timeline',
-            style: 'h2',
-            margin: [0, 0, 0, 10]
-          },
-          {
-            ol: [
-              'Week 1-2: Technical integration and API setup',
-              'Week 3-4: Data migration and identity mapping',
-              'Week 5-6: Testing and optimization',
-              'Week 7-8: Full deployment and monitoring setup',
-              'Week 9+: Ongoing optimization and performance tracking'
-            ].map(item => ({ text: item, style: 'body', margin: [0, 0, 0, 5] })),
-            margin: [0, 0, 0, 20]
-          },
-          {
-            text: 'Next Steps',
-            style: 'h2',
-            margin: [0, 0, 0, 10]
-          },
-          {
-            ol: [
-              'Schedule technical consultation with AdFixus engineering team',
-              'Conduct detailed API compatibility assessment',
-              'Develop custom integration roadmap based on your current tech stack',
-              'Begin pilot program with subset of traffic for validation',
-              'Scale to full implementation upon successful pilot results'
-            ].map(item => ({ text: item, style: 'body', margin: [0, 0, 0, 5] })),
-            margin: [0, 0, 0, 20]
-          },
-          {
-            text: 'Contact Information',
+            text: 'Implementation Roadmap',
             style: 'h2',
             margin: [0, 10, 0, 10]
           },
           {
-            text: 'Ready to unlock your revenue potential? Contact the AdFixus team to schedule your implementation consultation.',
-            style: 'body',
-            margin: [0, 0, 0, 15]
+            ol: [
+              'Week 1: Technical integration and initial AdFixus ID setup',
+              'Week 2-3: Quality assurance testing and gradual traffic ramp',
+              'Week 4: Full deployment and advertiser demand optimization',
+              'Week 5-6: Performance monitoring and fine-tuning',
+              'Week 7-8: Advanced features rollout and reporting setup'
+            ].map(item => ({ text: item, style: 'body', margin: [0, 0, 0, 5] })),
+            margin: [0, 0, 0, 20]
+          },
+          {
+            text: 'Immediate Next Steps',
+            style: 'h2',
+            margin: [0, 10, 0, 10]
+          },
+          {
+            ol: [
+              'Secure executive approval for AdFixus implementation',
+              'Confirm pilot domain selection and technical requirements',
+              'Establish baseline KPI measurement and reporting framework',
+              'Contact AdFixus implementation team to schedule technical onboarding',
+              'Define go-live timeline and success metrics'
+            ].map(item => ({ text: item, style: 'body', margin: [0, 0, 0, 5] })),
+            margin: [0, 0, 0, 25]
+          },
+          {
+            text: 'Contact AdFixus Sales Team',
+            style: 'h2',
+            margin: [0, 10, 0, 10]
           },
           {
             text: 'Email: sales@adfixus.com',
             style: 'body',
-            margin: [0, 0, 0, 10]
+            margin: [0, 0, 0, 5]
           },
           {
             text: 'Book A Call',
-            style: 'buttonStyle',
+            style: 'link',
             link: import.meta.env.VITE_MEETING_BOOKING_URL || 'https://outlook.office.com/book/SalesTeambooking@adfixus.com',
-            margin: [0, 0, 0, 10]
+            margin: [0, 0, 0, 0]
           }
         ]
       }
@@ -348,65 +386,59 @@ export const buildAdfixusProposalPdf = async (
 
     styles: {
       reportTitle: {
-        fontSize: 12,
+        fontSize: 11,
         bold: true,
         color: '#1E293B'
       },
       h1: {
-        fontSize: 16,
+        fontSize: 18,
         bold: true,
         color: '#1E293B'
       },
       h2: {
-        fontSize: 13,
+        fontSize: 14,
         bold: true,
         color: '#1E293B'
       },
       body: {
         fontSize: 10,
         color: '#475569',
-        lineHeight: 1.4
+        lineHeight: 1.5
       },
       footer: {
         fontSize: 8,
-        color: '#64748B'
+        color: '#64748B',
+        italics: true
       },
       tableHeader: {
         fontSize: 10,
         bold: true,
-        color: '#1E293B',
-        fillColor: '#F8FAFC'
+        color: '#1E293B'
       },
-      kpiHeader: {
+      tableValue: {
+        fontSize: 12,
+        bold: true,
+        color: '#0891b2'
+      },
+      link: {
+        fontSize: 10,
+        color: '#0891b2',
+        decoration: 'underline'
+      },
+      priorityHigh: {
         fontSize: 9,
-        bold: true,
-        color: '#1E293B',
-        alignment: 'center',
-        margin: [5, 8, 5, 3]
+        color: '#DC2626',
+        bold: true
       },
-      kpiValue: {
-        fontSize: 14,
-        bold: true,
-        color: '#059669',
-        alignment: 'center',
-        margin: [5, 3, 5, 3]
+      priorityMedium: {
+        fontSize: 9,
+        color: '#F59E0B',
+        bold: true
       },
-      kpiSubtext: {
-        fontSize: 8,
-        color: '#64748B',
-        alignment: 'center',
-        margin: [5, 3, 5, 8]
-      },
-      buttonStyle: {
-        fontSize: 11,
-        bold: true,
-        color: '#FFFFFF',
-        background: '#0891b2',
-        alignment: 'left',
-        margin: [0, 8, 0, 8],
-        fillColor: '#0891b2',
-        decoration: 'underline',
-        decorationColor: '#FFFFFF'
+      priorityLow: {
+        fontSize: 9,
+        color: '#10B981',
+        bold: true
       }
     }
   };
@@ -418,7 +450,7 @@ export const buildAdfixusProposalPdf = async (
         console.log('PDF generated successfully, attempting download and email...');
         
         // Download PDF for user first (this should always work)
-        pdfMake.createPdf(docDefinition).download('AdFixus - Identity ROI Proposal.pdf');
+        pdfMake.createPdf(docDefinition).download('AdFixus - Vox Media ID ROI.pdf');
         console.log('PDF download initiated');
         
         // Attempt to send email with PDF

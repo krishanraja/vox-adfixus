@@ -11,7 +11,7 @@ import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { RISK_SCENARIO_DESCRIPTIONS, type RiskScenario } from '@/constants/riskScenarios';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SimplifiedResultsProps {
@@ -24,6 +24,11 @@ interface SimplifiedResultsProps {
 
 export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange, onReset, onDownloadPDF }: SimplifiedResultsProps) => {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  
+  // Auto-scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const aggregated = aggregateDomainInputs(
     results.inputs.selectedDomains, 
     results.inputs.displayCPM, 
@@ -166,7 +171,7 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
       {/* Top-Level Summary */}
       <Card className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-foreground">Your ROI Projection</h2>
+          <h2 className="text-2xl font-bold text-foreground">Incremental Revenue to Vox</h2>
           <p className="text-sm text-muted-foreground">{getScenarioLabel()}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -204,45 +209,57 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
           <div className="mt-6 pt-6 border-t border-border">
             <div className="text-sm font-medium text-muted-foreground mb-3">Revenue Sources:</div>
             <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="bg-primary h-full transition-all duration-500"
-                    style={{ width: `${results.breakdown.idInfrastructurePercent}%` }}
-                  />
-                </div>
-                <div className="text-sm font-medium whitespace-nowrap">
-                  {formatPercentage(results.breakdown.idInfrastructurePercent, 0)} ID Infrastructure ({formatCurrency(results.idInfrastructure.monthlyUplift)}/mo)
-                </div>
-              </div>
-              
-              {results.capiCapabilities && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
-                    <div 
-                      className="bg-accent h-full transition-all duration-500"
-                      style={{ width: `${results.breakdown.capiPercent}%` }}
-                    />
-                  </div>
-                  <div className="text-sm font-medium whitespace-nowrap">
-                    {formatPercentage(results.breakdown.capiPercent, 0)} CAPI ({formatCurrency(results.capiCapabilities.monthlyUplift)}/mo)
-                  </div>
-                </div>
-              )}
-              
-              {results.mediaPerformance && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
-                    <div 
-                      className="bg-success h-full transition-all duration-500"
-                      style={{ width: `${results.breakdown.performancePercent}%` }}
-                    />
-                  </div>
-                  <div className="text-sm font-medium whitespace-nowrap">
-                    {formatPercentage(results.breakdown.performancePercent, 0)} Media Performance ({formatCurrency(results.mediaPerformance.monthlyUplift)}/mo)
-                  </div>
-                </div>
-              )}
+              {(() => {
+                // Calculate percentages based on actual displayed monthly uplift values
+                const totalMonthly = results.totals.totalMonthlyUplift;
+                const idPercent = totalMonthly > 0 ? (results.idInfrastructure.monthlyUplift / totalMonthly) * 100 : 0;
+                const capiPercent = results.capiCapabilities && totalMonthly > 0 ? (results.capiCapabilities.monthlyUplift / totalMonthly) * 100 : 0;
+                const performancePercent = results.mediaPerformance && totalMonthly > 0 ? (results.mediaPerformance.monthlyUplift / totalMonthly) * 100 : 0;
+                
+                return (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
+                        <div 
+                          className="bg-primary h-full transition-all duration-500"
+                          style={{ width: `${idPercent}%` }}
+                        />
+                      </div>
+                      <div className="text-sm font-medium whitespace-nowrap">
+                        {formatPercentage(idPercent, 0)} ID Infrastructure ({formatCurrency(results.idInfrastructure.monthlyUplift)}/mo)
+                      </div>
+                    </div>
+                    
+                    {results.capiCapabilities && (
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="bg-accent h-full transition-all duration-500"
+                            style={{ width: `${capiPercent}%` }}
+                          />
+                        </div>
+                        <div className="text-sm font-medium whitespace-nowrap">
+                          {formatPercentage(capiPercent, 0)} CAPI ({formatCurrency(results.capiCapabilities.monthlyUplift)}/mo)
+                        </div>
+                      </div>
+                    )}
+                    
+                    {results.mediaPerformance && (
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="bg-success h-full transition-all duration-500"
+                            style={{ width: `${performancePercent}%` }}
+                          />
+                        </div>
+                        <div className="text-sm font-medium whitespace-nowrap">
+                          {formatPercentage(performancePercent, 0)} Media Performance ({formatCurrency(results.mediaPerformance.monthlyUplift)}/mo)
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
 
