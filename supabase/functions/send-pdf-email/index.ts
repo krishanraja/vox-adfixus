@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@3.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,7 +101,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Generate comprehensive email content that matches PDF depth
     const getGradeColor = (grade: string) => {
-      const colors = {
+      const colors: Record<string, string> = {
         'A+': '#059669', 'A': '#10b981', 'B': '#3b82f6', 
         'C': '#f59e0b', 'D': '#f97316', 'F': '#ef4444'
       };
@@ -496,7 +496,7 @@ const handler = async (req: Request): Promise<Response> => {
               ${Object.entries(quizResults.scores || {})
                 .filter(([category]) => category !== 'sales-mix')
                 .map(([category, data]: [string, any]) => {
-                  const categoryNames = {
+                  const categoryNames: Record<string, string> = {
                     'durability': 'Identity Durability',
                     'cross-domain': 'Cross-Domain Visibility', 
                     'privacy': 'Privacy & Compliance',
