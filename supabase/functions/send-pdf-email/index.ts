@@ -1,6 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { decode as base64Decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
-import { Resend } from "https://esm.sh/resend@4.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,8 +49,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     console.log("RESEND_API_KEY found successfully");
-
-    const resend = new Resend(resendApiKey);
     
     const requestBody = await req.json();
     console.log("Request body received:", JSON.stringify(requestBody, null, 2));
@@ -781,41 +777,40 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("PDF base64 validated, length:", pdfBase64.length);
 
-    // Convert base64 to buffer for attachment
-    let pdfBuffer: Uint8Array;
-    try {
-      pdfBuffer = base64Decode(pdfBase64);
-      console.log("PDF buffer created successfully, size:", pdfBuffer.length);
-    } catch (error) {
-      console.error("Error converting base64 to buffer:", error);
-      return new Response(
-        JSON.stringify({ error: "Invalid PDF data format" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    console.log("Attempting to send email with Resend...");
+    console.log("Attempting to send email via Resend API...");
     
     try {
-      const emailResponse = await resend.emails.send({
-        from: "AdFixus ROI Calculator <hello@krishraja.com>",
-        to: ["hello@krishraja.com"],
-        subject: `New AdFixus Analysis: ${userName} from ${userCompany}`,
-        html: emailBody,
-        attachments: [
-          {
-            filename: `AdFixus_Analysis_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-            content: pdfBuffer as any,
-          },
-        ],
+      // Send email using direct Resend API fetch call
+      const emailResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: 'AdFixus ROI Calculator <hello@krishraja.com>',
+          to: ['hello@krishraja.com'],
+          subject: `New AdFixus Analysis: ${userName} from ${userCompany}`,
+          html: emailBody,
+          attachments: [
+            {
+              filename: `AdFixus_Analysis_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+              content: pdfBase64,
+            },
+          ],
+        }),
       });
 
-      console.log("Email sent successfully:", emailResponse);
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        console.error("Resend API error response:", errorData);
+        throw new Error(`Resend API error: ${JSON.stringify(errorData)}`);
+      }
 
-      return new Response(JSON.stringify({ success: true, emailResponse }), {
+      const data = await emailResponse.json();
+      console.log("Email sent successfully via Resend API:", data);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: data }), {
         status: 200,
         headers: {
           "Content-Type": "application/json",
@@ -823,10 +818,9 @@ const handler = async (req: Request): Promise<Response> => {
         },
       });
     } catch (emailError: any) {
-      console.error("Resend API error:", emailError);
-      console.error("Resend error details:", {
+      console.error("Error sending email:", emailError);
+      console.error("Email error details:", {
         message: emailError.message,
-        statusCode: emailError.statusCode,
         name: emailError.name
       });
       
@@ -836,7 +830,7 @@ const handler = async (req: Request): Promise<Response> => {
           details: emailError.message || "Email service error"
         }),
         {
-          status: emailError.statusCode || 500,
+          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
