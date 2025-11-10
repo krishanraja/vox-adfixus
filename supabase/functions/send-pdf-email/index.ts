@@ -111,43 +111,80 @@ const handler = async (req: Request): Promise<Response> => {
     const generateDetailedRecommendations = () => {
       const recommendations = [];
       
-      if (calculatorResults?.unaddressableInventory?.percentage > 20) {
-        recommendations.push('Implement comprehensive identity resolution to address significant unaddressable inventory');
-      } else if (calculatorResults?.unaddressableInventory?.percentage > 10) {
-        recommendations.push('Optimize identity resolution to capture remaining unaddressable inventory');
+      // Check if this is UnifiedResults or old CalculatorResults
+      const isUnifiedResults = calculatorResults?.idInfrastructure !== undefined;
+      
+      if (isUnifiedResults) {
+        // Handle new UnifiedResults structure
+        const currentAddr = calculatorResults?.idInfrastructure?.details?.currentAddressability || 0;
+        const improvedAddr = calculatorResults?.idInfrastructure?.details?.improvedAddressability || 0;
+        const gap = improvedAddr - currentAddr;
+        
+        if (gap > 20) {
+          recommendations.push('Implement comprehensive identity resolution to address significant unaddressable inventory');
+        } else if (gap > 10) {
+          recommendations.push('Optimize identity resolution to capture remaining unaddressable inventory');
+        } else {
+          recommendations.push('Fine-tune identity resolution for maximum addressability rates');
+        }
+        
+        if (calculatorResults?.inputs?.selectedDomains?.length > 3) {
+          recommendations.push('Implement cross-domain identity resolution for multi-domain operations');
+        }
+        
+        if (calculatorResults?.capiCapabilities && calculatorResults.capiCapabilities.monthlyUplift > 0) {
+          recommendations.push('Leverage CAPI for improved conversion tracking and match rates');
+        }
+        
+        if (calculatorResults?.mediaPerformance && calculatorResults.mediaPerformance.monthlyUplift > 0) {
+          recommendations.push('Optimize media performance to maximize advertiser ROAS');
+        }
+        
+        if (currentAddr < 70) {
+          recommendations.push('Priority focus on improving overall addressability rates');
+        }
+        
       } else {
-        recommendations.push('Fine-tune identity resolution for maximum addressability rates');
-      }
+        // Handle old CalculatorResults structure (existing logic)
+        if (calculatorResults?.unaddressableInventory?.percentage > 20) {
+          recommendations.push('Implement comprehensive identity resolution to address significant unaddressable inventory');
+        } else if (calculatorResults?.unaddressableInventory?.percentage > 10) {
+          recommendations.push('Optimize identity resolution to capture remaining unaddressable inventory');
+        } else {
+          recommendations.push('Fine-tune identity resolution for maximum addressability rates');
+        }
 
-      const safariFirefoxShare = 100 - (calculatorResults?.inputs?.chromeShare || 70);
-      if (safariFirefoxShare > 25) {
-        recommendations.push('Implement Safari/Firefox-specific optimization strategies');
-      }
-      
-      if ((calculatorResults?.breakdown?.currentAddressability || 0) < 70) {
-        recommendations.push('Priority focus on improving overall addressability rates');
-      }
-      
-      const salesMix = calculatorResults?.breakdown?.salesMix;
-      if (salesMix) {
-        if (salesMix.openExchange > 50) {
-          recommendations.push('Consider increasing direct sales and deal ID usage to improve margins');
+        const safariFirefoxShare = 100 - (calculatorResults?.inputs?.chromeShare || 70);
+        if (safariFirefoxShare > 25) {
+          recommendations.push('Implement Safari/Firefox-specific optimization strategies');
         }
-        if (salesMix.direct < 30) {
-          recommendations.push('Explore opportunities to grow direct sales relationships');
+        
+        if ((calculatorResults?.breakdown?.currentAddressability || 0) < 70) {
+          recommendations.push('Priority focus on improving overall addressability rates');
+        }
+        
+        const salesMix = calculatorResults?.breakdown?.salesMix;
+        if (salesMix) {
+          if (salesMix.openExchange > 50) {
+            recommendations.push('Consider increasing direct sales and deal ID usage to improve margins');
+          }
+          if (salesMix.direct < 30) {
+            recommendations.push('Explore opportunities to grow direct sales relationships');
+          }
+        }
+        
+        if ((calculatorResults?.inputs?.displayVideoSplit || 0) < 20) {
+          recommendations.push('Optimize video inventory monetization strategies');
+        } else if ((calculatorResults?.inputs?.displayVideoSplit || 0) > 90) {
+          recommendations.push('Consider expanding video inventory opportunities');
+        }
+        
+        if ((calculatorResults?.inputs?.numDomains || 1) > 3) {
+          recommendations.push('Implement cross-domain identity resolution for multi-domain operations');
         }
       }
       
-      if ((calculatorResults?.inputs?.displayVideoSplit || 0) < 20) {
-        recommendations.push('Optimize video inventory monetization strategies');
-      } else if ((calculatorResults?.inputs?.displayVideoSplit || 0) > 90) {
-        recommendations.push('Consider expanding video inventory opportunities');
-      }
-      
-      if ((calculatorResults?.inputs?.numDomains || 1) > 3) {
-        recommendations.push('Implement cross-domain identity resolution for multi-domain operations');
-      }
-      
+      // Ensure minimum recommendations
       if (recommendations.length < 3) {
         recommendations.push('Leverage privacy-compliant targeting to maximize CPMs');
         if (recommendations.length < 3) {
@@ -160,10 +197,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Calculate monthly projection data
     const generateMonthlyProjection = () => {
+      const isUnifiedResults = calculatorResults?.idInfrastructure !== undefined;
       return Array.from({ length: 12 }, (_, i) => {
         const month = i + 1;
-        const baseCurrentRevenue = calculatorResults?.currentRevenue || 0;
-        const maxUplift = calculatorResults?.uplift?.totalMonthlyUplift || 0;
+        const baseCurrentRevenue = isUnifiedResults 
+          ? (calculatorResults?.totals?.totalMonthlyRevenue || 0) 
+          : (calculatorResults?.currentRevenue || 0);
+        const maxUplift = isUnifiedResults 
+          ? (calculatorResults?.totals?.totalMonthlyUplift || 0) 
+          : (calculatorResults?.uplift?.totalMonthlyUplift || 0);
         
         let rampFactor;
         if (month === 1) {
@@ -251,57 +293,104 @@ const handler = async (req: Request): Promise<Response> => {
               <div class="alert info">
                 <p><strong>All calculator inputs provided by ${userCompany}:</strong></p>
               </div>
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Parameter</th>
-                    <th>Value</th>
-                    <th>Impact</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Monthly Pageviews</strong></td>
-                    <td>${calculatorResults?.inputs?.monthlyPageviews?.toLocaleString() || 'N/A'}</td>
-                    <td>Base inventory volume for revenue calculations</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Average CPM</strong></td>
-                    <td>$${calculatorResults?.inputs?.avgCpm || 'N/A'}</td>
-                    <td>Revenue per 1,000 ad impressions</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Chrome Browser Share</strong></td>
-                    <td>${calculatorResults?.inputs?.chromeShare || 'N/A'}%</td>
-                    <td>Affects current addressability rates</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Safari/Firefox Share</strong></td>
-                    <td>${100 - (calculatorResults?.inputs?.chromeShare || 70)}%</td>
-                    <td>Privacy-focused browsers with limited tracking</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Number of Domains</strong></td>
-                    <td>${calculatorResults?.inputs?.numDomains || 'N/A'}</td>
-                    <td>Cross-domain identity complexity</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Display/Video Split</strong></td>
-                    <td>${calculatorResults?.inputs?.displayVideoSplit || 'N/A'}% Display / ${100 - (calculatorResults?.inputs?.displayVideoSplit || 50)}% Video</td>
-                    <td>Inventory composition affects CPM rates</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Estimated Ad Impressions</strong></td>
-                    <td>${calculatorResults?.breakdown?.totalAdImpressions?.toLocaleString() || 'N/A'}</td>
-                    <td>Total monthly monetizable inventory</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Estimated Monthly Users</strong></td>
-                    <td>${calculatorResults?.inputs?.monthlyPageviews ? Math.round(calculatorResults.inputs.monthlyPageviews / 2.5).toLocaleString() : 'N/A'}</td>
-                    <td>Unique user base for identity analysis</td>
-                  </tr>
-                </tbody>
-              </table>
+              ${(() => {
+                const isUnifiedResults = calculatorResults?.idInfrastructure !== undefined;
+                if (isUnifiedResults) {
+                  const domains = calculatorResults?.inputs?.selectedDomains || [];
+                  return `
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Parameter</th>
+                          <th>Value</th>
+                          <th>Impact</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong>Selected Domains</strong></td>
+                          <td>${domains.length} domains</td>
+                          <td>Multi-property identity resolution scope</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Display CPM</strong></td>
+                          <td>$${calculatorResults?.inputs?.displayCPM?.toFixed(2) || 'N/A'}</td>
+                          <td>Revenue per 1,000 display ad impressions</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Video CPM</strong></td>
+                          <td>$${calculatorResults?.inputs?.videoCPM?.toFixed(2) || 'N/A'}</td>
+                          <td>Revenue per 1,000 video ad impressions</td>
+                        </tr>
+                        <tr>
+                          <td><strong>CAPI Campaigns/Month</strong></td>
+                          <td>${calculatorResults?.inputs?.capiCampaignsPerMonth || 'N/A'}</td>
+                          <td>Server-side conversion tracking volume</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Avg Campaign Spend</strong></td>
+                          <td>$${calculatorResults?.inputs?.avgCampaignSpend?.toLocaleString() || 'N/A'}</td>
+                          <td>Average advertiser investment per campaign</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  `;
+                } else {
+                  return `
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Parameter</th>
+                          <th>Value</th>
+                          <th>Impact</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong>Monthly Pageviews</strong></td>
+                          <td>${calculatorResults?.inputs?.monthlyPageviews?.toLocaleString() || 'N/A'}</td>
+                          <td>Base inventory volume for revenue calculations</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Average CPM</strong></td>
+                          <td>$${calculatorResults?.inputs?.avgCpm || 'N/A'}</td>
+                          <td>Revenue per 1,000 ad impressions</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Chrome Browser Share</strong></td>
+                          <td>${calculatorResults?.inputs?.chromeShare || 'N/A'}%</td>
+                          <td>Affects current addressability rates</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Safari/Firefox Share</strong></td>
+                          <td>${100 - (calculatorResults?.inputs?.chromeShare || 70)}%</td>
+                          <td>Privacy-focused browsers with limited tracking</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Number of Domains</strong></td>
+                          <td>${calculatorResults?.inputs?.numDomains || 'N/A'}</td>
+                          <td>Cross-domain identity complexity</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Display/Video Split</strong></td>
+                          <td>${calculatorResults?.inputs?.displayVideoSplit || 'N/A'}% Display / ${100 - (calculatorResults?.inputs?.displayVideoSplit || 50)}% Video</td>
+                          <td>Inventory composition affects CPM rates</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Estimated Ad Impressions</strong></td>
+                          <td>${calculatorResults?.breakdown?.totalAdImpressions?.toLocaleString() || 'N/A'}</td>
+                          <td>Total monthly monetizable inventory</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Estimated Monthly Users</strong></td>
+                          <td>${calculatorResults?.inputs?.monthlyPageviews ? Math.round(calculatorResults.inputs.monthlyPageviews / 2.5).toLocaleString() : 'N/A'}</td>
+                          <td>Unique user base for identity analysis</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  `;
+                }
+              })()}
             </div>
 
             <div class="section">
@@ -317,44 +406,80 @@ const handler = async (req: Request): Promise<Response> => {
               
               ${calculatorResults ? `
                 <div class="alert success">
-                  <p style="font-size: 18px;"><strong>💰 Revenue Opportunity Identified:</strong> ${userCompany} has the potential to generate an additional 
-                  <strong style="font-size: 24px; color: #059669;">$${calculatorResults.uplift?.totalMonthlyUplift?.toLocaleString() || 'N/A'}/month</strong> 
-                  in advertising revenue through identity optimization.</p>
-                  <p><strong>Annual Revenue Opportunity:</strong> $${calculatorResults.uplift?.totalAnnualUplift?.toLocaleString() || 'N/A'}</p>
-                  <p><strong>Revenue Improvement:</strong> +${calculatorResults.uplift?.percentageImprovement?.toFixed(1) || 'N/A'}% increase</p>
+                  ${(() => {
+                    const isUnifiedResults = calculatorResults?.idInfrastructure !== undefined;
+                    const monthlyUplift = isUnifiedResults 
+                      ? calculatorResults?.totals?.totalMonthlyUplift 
+                      : calculatorResults?.uplift?.totalMonthlyUplift;
+                    const annualUplift = isUnifiedResults 
+                      ? calculatorResults?.totals?.totalAnnualUplift 
+                      : calculatorResults?.uplift?.totalAnnualUplift;
+                    const percentageImprovement = isUnifiedResults 
+                      ? ((monthlyUplift / (calculatorResults?.totals?.totalMonthlyRevenue || 1)) * 100)
+                      : calculatorResults?.uplift?.percentageImprovement;
+                    return `
+                      <p style="font-size: 18px;"><strong>💰 Revenue Opportunity Identified:</strong> ${userCompany} has the potential to generate an additional 
+                      <strong style="font-size: 24px; color: #059669;">$${monthlyUplift?.toLocaleString() || 'N/A'}/month</strong> 
+                      in advertising revenue through identity optimization.</p>
+                      <p><strong>Annual Revenue Opportunity:</strong> $${annualUplift?.toLocaleString() || 'N/A'}</p>
+                      <p><strong>Revenue Improvement:</strong> +${percentageImprovement?.toFixed(1) || 'N/A'}% increase</p>
+                    `;
+                  })()}
                 </div>
               ` : ''}
             </div>
 
             <div class="section">
               <h2 style="color: #0891b2; margin-top: 0;">💰 Complete Revenue Impact Overview</h2>
-              <div class="metrics-grid">
-                <div class="metric-card" style="border-left: 4px solid #ef4444;">
-                  <div class="metric-value" style="color: #ef4444;">$${calculatorResults?.unaddressableInventory?.lostRevenue?.toLocaleString() || 'N/A'}</div>
-                  <div class="metric-label">Monthly Revenue Loss</div>
-                  <p style="font-size: 12px; margin-top: 5px;">${calculatorResults?.unaddressableInventory?.percentage?.toFixed(1) || 'N/A'}% unaddressable inventory</p>
-                </div>
-                <div class="metric-card" style="border-left: 4px solid #0891b2;">
-                  <div class="metric-value" style="color: #0891b2;">$${calculatorResults?.uplift?.totalMonthlyUplift?.toLocaleString() || 'N/A'}</div>
-                  <div class="metric-label">Monthly Uplift Potential</div>
-                  <p style="font-size: 12px; margin-top: 5px;">+${calculatorResults?.uplift?.percentageImprovement?.toFixed(1) || 'N/A'}% revenue increase</p>
-                </div>
-                <div class="metric-card" style="border-left: 4px solid #7c3aed;">
-                  <div class="metric-value" style="color: #7c3aed;">$${calculatorResults?.uplift?.totalAnnualUplift?.toLocaleString() || 'N/A'}</div>
-                  <div class="metric-label">Annual Opportunity</div>
-                  <p style="font-size: 12px; margin-top: 5px;">12-month projection</p>
-                </div>
-                <div class="metric-card" style="border-left: 4px solid #8b5cf6;">
-                  <div class="metric-value" style="color: #8b5cf6;">+${calculatorResults?.breakdown?.addressabilityImprovement?.toFixed(1) || 'N/A'}%</div>
-                  <div class="metric-label">Addressability Improvement</div>
-                  <p style="font-size: 12px; margin-top: 5px;">From ${calculatorResults?.breakdown?.currentAddressability?.toFixed(1) || 'N/A'}% to 100%</p>
-                </div>
-                <div class="metric-card" style="border-left: 4px solid #059669;">
-                  <div class="metric-value" style="color: #059669;">$${calculatorResults?.idBloatReduction?.monthlyCdpSavings?.toLocaleString() || 'N/A'}</div>
-                  <div class="metric-label">Monthly CDP Savings</div>
-                  <p style="font-size: 12px; margin-top: 5px;">${calculatorResults?.idBloatReduction?.reductionPercentage?.toFixed(1) || 'N/A'}% ID bloat reduction</p>
-                </div>
-              </div>
+              ${(() => {
+                const isUnifiedResults = calculatorResults?.idInfrastructure !== undefined;
+                const monthlyUplift = isUnifiedResults 
+                  ? calculatorResults?.totals?.totalMonthlyUplift 
+                  : calculatorResults?.uplift?.totalMonthlyUplift;
+                const annualUplift = isUnifiedResults 
+                  ? calculatorResults?.totals?.totalAnnualUplift 
+                  : calculatorResults?.uplift?.totalAnnualUplift;
+                const currentAddr = isUnifiedResults 
+                  ? calculatorResults?.idInfrastructure?.details?.currentAddressability 
+                  : calculatorResults?.breakdown?.currentAddressability;
+                const improvedAddr = isUnifiedResults 
+                  ? calculatorResults?.idInfrastructure?.details?.improvedAddressability 
+                  : 100;
+                const addrImprovement = improvedAddr - currentAddr;
+                
+                return `
+                  <div class="metrics-grid">
+                    <div class="metric-card" style="border-left: 4px solid #0891b2;">
+                      <div class="metric-value" style="color: #0891b2;">$${monthlyUplift?.toLocaleString() || 'N/A'}</div>
+                      <div class="metric-label">Monthly Uplift Potential</div>
+                      <p style="font-size: 12px; margin-top: 5px;">Total revenue opportunity</p>
+                    </div>
+                    <div class="metric-card" style="border-left: 4px solid #7c3aed;">
+                      <div class="metric-value" style="color: #7c3aed;">$${annualUplift?.toLocaleString() || 'N/A'}</div>
+                      <div class="metric-label">Annual Opportunity</div>
+                      <p style="font-size: 12px; margin-top: 5px;">12-month projection</p>
+                    </div>
+                    <div class="metric-card" style="border-left: 4px solid #8b5cf6;">
+                      <div class="metric-value" style="color: #8b5cf6;">+${addrImprovement?.toFixed(1) || 'N/A'}%</div>
+                      <div class="metric-label">Addressability Improvement</div>
+                      <p style="font-size: 12px; margin-top: 5px;">From ${currentAddr?.toFixed(1) || 'N/A'}% to ${improvedAddr?.toFixed(1) || 'N/A'}%</p>
+                    </div>
+                    ${isUnifiedResults ? `
+                      <div class="metric-card" style="border-left: 4px solid #059669;">
+                        <div class="metric-value" style="color: #059669;">$${calculatorResults?.totals?.threeYearProjection?.toLocaleString() || 'N/A'}</div>
+                        <div class="metric-label">3-Year Projection</div>
+                        <p style="font-size: 12px; margin-top: 5px;">Long-term value</p>
+                      </div>
+                    ` : `
+                      <div class="metric-card" style="border-left: 4px solid #059669;">
+                        <div class="metric-value" style="color: #059669;">$${calculatorResults?.idBloatReduction?.monthlyCdpSavings?.toLocaleString() || 'N/A'}</div>
+                        <div class="metric-label">Monthly CDP Savings</div>
+                        <p style="font-size: 12px; margin-top: 5px;">${calculatorResults?.idBloatReduction?.reductionPercentage?.toFixed(1) || 'N/A'}% ID bloat reduction</p>
+                      </div>
+                    `}
+                  </div>
+                `;
+              })()}
             </div>
 
             ${quizResults ? `
@@ -648,7 +773,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Attempting to send email with Resend...");
     const emailResponse = await resend.emails.send({
       from: "AdFixus ROI Calculator <onboarding@resend.dev>",
-      to: ["hello@krishraja.com"],
+      to: [userEmail, "hello@krishraja.com"],
       subject: `New AdFixus Analysis: ${userName} from ${userCompany}`,
       html: emailBody,
       attachments: [
