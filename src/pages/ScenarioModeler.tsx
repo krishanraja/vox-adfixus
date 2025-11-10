@@ -12,6 +12,7 @@ import type { LeadData } from '@/types';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { buildAdfixusProposalPdf } from '@/utils/pdfGenerator';
 
 type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
 
@@ -61,19 +62,30 @@ const ScenarioModeler = () => {
 
   const handleLeadCapture = async (data: LeadData) => {
     try {
-      // Store lead data for future PDF generation
+      // Store lead data
       localStorage.setItem('leadData', JSON.stringify(data));
       
+      // Show generating toast
       toast({
-        title: 'Information Saved',
-        description: 'Your details have been saved. PDF generation coming soon.',
+        title: 'Generating PDF...',
+        description: 'Creating your AdFixus ROI report...',
+      });
+      
+      // Generate and download the PDF
+      await buildAdfixusProposalPdf(results, results, data);
+      
+      // Show success toast
+      toast({
+        title: 'PDF Downloaded',
+        description: 'Your AdFixus - Vox Media ID ROI report has been downloaded.',
       });
       
       setShowLeadCapture(false);
     } catch (error) {
+      console.error('PDF generation error:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save information. Please try again.',
+        title: 'PDF Generation Failed',
+        description: error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.',
         variant: 'destructive',
       });
     }
