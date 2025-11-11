@@ -34,7 +34,7 @@ export const OPERATIONAL_BENCHMARKS = {
   BASELINE_ID_MULTIPLIER: 3.0, // 1 user = 3.0 IDs without solution (more conservative)
   IMPROVED_ID_MULTIPLIER: 1.1, // 1 user = 1.1 IDs with AdFixus (more conservative)
   ESTIMATED_MONTHLY_CDP_COSTS: 50000, // $50K/month baseline CDP costs
-  CDP_COST_REDUCTION_PERCENTAGE: 0.35, // 35% reduction (Benefit #5: 30-40% lower platform costs)
+  CDP_COST_REDUCTION_PERCENTAGE: 0.125, // 12.5% reduction (based on ~18% ID overlap reality)
   MANUAL_LABOR_HOURS_SAVED: 40, // hours per month
   HOURLY_RATE: 75, // $75/hour for ad ops labor
   ID_REDUCTION_PERCENTAGE: 0.63, // 63% reduction in ID bloat ((3.0-1.1)/3.0)
