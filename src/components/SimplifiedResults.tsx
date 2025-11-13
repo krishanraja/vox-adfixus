@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank, LineChart as LineChartIcon } from 'lucide-react';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank, LineChart as LineChartIcon, Target, Briefcase, Code, Users, Building, TrendingUp as TrendingUpIcon, Settings } from 'lucide-react';
 import type { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
 import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { RISK_SCENARIO_DESCRIPTIONS, type RiskScenario } from '@/constants/riskScenarios';
+import { READINESS_PRESETS, READINESS_DESCRIPTIONS } from '@/constants/readinessFactors';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -86,6 +87,26 @@ export const SimplifiedResults = ({
 
   const resetAllAssumptions = () => {
     onAssumptionOverridesChange(undefined);
+  };
+  
+  // Get current readiness factors or defaults
+  const readinessFactors = assumptionOverrides?.readinessFactors || {};
+  
+  const handleReadinessChange = (field: string, value: number) => {
+    onAssumptionOverridesChange({
+      ...assumptionOverrides,
+      readinessFactors: {
+        ...readinessFactors,
+        [field]: value,
+      },
+    });
+  };
+  
+  const applyReadinessPreset = (preset: 'weak' | 'moderate' | 'strong') => {
+    onAssumptionOverridesChange({
+      ...assumptionOverrides,
+      readinessFactors: READINESS_PRESETS[preset],
+    });
   };
 
   return (
@@ -414,12 +435,6 @@ export const SimplifiedResults = ({
                               <span className="text-muted-foreground">Revenue Uplift:</span>
                               <span className="font-semibold text-blue-600">
                                 {formatCurrency(data.uplift)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                              <span className="text-muted-foreground">Net ROI:</span>
-                              <span className="font-semibold text-green-600">
-                                {formatCurrency(data.netROI)}
                               </span>
                             </div>
                             <div className="flex justify-between gap-4">
@@ -752,178 +767,313 @@ export const SimplifiedResults = ({
           </Card>
         </Collapsible>
 
-        {/* Advanced Assumptions */}
-        <Collapsible open={expandedSections.includes('assumptions')}>
-          <Card className="overflow-hidden border-accent/20">
+        {/* Business Readiness Assessment */}
+        <Collapsible open={expandedSections.includes('readiness')}>
+          <Card className="overflow-hidden border-primary/20">
             <CollapsibleTrigger 
-              onClick={() => toggleSection('assumptions')}
-              className="w-full p-6 flex items-center justify-between hover:bg-accent/5 transition-colors"
+              onClick={() => toggleSection('readiness')}
+              className="w-full p-6 flex items-center justify-between hover:bg-primary/5 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <Sliders className="h-5 w-5 text-accent" />
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-primary" />
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">Advanced Assumptions</h3>
-                    {getModifiedCount() > 0 && (
+                    <h3 className="font-semibold">Business Readiness Assessment</h3>
+                    {readinessFactors && Object.keys(readinessFactors).length > 0 && (
                       <Badge variant="secondary" className="text-xs">
-                        {getModifiedCount()} modified
+                        {Object.keys(readinessFactors).length} factors set
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">Customize projections based on your business intelligence</p>
+                  <p className="text-sm text-muted-foreground">Adjust ROI based on organizational readiness</p>
                 </div>
               </div>
-              <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('assumptions') ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('readiness') ? 'rotate-180' : ''}`} />
             </CollapsibleTrigger>
             
             <CollapsibleContent>
               <div className="p-6 pt-0 space-y-6 border-t border-border">
-                {getModifiedCount() > 0 && (
-                  <Alert className="bg-accent/5 border-accent/20">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      You're using custom assumptions. Projections reflect your adjusted values.
-                      <Button 
-                        variant="link" 
-                        className="p-0 h-auto ml-2 text-accent"
-                        onClick={resetAllAssumptions}
-                      >
-                        Reset all to defaults
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertDescription className="text-sm text-blue-900 dark:text-blue-100">
+                    These factors reflect real-world implementation challenges based on publisher case studies.
+                    Adjust based on your organization's specific readiness and constraints.
+                  </AlertDescription>
+                </Alert>
 
-                {/* ID Infrastructure Section */}
+                {/* Quick Presets */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">Quick Assessment</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => applyReadinessPreset('weak')}
+                      className="text-xs"
+                    >
+                      🔴 Early Stage
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => applyReadinessPreset('moderate')}
+                      className="text-xs"
+                    >
+                      🟡 Normal Rollout
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => applyReadinessPreset('strong')}
+                      className="text-xs"
+                    >
+                      🟢 Best-in-Class
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Sales & Commercial */}
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">ID Infrastructure</h4>
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" /> Sales & Commercial Execution
+                  </h4>
                   
                   <AssumptionSlider
-                    label="Safari Baseline Addressability"
-                    description="What % of Safari users can you reach today?"
-                    value={(assumptionOverrides?.safariBaselineAddressability ?? 0.55) * 100}
-                    defaultValue={55}
-                    min={40}
-                    max={70}
-                    step={1}
-                    formatValue={(v) => `${v}%`}
-                    onChange={(v) => handleAssumptionChange('safariBaselineAddressability', v / 100)}
-                    tooltipContent="With Safari's 7-day ITP limit, tracking typically works for ~7 days. Industry average is 55%, with some publishers achieving 60-65% through first-party relationships."
-                  />
-
-                  <AssumptionSlider
-                    label="Safari with Durable ID"
-                    description="Expected addressability with persistent IDs"
-                    value={(assumptionOverrides?.safariWithDurableId ?? 0.85) * 100}
-                    defaultValue={85}
-                    min={75}
-                    max={95}
+                    label={READINESS_DESCRIPTIONS.salesReadiness.title}
+                    description={READINESS_DESCRIPTIONS.salesReadiness.description}
+                    value={(readinessFactors?.salesReadiness ?? 0.75) * 100}
+                    defaultValue={75}
+                    min={50}
+                    max={100}
                     step={5}
-                    formatValue={(v) => `${v}%`}
-                    onChange={(v) => handleAssumptionChange('safariWithDurableId', v / 100)}
-                    tooltipContent="Durable IDs recognize returning users beyond Safari's 7-day limit. Conservative estimate is 85%, with some publishers achieving 90%+ with strong authentication."
-                  />
-
-                  <AssumptionSlider
-                    label="CPM Improvement on Addressable Inventory"
-                    description="How much more do addressable impressions earn?"
-                    value={(assumptionOverrides?.cpmUpliftFactor ?? 0.25) * 100}
-                    defaultValue={25}
-                    min={10}
-                    max={40}
-                    step={5}
-                    formatValue={(v) => `${v}%`}
-                    onChange={(v) => handleAssumptionChange('cpmUpliftFactor', v / 100)}
-                    tooltipContent="Addressable inventory commands premium CPMs due to better targeting and measurement. Industry benchmarks show 20-30% uplift, with performance campaigns seeing up to 40%."
-                  />
-
-                  <AssumptionSlider
-                    label="CDP Platform Cost Savings"
-                    description="ID bloat reduction impact on fees"
-                    value={(assumptionOverrides?.cdpCostReduction ?? 0.14) * 100}
-                    defaultValue={14}
-                    min={10}
-                    max={18}
-                    step={1}
-                    formatValue={(v) => `${v}%`}
-                    onChange={(v) => handleAssumptionChange('cdpCostReduction', v / 100)}
-                    tooltipContent="Based on ~18% ID overlap observed in production. Reducing ID bloat from 3.0x to 1.1x per user lowers CDP/martech platform costs that charge per profile or API call."
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.salesReadiness.high : v >= 70 ? READINESS_DESCRIPTIONS.salesReadiness.medium : READINESS_DESCRIPTIONS.salesReadiness.low}
+                    onChange={(v) => handleReadinessChange('salesReadiness', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.salesReadiness.tooltip}
                   />
                 </div>
 
-                {/* CAPI Section (if applicable) */}
-                {results.capiCapabilities && (
-                  <>
-                    <Separator />
+                {/* Technical Deployment */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Code className="h-4 w-4" /> Technical Deployment
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.technicalDeploymentMonths.title}
+                    description={READINESS_DESCRIPTIONS.technicalDeploymentMonths.description}
+                    value={readinessFactors?.technicalDeploymentMonths ?? 12}
+                    defaultValue={12}
+                    min={3}
+                    max={18}
+                    step={3}
+                    formatValue={(v) => `${v} months`}
+                    onChange={(v) => handleReadinessChange('technicalDeploymentMonths', v)}
+                    tooltipContent={READINESS_DESCRIPTIONS.technicalDeploymentMonths.tooltip}
+                  />
+                </div>
+
+                {/* Advertiser Adoption */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4" /> Advertiser & Agency Buy-In
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.advertiserBuyIn.title}
+                    description={READINESS_DESCRIPTIONS.advertiserBuyIn.description}
+                    value={(readinessFactors?.advertiserBuyIn ?? 0.8) * 100}
+                    defaultValue={80}
+                    min={60}
+                    max={100}
+                    step={10}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.advertiserBuyIn.high : v >= 75 ? READINESS_DESCRIPTIONS.advertiserBuyIn.medium : READINESS_DESCRIPTIONS.advertiserBuyIn.low}
+                    onChange={(v) => handleReadinessChange('advertiserBuyIn', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.advertiserBuyIn.tooltip}
+                  />
+                </div>
+
+                {/* Organizational Ownership */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Building className="h-4 w-4" /> Organizational Ownership
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.organizationalOwnership.title}
+                    description={READINESS_DESCRIPTIONS.organizationalOwnership.description}
+                    value={(readinessFactors?.organizationalOwnership ?? 0.8) * 100}
+                    defaultValue={80}
+                    min={60}
+                    max={100}
+                    step={10}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.organizationalOwnership.high : v >= 75 ? READINESS_DESCRIPTIONS.organizationalOwnership.medium : READINESS_DESCRIPTIONS.organizationalOwnership.low}
+                    onChange={(v) => handleReadinessChange('organizationalOwnership', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.organizationalOwnership.tooltip}
+                  />
+                </div>
+
+                {/* Market Conditions */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <TrendingUpIcon className="h-4 w-4" /> Market Conditions
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.marketConditions.title}
+                    description={READINESS_DESCRIPTIONS.marketConditions.description}
+                    value={(readinessFactors?.marketConditions ?? 0.85) * 100}
+                    defaultValue={85}
+                    min={70}
+                    max={100}
+                    step={5}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.marketConditions.high : v >= 80 ? READINESS_DESCRIPTIONS.marketConditions.medium : READINESS_DESCRIPTIONS.marketConditions.low}
+                    onChange={(v) => handleReadinessChange('marketConditions', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.marketConditions.tooltip}
+                  />
+                </div>
+
+                {/* Advanced Technical Settings (Nested Collapsible) */}
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:underline text-muted-foreground">
+                    <Settings className="h-4 w-4" />
+                    Advanced Technical Settings
+                    <ChevronDown className="h-4 w-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4 space-y-4 pt-4 border-t">
+                    {/* ID Infrastructure Section */}
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-sm">CAPI Capabilities</h4>
+                      <h4 className="font-semibold text-sm">ID Infrastructure</h4>
                       
                       <AssumptionSlider
-                        label="CAPI Service Fee"
-                        description="% of campaign spend charged as service fee"
-                        value={(assumptionOverrides?.capiServiceFee ?? 0.125) * 100}
-                        defaultValue={12.5}
-                        min={10}
-                        max={20}
-                        step={2.5}
+                        label="Safari Baseline Addressability"
+                        description="What % of Safari users can you reach today?"
+                        value={(assumptionOverrides?.safariBaselineAddressability ?? 0.55) * 100}
+                        defaultValue={55}
+                        min={40}
+                        max={70}
+                        step={1}
                         formatValue={(v) => `${v}%`}
-                        onChange={(v) => handleAssumptionChange('capiServiceFee', v / 100)}
-                        tooltipContent="Service fee for managed CAPI campaigns. Industry standard is 10-15% for self-serve, 15-20% for managed services with optimization."
+                        onChange={(v) => handleAssumptionChange('safariBaselineAddressability', v / 100)}
+                        tooltipContent="With Safari's 7-day ITP limit, tracking typically works for ~7 days. Industry average is 55%, with some publishers achieving 60-65% through first-party relationships."
                       />
 
                       <AssumptionSlider
-                        label="CAPI Match Rate with AdFixus"
-                        description="Expected match rate after implementation"
-                        value={(assumptionOverrides?.capiMatchRate ?? 0.75) * 100}
-                        defaultValue={75}
-                        min={50}
-                        max={90}
+                        label="Safari with Durable ID"
+                        description="Expected addressability with persistent IDs"
+                        value={(assumptionOverrides?.safariWithDurableId ?? 0.85) * 100}
+                        defaultValue={85}
+                        min={75}
+                        max={95}
                         step={5}
                         formatValue={(v) => `${v}%`}
-                        onChange={(v) => handleAssumptionChange('capiMatchRate', v / 100)}
-                        tooltipContent="Match rate improvement from baseline 30% to 75%+ with AdFixus. Conservative estimate is 75%, though premium publishers with strong authentication can achieve 80-85%."
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Media Performance Section (if applicable) */}
-                {results.mediaPerformance && (
-                  <>
-                    <Separator />
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm">Media Performance</h4>
-                      
-                      <AssumptionSlider
-                        label="Premium Inventory %"
-                        description="% of inventory sold at premium rates"
-                        value={(assumptionOverrides?.premiumInventoryShare ?? 0.30) * 100}
-                        defaultValue={30}
-                        min={20}
-                        max={50}
-                        step={5}
-                        formatValue={(v) => `${v}%`}
-                        onChange={(v) => handleAssumptionChange('premiumInventoryShare', v / 100)}
-                        tooltipContent="Percentage of total inventory sold as premium or performance-based campaigns. Premium publishers typically range from 25-40%, with top-tier reaching 50%."
+                        onChange={(v) => handleAssumptionChange('safariWithDurableId', v / 100)}
+                        tooltipContent="Durable IDs recognize returning users beyond Safari's 7-day limit. Conservative estimate is 85%, with some publishers achieving 90%+ with strong authentication."
                       />
 
                       <AssumptionSlider
-                        label="Premium Pricing Uplift"
-                        description="% increase on premium inventory"
-                        value={(assumptionOverrides?.premiumYieldUplift ?? 0.25) * 100}
+                        label="CPM Improvement on Addressable Inventory"
+                        description="How much more do addressable impressions earn?"
+                        value={(assumptionOverrides?.cpmUpliftFactor ?? 0.25) * 100}
                         defaultValue={25}
-                        min={15}
+                        min={10}
                         max={40}
                         step={5}
                         formatValue={(v) => `${v}%`}
-                        onChange={(v) => handleAssumptionChange('premiumYieldUplift', v / 100)}
-                        tooltipContent="Additional yield on premium inventory due to better performance and measurement. Industry benchmarks show 20-30% uplift, with guaranteed campaigns seeing up to 40%."
+                        onChange={(v) => handleAssumptionChange('cpmUpliftFactor', v / 100)}
+                        tooltipContent="Addressable inventory commands premium CPMs due to better targeting and measurement. Industry benchmarks show 20-30% uplift, with performance campaigns seeing up to 40%."
+                      />
+
+                      <AssumptionSlider
+                        label="CDP Platform Cost Savings"
+                        description="ID bloat reduction impact on fees"
+                        value={(assumptionOverrides?.cdpCostReduction ?? 0.14) * 100}
+                        defaultValue={14}
+                        min={10}
+                        max={18}
+                        step={1}
+                        formatValue={(v) => `${v}%`}
+                        onChange={(v) => handleAssumptionChange('cdpCostReduction', v / 100)}
+                        tooltipContent="Based on ~18% ID overlap observed in production. Reducing ID bloat from 3.0x to 1.1x per user lowers CDP/martech platform costs that charge per profile or API call."
                       />
                     </div>
-                  </>
-                )}
+
+                    {/* CAPI Section (if applicable) */}
+                    {results.capiCapabilities && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm">CAPI Capabilities</h4>
+                          
+                          <AssumptionSlider
+                            label="CAPI Service Fee"
+                            description="% of campaign spend charged as service fee"
+                            value={(assumptionOverrides?.capiServiceFee ?? 0.125) * 100}
+                            defaultValue={12.5}
+                            min={10}
+                            max={20}
+                            step={2.5}
+                            formatValue={(v) => `${v}%`}
+                            onChange={(v) => handleAssumptionChange('capiServiceFee', v / 100)}
+                            tooltipContent="Service fee for managed CAPI campaigns. Industry standard is 10-15% for self-serve, 15-20% for managed services with optimization."
+                          />
+
+                          <AssumptionSlider
+                            label="CAPI Match Rate with AdFixus"
+                            description="Expected match rate after implementation"
+                            value={(assumptionOverrides?.capiMatchRate ?? 0.75) * 100}
+                            defaultValue={75}
+                            min={50}
+                            max={90}
+                            step={5}
+                            formatValue={(v) => `${v}%`}
+                            onChange={(v) => handleAssumptionChange('capiMatchRate', v / 100)}
+                            tooltipContent="Match rate improvement from baseline 30% to 75%+ with AdFixus. Conservative estimate is 75%, though premium publishers with strong authentication can achieve 80-85%."
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Media Performance Section (if applicable) */}
+                    {results.mediaPerformance && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm">Media Performance</h4>
+                          
+                          <AssumptionSlider
+                            label="Premium Inventory %"
+                            description="% of inventory sold at premium rates"
+                            value={(assumptionOverrides?.premiumInventoryShare ?? 0.30) * 100}
+                            defaultValue={30}
+                            min={20}
+                            max={50}
+                            step={5}
+                            formatValue={(v) => `${v}%`}
+                            onChange={(v) => handleAssumptionChange('premiumInventoryShare', v / 100)}
+                            tooltipContent="Percentage of total inventory sold as premium or performance-based campaigns. Premium publishers typically range from 25-40%, with top-tier reaching 50%."
+                          />
+
+                          <AssumptionSlider
+                            label="Premium Pricing Uplift"
+                            description="% increase on premium inventory"
+                            value={(assumptionOverrides?.premiumYieldUplift ?? 0.25) * 100}
+                            defaultValue={25}
+                            min={15}
+                            max={40}
+                            step={5}
+                            formatValue={(v) => `${v}%`}
+                            onChange={(v) => handleAssumptionChange('premiumYieldUplift', v / 100)}
+                            tooltipContent="Additional yield on premium inventory due to better performance and measurement. Industry benchmarks show 20-30% uplift, with guaranteed campaigns seeing up to 40%."
+                          />
+                        </div>
+                      </>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </CollapsibleContent>
           </Card>

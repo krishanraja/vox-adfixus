@@ -30,6 +30,15 @@ export interface AssumptionOverrides {
   // Media Performance
   premiumInventoryShare?: number; // 0.20 - 0.50, default 0.30
   premiumYieldUplift?: number; // 0.15 - 0.40, default 0.25
+  
+  // Business Readiness Factors
+  readinessFactors?: {
+    salesReadiness?: number; // 0.5-1.0, affects sales effectiveness
+    technicalDeploymentMonths?: number; // 3-18 months, affects ramp-up
+    advertiserBuyIn?: number; // 0.6-1.0, affects CAPI deployment rate
+    organizationalOwnership?: number; // 0.6-1.0, affects adoption rate
+    marketConditions?: number; // 0.7-1.0, overall market dampener
+  };
 }
 
 export interface PricingModel {

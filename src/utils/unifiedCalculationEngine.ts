@@ -31,7 +31,34 @@ export class UnifiedCalculationEngine {
     } = aggregated;
     
     // Get risk multipliers
-    const risk = RISK_SCENARIOS[riskScenario];
+    const risk = { ...RISK_SCENARIOS[riskScenario] };
+    
+    // Apply readiness adjustments if provided
+    if (overrides?.readinessFactors) {
+      const rf = overrides.readinessFactors;
+      
+      // Apply individual factors to specific multipliers
+      if (rf.salesReadiness !== undefined) {
+        risk.salesEffectiveness *= rf.salesReadiness;
+      }
+      if (rf.advertiserBuyIn !== undefined) {
+        risk.capiDeploymentRate *= rf.advertiserBuyIn;
+      }
+      if (rf.organizationalOwnership !== undefined) {
+        risk.adoptionRate *= rf.organizationalOwnership;
+      }
+      if (rf.technicalDeploymentMonths !== undefined) {
+        risk.rampUpMonths = rf.technicalDeploymentMonths;
+      }
+      
+      // Apply market conditions as overall dampener to financial metrics
+      if (rf.marketConditions !== undefined) {
+        const marketMultiplier = rf.marketConditions;
+        risk.addressabilityEfficiency *= marketMultiplier;
+        risk.cpmUpliftRealization *= marketMultiplier;
+        risk.cdpSavingsRealization *= marketMultiplier;
+      }
+    }
 
     // Calculate base metrics
     const displayShare = weightedDisplayVideoSplit / 100;
@@ -279,9 +306,11 @@ export class UnifiedCalculationEngine {
     // Apply deployment multiplier only (CAPI works the same regardless of addressability)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
 
+    // Publisher benefits from CAPI:
+    // 1. Conversion tracking improvement → advertisers spend more (PRIMARY BENEFIT)
+    // 2. Operational labor savings (secondary benefit)
     // NOTE: campaignServiceFees are AdFixus revenue (cost to publisher), NOT publisher benefit
-    // Only include operational labor savings in publisher uplift
-    const monthlyUplift = capiLaborSavings * deploymentMultiplier;
+    const monthlyUplift = (conversionTrackingRevenue + capiLaborSavings) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
