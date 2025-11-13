@@ -402,15 +402,15 @@ export class UnifiedCalculationEngine {
     // POC Phase Net ROI
     const pocPhaseNetMonthlyROI = totalMonthlyBenefits - pocPhaseTotalMonthlyCost;
     const pocPhaseNetAnnualROI = pocPhaseNetMonthlyROI * 12;
-    const pocPhaseROIPercentage = pocPhaseTotalMonthlyCost > 0 
-      ? (pocPhaseNetMonthlyROI / pocPhaseTotalMonthlyCost) * 100 
+    const pocPhaseROIMultiple = pocPhaseTotalMonthlyCost > 0 
+      ? totalMonthlyBenefits / pocPhaseTotalMonthlyCost
       : 0;
     
     // Full Contract Phase Net ROI
     const fullContractNetMonthlyROI = totalMonthlyBenefits - fullContractTotalMonthlyCost;
     const fullContractNetAnnualROI = fullContractNetMonthlyROI * 12;
-    const fullContractROIPercentage = fullContractTotalMonthlyCost > 0
-      ? (fullContractNetMonthlyROI / fullContractTotalMonthlyCost) * 100
+    const fullContractROIMultiple = fullContractTotalMonthlyCost > 0
+      ? totalMonthlyBenefits / fullContractTotalMonthlyCost
       : 0;
     
     // Payback period (months to recover costs from benefits)
@@ -439,9 +439,9 @@ export class UnifiedCalculationEngine {
         pocPhase: pocPhaseNetAnnualROI,
         fullContract: fullContractNetAnnualROI,
       },
-      roiPercentage: {
-        pocPhase: pocPhaseROIPercentage,
-        fullContract: fullContractROIPercentage,
+      roiMultiple: {
+        pocPhase: pocPhaseROIMultiple,
+        fullContract: fullContractROIMultiple,
       },
       paybackMonths: {
         pocPhase: pocPaybackMonths,

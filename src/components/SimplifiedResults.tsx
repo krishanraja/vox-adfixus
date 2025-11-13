@@ -322,22 +322,22 @@ export const SimplifiedResults = ({
             <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="text-sm text-muted-foreground mb-1">POC Phase (3 months)</div>
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                ${formatCurrency(results.roiAnalysis.costs.pocPhaseMonthly)}/mo
+                {formatCurrency(results.roiAnalysis.costs.pocPhaseMonthly)}/mo
               </div>
               <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                <div>Platform: ${formatCurrency(results.roiAnalysis.costs.platformFeePOC)}/mo</div>
-                <div>CAPI Fees: ${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
+                <div>Platform: {formatCurrency(results.roiAnalysis.costs.platformFeePOC)}/mo</div>
+                <div>CAPI Fees: {formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
               </div>
             </div>
             
             <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-purple-200 dark:border-purple-800">
               <div className="text-sm text-muted-foreground mb-1">Full Contract</div>
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                ${formatCurrency(results.roiAnalysis.costs.fullContractMonthly)}/mo
+                {formatCurrency(results.roiAnalysis.costs.fullContractMonthly)}/mo
               </div>
               <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                <div>Platform: ${formatCurrency(results.roiAnalysis.costs.platformFeeFull)}/mo</div>
-                <div>CAPI Fees: ${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
+                <div>Platform: {formatCurrency(results.roiAnalysis.costs.platformFeeFull)}/mo</div>
+                <div>CAPI Fees: {formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
               </div>
             </div>
           </div>
@@ -351,11 +351,11 @@ export const SimplifiedResults = ({
               <div className="p-5 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-lg border-2 border-green-300 dark:border-green-700">
                 <div className="text-sm font-medium text-green-800 dark:text-green-300 mb-2">POC Phase (Months 1-3)</div>
                 <div className="text-3xl font-bold text-green-700 dark:text-green-400">
-                  +${formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}
+                  +{formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}
                 </div>
                 <div className="text-sm text-green-700 dark:text-green-400 mt-2 space-y-1">
-                  <div className="font-semibold">{formatPercentage(results.roiAnalysis.roiPercentage.pocPhase, 0)} ROI</div>
-                  <div className="text-xs">Annual: ${formatCurrency(results.roiAnalysis.netAnnualROI.pocPhase)}</div>
+                  <div className="font-semibold">{results.roiAnalysis.roiMultiple.pocPhase.toFixed(1)}x ROI</div>
+                  <div className="text-xs">Annual: {formatCurrency(results.roiAnalysis.netAnnualROI.pocPhase)}</div>
                   <div className="text-xs">Payback: {results.roiAnalysis.paybackMonths.pocPhase.toFixed(1)} months</div>
                 </div>
               </div>
@@ -363,11 +363,11 @@ export const SimplifiedResults = ({
               <div className="p-5 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 rounded-lg border-2 border-purple-300 dark:border-purple-700">
                 <div className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-2">Full Contract (Month 4+)</div>
                 <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
-                  +${formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}
+                  +{formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}
                 </div>
                 <div className="text-sm text-purple-700 dark:text-purple-400 mt-2 space-y-1">
-                  <div className="font-semibold">{formatPercentage(results.roiAnalysis.roiPercentage.fullContract, 0)} ROI</div>
-                  <div className="text-xs">Annual: ${formatCurrency(results.roiAnalysis.netAnnualROI.fullContract)}</div>
+                  <div className="font-semibold">{results.roiAnalysis.roiMultiple.fullContract.toFixed(1)}x ROI</div>
+                  <div className="text-xs">Annual: {formatCurrency(results.roiAnalysis.netAnnualROI.fullContract)}</div>
                   <div className="text-xs">Payback: {results.roiAnalysis.paybackMonths.fullContract.toFixed(1)} months</div>
                 </div>
               </div>
@@ -385,7 +385,7 @@ export const SimplifiedResults = ({
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Total Monthly Benefits:</span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
-                  +${formatCurrency(results.roiAnalysis.totalMonthlyBenefits)}
+                  +{formatCurrency(results.roiAnalysis.totalMonthlyBenefits)}
                 </span>
               </div>
               <Separator />
@@ -393,15 +393,15 @@ export const SimplifiedResults = ({
                 <div className="font-medium text-xs uppercase text-muted-foreground">POC Phase Costs:</div>
                 <div className="flex justify-between pl-4">
                   <span className="text-muted-foreground">Platform Fee (monthly):</span>
-                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.platformFeePOC)}</span>
+                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.platformFeePOC)}</span>
                 </div>
                 <div className="flex justify-between pl-4">
                   <span className="text-muted-foreground">CAPI Service Fees (12.5%):</span>
-                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
+                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
                 </div>
                 <div className="flex justify-between pl-4 font-semibold pt-2 border-t">
                   <span>Net POC ROI:</span>
-                  <span className="text-green-600 dark:text-green-400">+${formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}</span>
+                  <span className="text-green-600 dark:text-green-400">+{formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}</span>
                 </div>
               </div>
               <Separator />
@@ -409,15 +409,15 @@ export const SimplifiedResults = ({
                 <div className="font-medium text-xs uppercase text-muted-foreground">Full Contract Costs:</div>
                 <div className="flex justify-between pl-4">
                   <span className="text-muted-foreground">Platform Fee (monthly):</span>
-                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.platformFeeFull)}</span>
+                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.platformFeeFull)}</span>
                 </div>
                 <div className="flex justify-between pl-4">
                   <span className="text-muted-foreground">CAPI Service Fees (12.5%):</span>
-                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
+                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
                 </div>
                 <div className="flex justify-between pl-4 font-semibold pt-2 border-t">
                   <span>Net Full Contract ROI:</span>
-                  <span className="text-green-600 dark:text-green-400">+${formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}</span>
+                  <span className="text-green-600 dark:text-green-400">+{formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}</span>
                 </div>
               </div>
             </CollapsibleContent>
@@ -503,7 +503,7 @@ export const SimplifiedResults = ({
                               <p>• Estimated current CDP costs: $50K/month</p>
                               <p>• AdFixus reduces ID bloat by {formatPercentage(results.idInfrastructure.details.idReductionPercentage, 0)}</p>
                               <p>• Cost reduction: 10-18% of platform fees (mid-range: 14%)</p>
-                              <p>• Monthly savings: ${formatCurrency(results.idInfrastructure.cdpSavings)}</p>
+                              <p>• Monthly savings: {formatCurrency(results.idInfrastructure.cdpSavings)}</p>
                             </div>
                           </TooltipContent>
                         </Tooltip>

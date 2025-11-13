@@ -66,9 +66,9 @@ export interface ROIAnalysis {
     fullContract: number;
   };
   
-  // ROI Percentages
-  roiPercentage: {
-    pocPhase: number; // (Net ROI / Costs) * 100
+  // ROI Multiples (e.g., 3.5x)
+  roiMultiple: {
+    pocPhase: number; // Total Benefits / Costs
     fullContract: number;
   };
   
