@@ -510,7 +510,7 @@ export const SimplifiedResults = ({
               <CollapsibleContent>
                 <div className="p-6 pt-0 space-y-3 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Based on {results.inputs.capiCampaignsPerMonth} campaigns per month at {formatCurrency(results.inputs.avgCampaignSpend)} average spend using AdFixus Stream (CAPI). Each campaign requires individual deployment.
+                    Based on {results.inputs.capiCampaignsPerMonth} campaigns per month at {formatCurrency(results.inputs.avgCampaignSpend)} average spend using AdFixus Stream (CAPI). Each campaign requires individual deployment. The uplift shown is NET of the 12.5% service fees.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -522,7 +522,7 @@ export const SimplifiedResults = ({
                       <div className="text-lg font-semibold">+{formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)}</div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Campaign Service Fees</div>
+                      <div className="text-sm text-muted-foreground">Service Fees (Deducted)</div>
                       <div className="text-lg font-semibold">{formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo</div>
                     </div>
                     <div>
@@ -530,6 +530,12 @@ export const SimplifiedResults = ({
                       <div className="text-lg font-semibold">+{formatPercentage(results.capiCapabilities.details.ctrImprovement, 0)}</div>
                     </div>
                   </div>
+                  <Alert className="mt-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                    <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertDescription className="text-xs text-blue-900 dark:text-blue-100">
+                      <strong>CAPI Revenue Calculation:</strong> Baseline campaign spend ({formatCurrency(results.inputs.capiCampaignsPerMonth * results.inputs.avgCampaignSpend)}/mo) improved by {formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)} = Gross benefit. Service fees ({formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo at 12.5%) are deducted to show NET uplift to Vox.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               </CollapsibleContent>
             </Card>
@@ -639,13 +645,15 @@ export const SimplifiedResults = ({
                 <div className="space-y-2">
                   <h4 className="font-semibold">Key Assumptions</h4>
                   <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• Safari addressability: 55% without durable ID → 85% with AdFixus (~30% improvement)</li>
-                    <li>• Durable ID enables user recognition beyond 7-day cookie limit</li>
+                    <li>• Safari addressability: 55% without durable ID → 85% with AdFixus (~30 percentage point improvement)</li>
+                    <li>• Safari represents 35% of total traffic, making addressability gains highly impactful</li>
+                    <li>• Durable ID enables user recognition beyond 7-day ITP cookie limit</li>
                     <li>• CPM uplift: 25% on newly addressable inventory</li>
                     <li>• CDP cost reduction: 10-18% of platform fees (from reduced ID bloat)</li>
-                    <li>• CAPI service fee: 12.5% of campaign spend (AdFixus revenue)</li>
+                    <li>• CAPI service fee: 12.5% of campaign spend (deducted from gross CAPI benefit)</li>
+                    <li>• CAPI uplift shown is NET of service fees</li>
                     <li>• Premium inventory: 30% of total (receives 25% yield uplift)</li>
-                    <li>• Ramp-up schedule: varies by risk scenario</li>
+                    <li>• Ramp-up schedule: varies by business readiness assessment</li>
                   </ul>
                 </div>
               </CardContent>
@@ -669,11 +677,11 @@ export const SimplifiedResults = ({
                     <h3 className="font-semibold">Business Readiness Assessment</h3>
                     {readinessFactors && Object.keys(readinessFactors).length > 0 && (
                       <Badge variant="secondary" className="text-xs">
-                        {Object.keys(readinessFactors).length} factors set
+                        {Object.keys(readinessFactors).length} factors configured
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">Adjust ROI based on organizational readiness</p>
+                  <p className="text-sm text-muted-foreground">Fine-tune ROI projections based on organizational readiness and CAPI configuration</p>
                 </div>
               </div>
               <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('readiness') ? 'rotate-180' : ''}`} />
@@ -685,7 +693,7 @@ export const SimplifiedResults = ({
                   <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <AlertDescription className="text-sm text-blue-900 dark:text-blue-100">
                     These factors reflect real-world implementation challenges based on publisher case studies.
-                    Adjust based on your organization's specific readiness and constraints.
+                    Adjust based on your organization's specific readiness, resource constraints, and CAPI campaign volume.
                   </AlertDescription>
                 </Alert>
 
