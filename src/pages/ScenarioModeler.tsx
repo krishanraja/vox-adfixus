@@ -151,6 +151,11 @@ const ScenarioModeler = () => {
               onRiskScenarioChange={setRiskScenario}
               assumptionOverrides={assumptionOverrides}
               onAssumptionOverridesChange={setAssumptionOverrides}
+              onInputChange={(field, value) => {
+                setInputs({ ...inputs, [field]: value });
+                // Recalculate with updated inputs
+                setTimeout(() => calculateResults(), 0);
+              }}
               onReset={() => setCurrentStep('inputs')}
               onDownloadPDF={handleDownloadPDF}
             />

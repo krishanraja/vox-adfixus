@@ -25,6 +25,7 @@ interface SimplifiedResultsProps {
   onRiskScenarioChange: (scenario: RiskScenario) => void;
   assumptionOverrides?: AssumptionOverrides;
   onAssumptionOverridesChange: (overrides: AssumptionOverrides | undefined) => void;
+  onInputChange: (field: string, value: number) => void;
   onReset: () => void;
   onDownloadPDF: () => void;
 }
@@ -35,6 +36,7 @@ export const SimplifiedResults = ({
   onRiskScenarioChange, 
   assumptionOverrides,
   onAssumptionOverridesChange,
+  onInputChange,
   onReset, 
   onDownloadPDF 
 }: SimplifiedResultsProps) => {
@@ -877,6 +879,41 @@ export const SimplifiedResults = ({
                     formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.resourceAvailability.high : v >= 75 ? READINESS_DESCRIPTIONS.resourceAvailability.medium : READINESS_DESCRIPTIONS.resourceAvailability.low}
                     onChange={(v) => handleReadinessChange('resourceAvailability', v / 100)}
                     tooltipContent={READINESS_DESCRIPTIONS.resourceAvailability.tooltip}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* CAPI Configuration */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Target className="h-4 w-4" /> CAPI Campaign Configuration
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label="CAPI Campaigns Per Month"
+                    description="Number of conversion API campaigns running monthly"
+                    value={results.inputs.capiCampaignsPerMonth}
+                    defaultValue={10}
+                    min={0}
+                    max={50}
+                    step={1}
+                    formatValue={(v) => `${v} campaigns`}
+                    onChange={(v) => onInputChange('capiCampaignsPerMonth', v)}
+                    tooltipContent="How many campaigns per month will use CAPI conversion tracking capabilities?"
+                  />
+
+                  <AssumptionSlider
+                    label="Average Campaign Spend"
+                    description="Average monthly spend per CAPI campaign"
+                    value={results.inputs.avgCampaignSpend}
+                    defaultValue={50000}
+                    min={5000}
+                    max={500000}
+                    step={5000}
+                    formatValue={(v) => formatCurrency(v)}
+                    onChange={(v) => onInputChange('avgCampaignSpend', v)}
+                    tooltipContent="What is the average monthly spend across your CAPI-enabled campaigns?"
                   />
                 </div>
 
