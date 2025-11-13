@@ -13,10 +13,10 @@ export const formatCurrency = (amount: number | undefined | null): string => {
     }).format(num);
   } else if (num < 1000000) {
     const kValue = num / 1000;
-    return `$${kValue % 1 === 0 ? kValue.toFixed(0) : kValue.toFixed(1)}K`;
+    return `$${Math.round(kValue)}K`;
   } else {
     const mValue = num / 1000000;
-    return `$${mValue % 1 === 0 ? mValue.toFixed(0) : mValue.toFixed(1)}M`;
+    return `$${Math.round(mValue)}M`;
   }
 };
 
@@ -28,10 +28,10 @@ export const formatNumber = (num: number | undefined | null): string => {
     return new Intl.NumberFormat('en-US').format(value);
   } else if (value < 1000000) {
     const kValue = value / 1000;
-    return `${kValue % 1 === 0 ? kValue.toFixed(0) : kValue.toFixed(1)}K`;
+    return `${Math.round(kValue)}K`;
   } else {
     const mValue = value / 1000000;
-    return `${mValue % 1 === 0 ? mValue.toFixed(0) : mValue.toFixed(1)}M`;
+    return `${Math.round(mValue)}M`;
   }
 };
 

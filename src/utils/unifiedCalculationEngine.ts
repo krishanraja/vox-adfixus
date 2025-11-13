@@ -294,29 +294,40 @@ export class UnifiedCalculationEngine {
     const estimatedCapiCampaigns = inputs.capiCampaignsPerMonth;
     const avgCampaignSpend = inputs.avgCampaignSpend;
     const serviceFee = overrides?.capiServiceFee ?? CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
-    const campaignServiceFees = estimatedCapiCampaigns * avgCampaignSpend * serviceFee;
+
+    // Total baseline CAPI campaign spend
+    const baselineCapiSpend = estimatedCapiCampaigns * avgCampaignSpend;
 
     // Operational labor savings from CAPI (reduced troubleshooting, better data quality)
     const capiLaborSavings = OPERATIONAL_BENCHMARKS.MANUAL_LABOR_HOURS_SAVED * OPERATIONAL_BENCHMARKS.HOURLY_RATE;
 
-    // Conversion tracking revenue improvement (40% better conversion rates)
+    // With better conversion tracking, advertisers increase spend by 40%
     const conversionImprovement = CAPI_CAMPAIGN_VALUES.CONVERSION_RATE_MULTIPLIER - 1;
-    const conversionTrackingRevenue = campaignServiceFees * conversionImprovement;
+    const totalCapiSpendWithImprovement = baselineCapiSpend * (1 + conversionImprovement);
+
+    // Additional revenue from improved conversion tracking
+    const conversionTrackingRevenue = baselineCapiSpend * conversionImprovement;
+
+    // Service fee on TOTAL CAPI campaign volume (baseline + growth)
+    const campaignServiceFees = totalCapiSpendWithImprovement * serviceFee;
 
     // Apply deployment multiplier only (CAPI works the same regardless of addressability)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
 
-    // Publisher benefits from CAPI:
-    // 1. Conversion tracking improvement → advertisers spend more (PRIMARY BENEFIT)
-    // 2. Operational labor savings (secondary benefit)
-    // NOTE: campaignServiceFees are AdFixus revenue (cost to publisher), NOT publisher benefit
-    const monthlyUplift = (conversionTrackingRevenue + capiLaborSavings) * deploymentMultiplier;
+    // NET Publisher benefit from CAPI:
+    // 1. Additional revenue from better conversion tracking: +conversionTrackingRevenue
+    // 2. Operational labor savings: +capiLaborSavings
+    // 3. MINUS service fees paid to AdFixus: -campaignServiceFees
+    const monthlyUplift = (conversionTrackingRevenue + capiLaborSavings - campaignServiceFees) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
       matchRateImprovement,
+      baselineCapiSpend,
+      totalCapiSpendWithImprovement,
       conversionTrackingRevenue,
       campaignServiceFees,
+      capiLaborSavings,
       monthlyUplift,
       annualUplift,
       details: {
@@ -420,13 +431,13 @@ export class UnifiedCalculationEngine {
     totalMonthlyBenefits: number,
     pricing: PricingModel
   ): ROIAnalysis {
-    // POC Phase Costs
+    // Service fees are already subtracted from CAPI benefits in calculateCapiCapabilities()
+    // Publisher costs = platform fees ONLY
     const platformFeePOC = pricing.pocMonthlyEquivalent; // $5K/month
-    const pocPhaseTotalMonthlyCost = platformFeePOC + pricing.monthlyCapiServiceFees;
+    const pocPhaseTotalMonthlyCost = platformFeePOC;
     
-    // Full Contract Phase Costs
     const platformFeeFull = pricing.fullContractMonthly; // $26K/month
-    const fullContractTotalMonthlyCost = platformFeeFull + pricing.monthlyCapiServiceFees;
+    const fullContractTotalMonthlyCost = platformFeeFull;
     
     // POC Phase Net ROI
     const pocPhaseNetMonthlyROI = totalMonthlyBenefits - pocPhaseTotalMonthlyCost;
@@ -458,7 +469,7 @@ export class UnifiedCalculationEngine {
         fullContractMonthly: fullContractTotalMonthlyCost,
         platformFeePOC,
         platformFeeFull,
-        capiServiceFees: pricing.monthlyCapiServiceFees,
+        capiServiceFees: 0, // Service fees already deducted from CAPI benefits
       },
       netMonthlyROI: {
         pocPhase: pocPhaseNetMonthlyROI,
