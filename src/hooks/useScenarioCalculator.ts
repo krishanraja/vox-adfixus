@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { SimplifiedInputs, UnifiedResults, ScenarioState } from '@/types/scenarios';
+import type { SimplifiedInputs, UnifiedResults, ScenarioState, AssumptionOverrides } from '@/types/scenarios';
 import { UnifiedCalculationEngine } from '@/utils/unifiedCalculationEngine';
 
 export const useScenarioCalculator = () => {
@@ -17,10 +17,11 @@ export const useScenarioCalculator = () => {
   });
 
   const [riskScenario, setRiskScenario] = useState<'conservative' | 'moderate' | 'optimistic'>('moderate');
+  const [assumptionOverrides, setAssumptionOverrides] = useState<AssumptionOverrides | undefined>(undefined);
   const [results, setResults] = useState<UnifiedResults | null>(null);
 
   const calculateResults = () => {
-    const calculatedResults = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario);
+    const calculatedResults = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario, assumptionOverrides);
     setResults(calculatedResults);
     return calculatedResults;
   };
@@ -28,7 +29,15 @@ export const useScenarioCalculator = () => {
   const updateRiskScenario = (newRisk: 'conservative' | 'moderate' | 'optimistic') => {
     setRiskScenario(newRisk);
     if (results) {
-      const updated = UnifiedCalculationEngine.calculate(inputs, scenario, newRisk);
+      const updated = UnifiedCalculationEngine.calculate(inputs, scenario, newRisk, assumptionOverrides);
+      setResults(updated);
+    }
+  };
+  
+  const updateAssumptionOverrides = (overrides: AssumptionOverrides | undefined) => {
+    setAssumptionOverrides(overrides);
+    if (results) {
+      const updated = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario, overrides);
       setResults(updated);
     }
   };
@@ -46,6 +55,7 @@ export const useScenarioCalculator = () => {
       scope: 'id-capi-performance',
     });
     setRiskScenario('moderate');
+    setAssumptionOverrides(undefined);
     setResults(null);
   };
 
@@ -56,6 +66,8 @@ export const useScenarioCalculator = () => {
     setScenario,
     riskScenario,
     setRiskScenario: updateRiskScenario,
+    assumptionOverrides,
+    setAssumptionOverrides: updateAssumptionOverrides,
     results,
     calculateResults,
     reset,

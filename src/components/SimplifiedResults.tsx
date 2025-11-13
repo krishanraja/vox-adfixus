@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle } from 'lucide-react';
-import type { UnifiedResults } from '@/types/scenarios';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders } from 'lucide-react';
+import type { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
 import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Separator } from './ui/separator';
@@ -13,16 +13,28 @@ import { RISK_SCENARIO_DESCRIPTIONS, type RiskScenario } from '@/constants/riskS
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { AssumptionSlider } from './calculator/AssumptionSlider';
+import { Badge } from './ui/badge';
 
 interface SimplifiedResultsProps {
   results: UnifiedResults;
   riskScenario: RiskScenario;
   onRiskScenarioChange: (scenario: RiskScenario) => void;
+  assumptionOverrides?: AssumptionOverrides;
+  onAssumptionOverridesChange: (overrides: AssumptionOverrides | undefined) => void;
   onReset: () => void;
   onDownloadPDF: () => void;
 }
 
-export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange, onReset, onDownloadPDF }: SimplifiedResultsProps) => {
+export const SimplifiedResults = ({ 
+  results, 
+  riskScenario, 
+  onRiskScenarioChange, 
+  assumptionOverrides,
+  onAssumptionOverridesChange,
+  onReset, 
+  onDownloadPDF 
+}: SimplifiedResultsProps) => {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   
   // Auto-scroll to top on component mount
@@ -48,6 +60,23 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                   results.scenario.scope === 'id-capi' ? 'ID + CAPI' : 'All Features';
     
     return `${deployment} | ${scope}`;
+  };
+
+  // Track modified assumptions
+  const getModifiedCount = () => {
+    if (!assumptionOverrides) return 0;
+    return Object.keys(assumptionOverrides).length;
+  };
+
+  const handleAssumptionChange = (field: keyof AssumptionOverrides, value: number) => {
+    onAssumptionOverridesChange({
+      ...assumptionOverrides,
+      [field]: value,
+    });
+  };
+
+  const resetAllAssumptions = () => {
+    onAssumptionOverridesChange(undefined);
   };
 
   return (
@@ -525,6 +554,183 @@ export const SimplifiedResults = ({ results, riskScenario, onRiskScenarioChange,
                   </ul>
                 </div>
               </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
+        {/* Advanced Assumptions */}
+        <Collapsible open={expandedSections.includes('assumptions')}>
+          <Card className="overflow-hidden border-accent/20">
+            <CollapsibleTrigger 
+              onClick={() => toggleSection('assumptions')}
+              className="w-full p-6 flex items-center justify-between hover:bg-accent/5 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <Sliders className="h-5 w-5 text-accent" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">Advanced Assumptions</h3>
+                    {getModifiedCount() > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {getModifiedCount()} modified
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Customize projections based on your business intelligence</p>
+                </div>
+              </div>
+              <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('assumptions') ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="p-6 pt-0 space-y-6 border-t border-border">
+                {getModifiedCount() > 0 && (
+                  <Alert className="bg-accent/5 border-accent/20">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      You're using custom assumptions. Projections reflect your adjusted values.
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto ml-2 text-accent"
+                        onClick={resetAllAssumptions}
+                      >
+                        Reset all to defaults
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* ID Infrastructure Section */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm">ID Infrastructure</h4>
+                  
+                  <AssumptionSlider
+                    label="Safari Baseline Addressability"
+                    description="What % of Safari users can you reach today?"
+                    value={(assumptionOverrides?.safariBaselineAddressability ?? 0.20) * 100}
+                    defaultValue={20}
+                    min={10}
+                    max={40}
+                    step={1}
+                    formatValue={(v) => `${v}%`}
+                    onChange={(v) => handleAssumptionChange('safariBaselineAddressability', v / 100)}
+                    tooltipContent="Without durable IDs, Safari's 7-day ITP limit significantly reduces addressability. Industry average is 20%, but some publishers achieve 25-30% through first-party relationships."
+                  />
+
+                  <AssumptionSlider
+                    label="Safari with Durable ID"
+                    description="Expected addressability with persistent IDs"
+                    value={(assumptionOverrides?.safariWithDurableId ?? 0.85) * 100}
+                    defaultValue={85}
+                    min={60}
+                    max={95}
+                    step={5}
+                    formatValue={(v) => `${v}%`}
+                    onChange={(v) => handleAssumptionChange('safariWithDurableId', v / 100)}
+                    tooltipContent="Durable IDs recognize returning users beyond Safari's 7-day limit. Conservative estimate is 85%, though some publishers achieve 90%+ with strong authentication."
+                  />
+
+                  <AssumptionSlider
+                    label="CPM Improvement on Addressable Inventory"
+                    description="How much more do addressable impressions earn?"
+                    value={(assumptionOverrides?.cpmUpliftFactor ?? 0.25) * 100}
+                    defaultValue={25}
+                    min={10}
+                    max={40}
+                    step={5}
+                    formatValue={(v) => `${v}%`}
+                    onChange={(v) => handleAssumptionChange('cpmUpliftFactor', v / 100)}
+                    tooltipContent="Addressable inventory commands premium CPMs due to better targeting and measurement. Industry benchmarks show 20-30% uplift, with performance campaigns seeing up to 40%."
+                  />
+
+                  <AssumptionSlider
+                    label="CDP Platform Cost Savings"
+                    description="ID bloat reduction impact on fees"
+                    value={(assumptionOverrides?.cdpCostReduction ?? 0.125) * 100}
+                    defaultValue={12.5}
+                    min={5}
+                    max={25}
+                    step={2.5}
+                    formatValue={(v) => `${v}%`}
+                    onChange={(v) => handleAssumptionChange('cdpCostReduction', v / 100)}
+                    tooltipContent="Based on ~18% ID overlap observed in production. Reducing ID bloat from 3.0x to 1.1x per user lowers CDP/martech platform costs that charge per profile or API call."
+                  />
+                </div>
+
+                {/* CAPI Section (if applicable) */}
+                {results.capiCapabilities && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm">CAPI Capabilities</h4>
+                      
+                      <AssumptionSlider
+                        label="CAPI Service Fee"
+                        description="% of campaign spend charged as service fee"
+                        value={(assumptionOverrides?.capiServiceFee ?? 0.125) * 100}
+                        defaultValue={12.5}
+                        min={10}
+                        max={20}
+                        step={2.5}
+                        formatValue={(v) => `${v}%`}
+                        onChange={(v) => handleAssumptionChange('capiServiceFee', v / 100)}
+                        tooltipContent="Service fee for managed CAPI campaigns. Industry standard is 10-15% for self-serve, 15-20% for managed services with optimization."
+                      />
+
+                      <AssumptionSlider
+                        label="CAPI Match Rate with AdFixus"
+                        description="Expected match rate after implementation"
+                        value={(assumptionOverrides?.capiMatchRate ?? 0.75) * 100}
+                        defaultValue={75}
+                        min={50}
+                        max={90}
+                        step={5}
+                        formatValue={(v) => `${v}%`}
+                        onChange={(v) => handleAssumptionChange('capiMatchRate', v / 100)}
+                        tooltipContent="Match rate improvement from baseline 30% to 75%+ with AdFixus. Conservative estimate is 75%, though premium publishers with strong authentication can achieve 80-85%."
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Media Performance Section (if applicable) */}
+                {results.mediaPerformance && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm">Media Performance</h4>
+                      
+                      <AssumptionSlider
+                        label="Premium Inventory %"
+                        description="% of inventory sold at premium rates"
+                        value={(assumptionOverrides?.premiumInventoryShare ?? 0.30) * 100}
+                        defaultValue={30}
+                        min={20}
+                        max={50}
+                        step={5}
+                        formatValue={(v) => `${v}%`}
+                        onChange={(v) => handleAssumptionChange('premiumInventoryShare', v / 100)}
+                        tooltipContent="Percentage of total inventory sold as premium or performance-based campaigns. Premium publishers typically range from 25-40%, with top-tier reaching 50%."
+                      />
+
+                      <AssumptionSlider
+                        label="Premium Pricing Uplift"
+                        description="% increase on premium inventory"
+                        value={(assumptionOverrides?.premiumYieldUplift ?? 0.25) * 100}
+                        defaultValue={25}
+                        min={15}
+                        max={40}
+                        step={5}
+                        formatValue={(v) => `${v}%`}
+                        onChange={(v) => handleAssumptionChange('premiumYieldUplift', v / 100)}
+                        tooltipContent="Additional yield on premium inventory due to better performance and measurement. Industry benchmarks show 20-30% uplift, with guaranteed campaigns seeing up to 40%."
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             </CollapsibleContent>
           </Card>
         </Collapsible>

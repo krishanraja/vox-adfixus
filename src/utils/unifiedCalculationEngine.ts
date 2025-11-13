@@ -1,4 +1,4 @@
-import type { SimplifiedInputs, UnifiedResults, ScenarioState, MonthlyProjection } from '@/types/scenarios';
+import type { SimplifiedInputs, UnifiedResults, ScenarioState, MonthlyProjection, AssumptionOverrides } from '@/types/scenarios';
 import {
   CAPI_BENCHMARKS,
   MEDIA_PERFORMANCE_BENCHMARKS,
@@ -14,7 +14,8 @@ export class UnifiedCalculationEngine {
   static calculate(
     inputs: SimplifiedInputs, 
     scenario: ScenarioState,
-    riskScenario: RiskScenario = 'moderate'
+    riskScenario: RiskScenario = 'moderate',
+    overrides?: AssumptionOverrides
   ): UnifiedResults {
     // Aggregate domain inputs with user-provided CPMs
     const aggregated = aggregateDomainInputs(
@@ -52,7 +53,8 @@ export class UnifiedCalculationEngine {
       scenario,
       currentMonthlyRevenue,
       displayImpressions,
-      videoImpressions
+      videoImpressions,
+      overrides
     );
 
     // Apply risk adjustments to ID infrastructure
@@ -70,7 +72,7 @@ export class UnifiedCalculationEngine {
     // Calculate CAPI Capabilities (if enabled) - BASE before risk adjustment
     let capiCapabilities;
     if (scenario.scope === 'id-capi' || scenario.scope === 'id-capi-performance') {
-      const baseCapiCapabilities = this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue);
+      const baseCapiCapabilities = this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, overrides);
       
       // Apply risk adjustments to CAPI
       capiCapabilities = {
@@ -93,7 +95,8 @@ export class UnifiedCalculationEngine {
         scenario,
         currentMonthlyRevenue,
         displayImpressions,
-        videoImpressions
+        videoImpressions,
+        overrides
       );
       
       // Apply risk adjustments to media performance
@@ -145,6 +148,7 @@ export class UnifiedCalculationEngine {
     return {
       scenario,
       inputs,
+      assumptionOverrides: overrides,
       riskScenario,
       riskAdjustmentSummary: {
         unadjustedMonthlyUplift,
@@ -172,14 +176,15 @@ export class UnifiedCalculationEngine {
     scenario: ScenarioState,
     currentMonthlyRevenue: number,
     displayImpressions: number,
-    videoImpressions: number
+    videoImpressions: number,
+    overrides?: AssumptionOverrides
   ) {
     // Safari addressability: Binary improvement with durable ID
     // Without AdFixus: Safari users lose identity after 7 days
     // With AdFixus: Durable ID recognizes returning users beyond 7 days
     const safariShare = ADDRESSABILITY_BENCHMARKS.SAFARI_IOS_SHARE;
-    const currentSafariAddressability = ADDRESSABILITY_BENCHMARKS.WITHOUT_ADFIXUS;
-    const improvedSafariAddressability = ADDRESSABILITY_BENCHMARKS.WITH_ADFIXUS;
+    const currentSafariAddressability = overrides?.safariBaselineAddressability ?? ADDRESSABILITY_BENCHMARKS.WITHOUT_ADFIXUS;
+    const improvedSafariAddressability = overrides?.safariWithDurableId ?? ADDRESSABILITY_BENCHMARKS.WITH_ADFIXUS;
 
     const currentAddressability =
       ADDRESSABILITY_BENCHMARKS.CHROME_SHARE +
@@ -200,8 +205,9 @@ export class UnifiedCalculationEngine {
     const newlyAddressableVideo = videoImpressions * addressabilityImprovement;
 
     // CPM improvement on newly addressable inventory
-    const improvedDisplayCPM = displayCPM * ADDRESSABILITY_BENCHMARKS.CPM_IMPROVEMENT_FACTOR;
-    const improvedVideoCPM = videoCPM * ADDRESSABILITY_BENCHMARKS.CPM_IMPROVEMENT_FACTOR;
+    const cpmUpliftFactor = overrides?.cpmUpliftFactor ?? ADDRESSABILITY_BENCHMARKS.CPM_IMPROVEMENT_FACTOR;
+    const improvedDisplayCPM = displayCPM * (1 + cpmUpliftFactor);
+    const improvedVideoCPM = videoCPM * (1 + cpmUpliftFactor);
 
     const displayUplift = (newlyAddressableDisplay / 1000) * improvedDisplayCPM;
     const videoUplift = (newlyAddressableVideo / 1000) * improvedVideoCPM;
@@ -209,7 +215,7 @@ export class UnifiedCalculationEngine {
 
     // CDP cost savings: Percentage-based model (Benefit #5: 30-40% lower platform costs)
     const estimatedMonthlyCdpCosts = OPERATIONAL_BENCHMARKS.ESTIMATED_MONTHLY_CDP_COSTS;
-    const cdpCostReduction = OPERATIONAL_BENCHMARKS.CDP_COST_REDUCTION_PERCENTAGE;
+    const cdpCostReduction = overrides?.cdpCostReduction ?? OPERATIONAL_BENCHMARKS.CDP_COST_REDUCTION_PERCENTAGE;
     const monthlyCdpSavings = estimatedMonthlyCdpCosts * cdpCostReduction;
 
     // Apply deployment multiplier only (addressability is binary - either you have durable ID or you don't)
@@ -241,11 +247,12 @@ export class UnifiedCalculationEngine {
   private static calculateCapiCapabilities(
     inputs: SimplifiedInputs,
     scenario: ScenarioState,
-    currentMonthlyRevenue: number
+    currentMonthlyRevenue: number,
+    overrides?: AssumptionOverrides
   ) {
     // Match rate improvement
     const baselineMatchRate = CAPI_BENCHMARKS.BASELINE_MATCH_RATE;
-    const improvedMatchRate = CAPI_BENCHMARKS.IMPROVED_MATCH_RATE;
+    const improvedMatchRate = overrides?.capiMatchRate ?? CAPI_BENCHMARKS.IMPROVED_MATCH_RATE;
     const matchRateImprovement = (improvedMatchRate / baselineMatchRate - 1) * 100;
 
     // Campaign-based service fees (Benefit #4: Ad Performance/CAPI)
@@ -253,7 +260,8 @@ export class UnifiedCalculationEngine {
     // Now using user-configurable inputs instead of hardcoded values
     const estimatedCapiCampaigns = inputs.capiCampaignsPerMonth;
     const avgCampaignSpend = inputs.avgCampaignSpend;
-    const campaignServiceFees = estimatedCapiCampaigns * avgCampaignSpend * CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
+    const serviceFee = overrides?.capiServiceFee ?? CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
+    const campaignServiceFees = estimatedCapiCampaigns * avgCampaignSpend * serviceFee;
 
     // Operational labor savings from CAPI (reduced troubleshooting, better data quality)
     const capiLaborSavings = OPERATIONAL_BENCHMARKS.MANUAL_LABOR_HOURS_SAVED * OPERATIONAL_BENCHMARKS.HOURLY_RATE;
@@ -291,12 +299,13 @@ export class UnifiedCalculationEngine {
     scenario: ScenarioState,
     currentMonthlyRevenue: number,
     displayImpressions: number,
-    videoImpressions: number
+    videoImpressions: number,
+    overrides?: AssumptionOverrides
   ) {
     // Premium CPM uplift on premium inventory subset (Benefit #3: Higher CPMs)
     // Only applies to inventory sold as premium/performance campaigns
-    const premiumInventoryShare = MEDIA_PERFORMANCE_BENCHMARKS.PREMIUM_INVENTORY_SHARE;
-    const yieldUplift = MEDIA_PERFORMANCE_BENCHMARKS.YIELD_UPLIFT_PERCENTAGE;
+    const premiumInventoryShare = overrides?.premiumInventoryShare ?? MEDIA_PERFORMANCE_BENCHMARKS.PREMIUM_INVENTORY_SHARE;
+    const yieldUplift = overrides?.premiumYieldUplift ?? MEDIA_PERFORMANCE_BENCHMARKS.YIELD_UPLIFT_PERCENTAGE;
 
     const premiumDisplayImpressions = displayImpressions * premiumInventoryShare;
     const premiumVideoImpressions = videoImpressions * premiumInventoryShare;

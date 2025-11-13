@@ -19,7 +19,19 @@ type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
 const ScenarioModeler = () => {
   const [currentStep, setCurrentStep] = useState<StepType>('hero');
   const [showLeadCapture, setShowLeadCapture] = useState(false);
-  const { inputs, setInputs, scenario, setScenario, riskScenario, setRiskScenario, results, calculateResults, reset } = useScenarioCalculator();
+  const { 
+    inputs, 
+    setInputs, 
+    scenario, 
+    setScenario, 
+    riskScenario, 
+    setRiskScenario,
+    assumptionOverrides,
+    setAssumptionOverrides,
+    results, 
+    calculateResults, 
+    reset 
+  } = useScenarioCalculator();
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -137,6 +149,8 @@ const ScenarioModeler = () => {
               results={results} 
               riskScenario={riskScenario}
               onRiskScenarioChange={setRiskScenario}
+              assumptionOverrides={assumptionOverrides}
+              onAssumptionOverridesChange={setAssumptionOverrides}
               onReset={() => setCurrentStep('inputs')}
               onDownloadPDF={handleDownloadPDF}
             />

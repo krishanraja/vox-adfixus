@@ -16,9 +16,26 @@ export interface SimplifiedInputs {
   avgCampaignSpend: number;
 }
 
+export interface AssumptionOverrides {
+  // ID Infrastructure
+  safariBaselineAddressability?: number; // 0.10 - 0.40, default 0.20
+  safariWithDurableId?: number; // 0.60 - 0.95, default 0.85
+  cpmUpliftFactor?: number; // 0.10 - 0.40, default 0.25
+  cdpCostReduction?: number; // 0.05 - 0.25, default 0.125
+  
+  // CAPI
+  capiServiceFee?: number; // 0.10 - 0.20, default 0.125
+  capiMatchRate?: number; // 0.50 - 0.90, default 0.75
+  
+  // Media Performance
+  premiumInventoryShare?: number; // 0.20 - 0.50, default 0.30
+  premiumYieldUplift?: number; // 0.15 - 0.40, default 0.25
+}
+
 export interface UnifiedResults {
   scenario: ScenarioState;
   inputs: SimplifiedInputs;
+  assumptionOverrides?: AssumptionOverrides;
   
   // Risk scenario metadata
   riskScenario?: 'conservative' | 'moderate' | 'optimistic';
