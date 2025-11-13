@@ -1,4 +1,4 @@
-import type { SimplifiedInputs, UnifiedResults, ScenarioState, MonthlyProjection, AssumptionOverrides } from '@/types/scenarios';
+import type { SimplifiedInputs, UnifiedResults, ScenarioState, MonthlyProjection, AssumptionOverrides, PricingModel, ROIAnalysis } from '@/types/scenarios';
 import {
   CAPI_BENCHMARKS,
   MEDIA_PERFORMANCE_BENCHMARKS,
@@ -145,6 +145,10 @@ export class UnifiedCalculationEngine {
       performancePercent: ((mediaPerformance?.monthlyUplift || 0) / baseMonthlyUplift) * 100,
     };
 
+    // Calculate ROI Analysis
+    const pricing = this.calculatePricing(inputs);
+    const roiAnalysis = this.calculateROI(totalMonthlyUplift, pricing);
+
     return {
       scenario,
       inputs,
@@ -155,6 +159,8 @@ export class UnifiedCalculationEngine {
         adjustedMonthlyUplift: totalMonthlyUplift,
         adjustmentPercentage,
       },
+      pricing,
+      roiAnalysis,
       idInfrastructure,
       capiCapabilities,
       mediaPerformance,
@@ -273,7 +279,9 @@ export class UnifiedCalculationEngine {
     // Apply deployment multiplier only (CAPI works the same regardless of addressability)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
 
-    const monthlyUplift = (campaignServiceFees + capiLaborSavings) * deploymentMultiplier;
+    // NOTE: campaignServiceFees are AdFixus revenue (cost to publisher), NOT publisher benefit
+    // Only include operational labor savings in publisher uplift
+    const monthlyUplift = capiLaborSavings * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
@@ -357,6 +365,89 @@ export class UnifiedCalculationEngine {
       default:
         return 1;
     }
+  }
+
+  private static calculatePricing(inputs: SimplifiedInputs): PricingModel {
+    const pocFlatFee = 15000; // $15K flat fee
+    const pocDurationMonths = 3;
+    const fullContractMonthly = 26000; // $26K/month for 16 domains / 600M pageviews
+    const capiServiceFeeRate = 0.125; // 12.5%
+    
+    const totalMonthlyCapiSpend = inputs.capiCampaignsPerMonth * inputs.avgCampaignSpend;
+    const monthlyCapiServiceFees = totalMonthlyCapiSpend * capiServiceFeeRate;
+    
+    return {
+      pocFlatFee,
+      pocDurationMonths,
+      pocMonthlyEquivalent: pocFlatFee / pocDurationMonths,
+      fullContractMonthly,
+      capiServiceFeeRate,
+      totalMonthlyCapiSpend,
+      monthlyCapiServiceFees,
+    };
+  }
+
+  private static calculateROI(
+    totalMonthlyBenefits: number,
+    pricing: PricingModel
+  ): ROIAnalysis {
+    // POC Phase Costs
+    const platformFeePOC = pricing.pocMonthlyEquivalent; // $5K/month
+    const pocPhaseTotalMonthlyCost = platformFeePOC + pricing.monthlyCapiServiceFees;
+    
+    // Full Contract Phase Costs
+    const platformFeeFull = pricing.fullContractMonthly; // $26K/month
+    const fullContractTotalMonthlyCost = platformFeeFull + pricing.monthlyCapiServiceFees;
+    
+    // POC Phase Net ROI
+    const pocPhaseNetMonthlyROI = totalMonthlyBenefits - pocPhaseTotalMonthlyCost;
+    const pocPhaseNetAnnualROI = pocPhaseNetMonthlyROI * 12;
+    const pocPhaseROIPercentage = pocPhaseTotalMonthlyCost > 0 
+      ? (pocPhaseNetMonthlyROI / pocPhaseTotalMonthlyCost) * 100 
+      : 0;
+    
+    // Full Contract Phase Net ROI
+    const fullContractNetMonthlyROI = totalMonthlyBenefits - fullContractTotalMonthlyCost;
+    const fullContractNetAnnualROI = fullContractNetMonthlyROI * 12;
+    const fullContractROIPercentage = fullContractTotalMonthlyCost > 0
+      ? (fullContractNetMonthlyROI / fullContractTotalMonthlyCost) * 100
+      : 0;
+    
+    // Payback period (months to recover costs from benefits)
+    const pocPaybackMonths = totalMonthlyBenefits > 0 
+      ? pricing.pocFlatFee / totalMonthlyBenefits 
+      : 999;
+    const fullContractPaybackMonths = totalMonthlyBenefits > 0 
+      ? platformFeeFull / totalMonthlyBenefits 
+      : 999;
+    
+    return {
+      totalMonthlyBenefits,
+      totalAnnualBenefits: totalMonthlyBenefits * 12,
+      costs: {
+        pocPhaseMonthly: pocPhaseTotalMonthlyCost,
+        fullContractMonthly: fullContractTotalMonthlyCost,
+        platformFeePOC,
+        platformFeeFull,
+        capiServiceFees: pricing.monthlyCapiServiceFees,
+      },
+      netMonthlyROI: {
+        pocPhase: pocPhaseNetMonthlyROI,
+        fullContract: fullContractNetMonthlyROI,
+      },
+      netAnnualROI: {
+        pocPhase: pocPhaseNetAnnualROI,
+        fullContract: fullContractNetAnnualROI,
+      },
+      roiPercentage: {
+        pocPhase: pocPhaseROIPercentage,
+        fullContract: fullContractROIPercentage,
+      },
+      paybackMonths: {
+        pocPhase: pocPaybackMonths,
+        fullContract: fullContractPaybackMonths,
+      },
+    };
   }
 
   static generateMonthlyProjection(results: UnifiedResults): MonthlyProjection[] {

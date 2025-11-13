@@ -18,10 +18,10 @@ export interface SimplifiedInputs {
 
 export interface AssumptionOverrides {
   // ID Infrastructure
-  safariBaselineAddressability?: number; // 0.10 - 0.40, default 0.20
-  safariWithDurableId?: number; // 0.60 - 0.95, default 0.85
+  safariBaselineAddressability?: number; // 0.40 - 0.70, default 0.55
+  safariWithDurableId?: number; // 0.75 - 0.95, default 0.85
   cpmUpliftFactor?: number; // 0.10 - 0.40, default 0.25
-  cdpCostReduction?: number; // 0.05 - 0.25, default 0.125
+  cdpCostReduction?: number; // 0.10 - 0.18, default 0.14
   
   // CAPI
   capiServiceFee?: number; // 0.10 - 0.20, default 0.125
@@ -30,6 +30,53 @@ export interface AssumptionOverrides {
   // Media Performance
   premiumInventoryShare?: number; // 0.20 - 0.50, default 0.30
   premiumYieldUplift?: number; // 0.15 - 0.40, default 0.25
+}
+
+export interface PricingModel {
+  pocFlatFee: number; // $15,000
+  pocDurationMonths: number; // 3 months
+  pocMonthlyEquivalent: number; // $5,000/month
+  fullContractMonthly: number; // $26,000/month
+  capiServiceFeeRate: number; // 0.125 (12.5%)
+  totalMonthlyCapiSpend: number; // Calculated from inputs
+  monthlyCapiServiceFees: number; // 12.5% of campaign spend
+}
+
+export interface ROIAnalysis {
+  // Benefits (Revenue Uplifts)
+  totalMonthlyBenefits: number;
+  totalAnnualBenefits: number;
+  
+  // Costs
+  costs: {
+    pocPhaseMonthly: number; // $5K platform + CAPI fees
+    fullContractMonthly: number; // $26K platform + CAPI fees
+    platformFeePOC: number; // $5K/month
+    platformFeeFull: number; // $26K/month
+    capiServiceFees: number; // 12.5% of campaign spend
+  };
+  
+  // Net ROI
+  netMonthlyROI: {
+    pocPhase: number; // Benefits - POC costs
+    fullContract: number; // Benefits - Full contract costs
+  };
+  netAnnualROI: {
+    pocPhase: number;
+    fullContract: number;
+  };
+  
+  // ROI Percentages
+  roiPercentage: {
+    pocPhase: number; // (Net ROI / Costs) * 100
+    fullContract: number;
+  };
+  
+  // Payback Period
+  paybackMonths: {
+    pocPhase: number;
+    fullContract: number;
+  };
 }
 
 export interface UnifiedResults {
@@ -44,6 +91,10 @@ export interface UnifiedResults {
     adjustedMonthlyUplift: number;
     adjustmentPercentage: number;
   };
+  
+  // Pricing & ROI
+  pricing: PricingModel;
+  roiAnalysis: ROIAnalysis;
   
   // ID Infrastructure
   idInfrastructure: {

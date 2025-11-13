@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders } from 'lucide-react';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank } from 'lucide-react';
 import type { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
 import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -305,6 +305,138 @@ export const SimplifiedResults = ({
         </div>
       </Card>
 
+      {/* ROI Analysis Card */}
+      <Card className="border-2 border-green-600/30 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+            <PiggyBank className="h-6 w-6" />
+            Return on Investment Analysis
+          </CardTitle>
+          <CardDescription>
+            Net revenue impact after AdFixus platform costs
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Pricing Summary */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="text-sm text-muted-foreground mb-1">POC Phase (3 months)</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                ${formatCurrency(results.roiAnalysis.costs.pocPhaseMonthly)}/mo
+              </div>
+              <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                <div>Platform: ${formatCurrency(results.roiAnalysis.costs.platformFeePOC)}/mo</div>
+                <div>CAPI Fees: ${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div className="text-sm text-muted-foreground mb-1">Full Contract</div>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                ${formatCurrency(results.roiAnalysis.costs.fullContractMonthly)}/mo
+              </div>
+              <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                <div>Platform: ${formatCurrency(results.roiAnalysis.costs.platformFeeFull)}/mo</div>
+                <div>CAPI Fees: ${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Net ROI Comparison */}
+          <div>
+            <h4 className="font-semibold mb-3 text-foreground">Net Monthly Revenue Uplift (After Costs)</h4>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-5 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-lg border-2 border-green-300 dark:border-green-700">
+                <div className="text-sm font-medium text-green-800 dark:text-green-300 mb-2">POC Phase (Months 1-3)</div>
+                <div className="text-3xl font-bold text-green-700 dark:text-green-400">
+                  +${formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}
+                </div>
+                <div className="text-sm text-green-700 dark:text-green-400 mt-2 space-y-1">
+                  <div className="font-semibold">{formatPercentage(results.roiAnalysis.roiPercentage.pocPhase, 0)} ROI</div>
+                  <div className="text-xs">Annual: ${formatCurrency(results.roiAnalysis.netAnnualROI.pocPhase)}</div>
+                  <div className="text-xs">Payback: {results.roiAnalysis.paybackMonths.pocPhase.toFixed(1)} months</div>
+                </div>
+              </div>
+              
+              <div className="p-5 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 rounded-lg border-2 border-purple-300 dark:border-purple-700">
+                <div className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-2">Full Contract (Month 4+)</div>
+                <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
+                  +${formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}
+                </div>
+                <div className="text-sm text-purple-700 dark:text-purple-400 mt-2 space-y-1">
+                  <div className="font-semibold">{formatPercentage(results.roiAnalysis.roiPercentage.fullContract, 0)} ROI</div>
+                  <div className="text-xs">Annual: ${formatCurrency(results.roiAnalysis.netAnnualROI.fullContract)}</div>
+                  <div className="text-xs">Payback: {results.roiAnalysis.paybackMonths.fullContract.toFixed(1)} months</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Breakdown Collapsible */}
+          <Collapsible>
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400 hover:underline">
+              <Calculator className="h-4 w-4" />
+              View ROI Calculation Breakdown
+              <ChevronDown className="h-4 w-4" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4 space-y-3 text-sm bg-white dark:bg-gray-900 p-4 rounded-lg border">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total Monthly Benefits:</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  +${formatCurrency(results.roiAnalysis.totalMonthlyBenefits)}
+                </span>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <div className="font-medium text-xs uppercase text-muted-foreground">POC Phase Costs:</div>
+                <div className="flex justify-between pl-4">
+                  <span className="text-muted-foreground">Platform Fee (monthly):</span>
+                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.platformFeePOC)}</span>
+                </div>
+                <div className="flex justify-between pl-4">
+                  <span className="text-muted-foreground">CAPI Service Fees (12.5%):</span>
+                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
+                </div>
+                <div className="flex justify-between pl-4 font-semibold pt-2 border-t">
+                  <span>Net POC ROI:</span>
+                  <span className="text-green-600 dark:text-green-400">+${formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}</span>
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <div className="font-medium text-xs uppercase text-muted-foreground">Full Contract Costs:</div>
+                <div className="flex justify-between pl-4">
+                  <span className="text-muted-foreground">Platform Fee (monthly):</span>
+                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.platformFeeFull)}</span>
+                </div>
+                <div className="flex justify-between pl-4">
+                  <span className="text-muted-foreground">CAPI Service Fees (12.5%):</span>
+                  <span className="text-red-600 dark:text-red-400">-${formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
+                </div>
+                <div className="flex justify-between pl-4 font-semibold pt-2 border-t">
+                  <span>Net Full Contract ROI:</span>
+                  <span className="text-green-600 dark:text-green-400">+${formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}</span>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Pricing Disclaimer */}
+          <Alert className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-xs text-blue-900 dark:text-blue-200">
+              <strong>POC Pricing:</strong> $15,000 flat fee (3-month term) represents 50% discount, valid until Dec 31, 2025. 
+              Covers full technology capabilities from AdFixus (infrastructure provisioning, monitoring, and CAPI enablement).
+              <br/><br/>
+              <strong>Full Contract:</strong> Estimated $26K/month for 16 domains / 600M pageviews. 
+              Final pricing subject to full scope and terms negotiation.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
       {/* Expandable Details */}
       <div className="space-y-4">
         {/* ID Infrastructure Details */}
@@ -342,9 +474,9 @@ export const SimplifiedResults = ({
                             <div className="space-y-2 text-xs">
                               <p><strong>Durable ID Benefit:</strong></p>
                               <p>• Safari traffic: 35% of {formatNumberWithCommas(aggregated.totalMonthlyPageviews)} pageviews</p>
-                              <p>• Without AdFixus: 20% addressable (IDs expire after 7 days)</p>
+                              <p>• Without AdFixus: 55% addressable (IDs expire after ~7 days)</p>
                               <p>• With AdFixus: 85% addressable (durable ID recognizes returning users)</p>
-                              <p>• Newly addressable: {formatPercentage(results.idInfrastructure.addressabilityRecovery, 1)} of Safari traffic</p>
+                              <p>• Newly addressable: {formatPercentage(results.idInfrastructure.addressabilityRecovery, 1)} of Safari traffic (~30% improvement)</p>
                               <p>• CPM uplift: ${aggregated.displayCPM.toFixed(2)} → ${(aggregated.displayCPM * 1.25).toFixed(2)} (25%)</p>
                             </div>
                           </TooltipContent>
@@ -370,8 +502,8 @@ export const SimplifiedResults = ({
                               <p><strong>Benefit #5: Platform Cost Savings</strong></p>
                               <p>• Estimated current CDP costs: $50K/month</p>
                               <p>• AdFixus reduces ID bloat by {formatPercentage(results.idInfrastructure.details.idReductionPercentage, 0)}</p>
-                              <p>• Cost reduction: 35% of platform fees (30-40% range)</p>
-                              <p>• Monthly savings: $50K × 35% = {formatCurrency(results.idInfrastructure.cdpSavings)}</p>
+                              <p>• Cost reduction: 10-18% of platform fees (mid-range: 14%)</p>
+                              <p>• Monthly savings: ${formatCurrency(results.idInfrastructure.cdpSavings)}</p>
                             </div>
                           </TooltipContent>
                         </Tooltip>
@@ -544,13 +676,13 @@ export const SimplifiedResults = ({
                 <div className="space-y-2">
                   <h4 className="font-semibold">Key Assumptions</h4>
                   <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• Safari addressability: 20% without durable ID → 85% with AdFixus</li>
+                    <li>• Safari addressability: 55% without durable ID → 85% with AdFixus (~30% improvement)</li>
                     <li>• Durable ID enables user recognition beyond 7-day cookie limit</li>
                     <li>• CPM uplift: 25% on newly addressable inventory</li>
-                    <li>• CDP cost reduction: 35% of platform fees (from reduced ID bloat)</li>
-                    <li>• CAPI service fee: 12.5% of campaign spend</li>
+                    <li>• CDP cost reduction: 10-18% of platform fees (from reduced ID bloat)</li>
+                    <li>• CAPI service fee: 12.5% of campaign spend (AdFixus revenue)</li>
                     <li>• Premium inventory: 30% of total (receives 25% yield uplift)</li>
-                    <li>• Ramp-up schedule: 15% (M1-3), 35% (M4-6), 100% (M7+)</li>
+                    <li>• Ramp-up schedule: varies by risk scenario</li>
                   </ul>
                 </div>
               </CardContent>
@@ -609,14 +741,14 @@ export const SimplifiedResults = ({
                   <AssumptionSlider
                     label="Safari Baseline Addressability"
                     description="What % of Safari users can you reach today?"
-                    value={(assumptionOverrides?.safariBaselineAddressability ?? 0.20) * 100}
-                    defaultValue={20}
-                    min={10}
-                    max={40}
+                    value={(assumptionOverrides?.safariBaselineAddressability ?? 0.55) * 100}
+                    defaultValue={55}
+                    min={40}
+                    max={70}
                     step={1}
                     formatValue={(v) => `${v}%`}
                     onChange={(v) => handleAssumptionChange('safariBaselineAddressability', v / 100)}
-                    tooltipContent="Without durable IDs, Safari's 7-day ITP limit significantly reduces addressability. Industry average is 20%, but some publishers achieve 25-30% through first-party relationships."
+                    tooltipContent="With Safari's 7-day ITP limit, tracking typically works for ~7 days. Industry average is 55%, with some publishers achieving 60-65% through first-party relationships."
                   />
 
                   <AssumptionSlider
@@ -624,12 +756,12 @@ export const SimplifiedResults = ({
                     description="Expected addressability with persistent IDs"
                     value={(assumptionOverrides?.safariWithDurableId ?? 0.85) * 100}
                     defaultValue={85}
-                    min={60}
+                    min={75}
                     max={95}
                     step={5}
                     formatValue={(v) => `${v}%`}
                     onChange={(v) => handleAssumptionChange('safariWithDurableId', v / 100)}
-                    tooltipContent="Durable IDs recognize returning users beyond Safari's 7-day limit. Conservative estimate is 85%, though some publishers achieve 90%+ with strong authentication."
+                    tooltipContent="Durable IDs recognize returning users beyond Safari's 7-day limit. Conservative estimate is 85%, with some publishers achieving 90%+ with strong authentication."
                   />
 
                   <AssumptionSlider
@@ -648,11 +780,11 @@ export const SimplifiedResults = ({
                   <AssumptionSlider
                     label="CDP Platform Cost Savings"
                     description="ID bloat reduction impact on fees"
-                    value={(assumptionOverrides?.cdpCostReduction ?? 0.125) * 100}
-                    defaultValue={12.5}
-                    min={5}
-                    max={25}
-                    step={2.5}
+                    value={(assumptionOverrides?.cdpCostReduction ?? 0.14) * 100}
+                    defaultValue={14}
+                    min={10}
+                    max={18}
+                    step={1}
                     formatValue={(v) => `${v}%`}
                     onChange={(v) => handleAssumptionChange('cdpCostReduction', v / 100)}
                     tooltipContent="Based on ~18% ID overlap observed in production. Reducing ID bloat from 3.0x to 1.1x per user lowers CDP/martech platform costs that charge per profile or API call."
