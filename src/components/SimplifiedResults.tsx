@@ -102,7 +102,7 @@ export const SimplifiedResults = ({
     });
   };
   
-  const applyReadinessPreset = (preset: 'weak' | 'moderate' | 'strong') => {
+  const applyReadinessPreset = (preset: 'conservative' | 'normal' | 'optimistic') => {
     onAssumptionOverridesChange({
       ...assumptionOverrides,
       readinessFactors: READINESS_PRESETS[preset],
@@ -111,122 +111,6 @@ export const SimplifiedResults = ({
 
   return (
     <div className="space-y-6">
-      {/* Risk Scenario Toggle */}
-      <Card className="p-6 border-2 border-primary/20">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Projection Scenario</h3>
-              <p className="text-sm text-muted-foreground">
-                Adjust for implementation risk and organizational readiness
-              </p>
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-5 w-5 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-md">
-                  <div className="space-y-2 text-xs">
-                    <p><strong>Risk scenarios reflect real-world challenges:</strong></p>
-                    <p>• Sales training & enablement gaps</p>
-                    <p>• Technical integration delays</p>
-                    <p>• Organizational change management</p>
-                    <p>• Advertiser adoption timelines</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          <RadioGroup value={riskScenario} onValueChange={(value) => onRiskScenarioChange(value as RiskScenario)}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Conservative */}
-              <div 
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  riskScenario === 'conservative' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
-                onClick={() => onRiskScenarioChange('conservative')}
-              >
-                <div className="flex items-start gap-3">
-                  <RadioGroupItem value="conservative" id="conservative" />
-                  <div className="space-y-1 flex-1">
-                    <Label htmlFor="conservative" className="font-semibold cursor-pointer">
-                      Conservative
-                    </Label>
-                    <p className="text-xs text-muted-foreground leading-tight">
-                      {RISK_SCENARIO_DESCRIPTIONS.conservative}
-                    </p>
-                    <div className="mt-2 text-xs space-y-1">
-                      <div className="font-medium">18-month ramp</div>
-                      <div className="text-muted-foreground">60% adoption</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Moderate */}
-              <div 
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  riskScenario === 'moderate' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
-                onClick={() => onRiskScenarioChange('moderate')}
-              >
-                <div className="flex items-start gap-3">
-                  <RadioGroupItem value="moderate" id="moderate" />
-                  <div className="space-y-1 flex-1">
-                    <Label htmlFor="moderate" className="font-semibold cursor-pointer">
-                      Moderate
-                    </Label>
-                    <p className="text-xs text-muted-foreground leading-tight">
-                      {RISK_SCENARIO_DESCRIPTIONS.moderate}
-                    </p>
-                    <div className="mt-2 text-xs space-y-1">
-                      <div className="font-medium">12-month ramp</div>
-                      <div className="text-muted-foreground">80% adoption</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Optimistic */}
-              <div 
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  riskScenario === 'optimistic' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
-                onClick={() => onRiskScenarioChange('optimistic')}
-              >
-                <div className="flex items-start gap-3">
-                  <RadioGroupItem value="optimistic" id="optimistic" />
-                  <div className="space-y-1 flex-1">
-                    <Label htmlFor="optimistic" className="font-semibold cursor-pointer">
-                      Optimistic
-                    </Label>
-                    <p className="text-xs text-muted-foreground leading-tight">
-                      {RISK_SCENARIO_DESCRIPTIONS.optimistic}
-                    </p>
-                    <div className="mt-2 text-xs space-y-1">
-                      <div className="font-medium">6-month ramp</div>
-                      <div className="text-muted-foreground">100% adoption</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </RadioGroup>
-          
-          {/* Risk adjustment summary */}
-          {results.riskAdjustmentSummary && results.riskAdjustmentSummary.adjustmentPercentage > 0 && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Risk adjustment reduced projections by {results.riskAdjustmentSummary.adjustmentPercentage.toFixed(0)}% from {formatCurrency(results.riskAdjustmentSummary.unadjustedMonthlyUplift)}/mo to {formatCurrency(results.riskAdjustmentSummary.adjustedMonthlyUplift)}/mo
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      </Card>
-
       {/* Top-Level Summary */}
       <Card className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
         <div className="text-center space-y-4">
@@ -810,26 +694,26 @@ export const SimplifiedResults = ({
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => applyReadinessPreset('weak')}
+                      onClick={() => applyReadinessPreset('conservative')}
                       className="text-xs"
                     >
-                      🔴 Early Stage
+                      Conservative
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => applyReadinessPreset('moderate')}
+                      onClick={() => applyReadinessPreset('normal')}
                       className="text-xs"
                     >
-                      🟡 Normal Rollout
+                      Normal
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => applyReadinessPreset('strong')}
+                      onClick={() => applyReadinessPreset('optimistic')}
                       className="text-xs"
                     >
-                      🟢 Best-in-Class
+                      Optimistic
                     </Button>
                   </div>
                 </div>
@@ -935,6 +819,88 @@ export const SimplifiedResults = ({
                     tooltipContent={READINESS_DESCRIPTIONS.marketConditions.tooltip}
                   />
                 </div>
+
+                {/* Training & Enablement */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4" /> Training & Enablement
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.trainingGaps.title}
+                    description={READINESS_DESCRIPTIONS.trainingGaps.description}
+                    value={(readinessFactors?.trainingGaps ?? 0.75) * 100}
+                    defaultValue={75}
+                    min={50}
+                    max={100}
+                    step={5}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.trainingGaps.high : v >= 70 ? READINESS_DESCRIPTIONS.trainingGaps.medium : READINESS_DESCRIPTIONS.trainingGaps.low}
+                    onChange={(v) => handleReadinessChange('trainingGaps', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.trainingGaps.tooltip}
+                  />
+                </div>
+
+                {/* Integration Complexity */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Code className="h-4 w-4" /> Integration Complexity
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.integrationComplexity.title}
+                    description={READINESS_DESCRIPTIONS.integrationComplexity.description}
+                    value={(readinessFactors?.integrationComplexity ?? 0.8) * 100}
+                    defaultValue={80}
+                    min={60}
+                    max={100}
+                    step={5}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.integrationComplexity.high : v >= 75 ? READINESS_DESCRIPTIONS.integrationComplexity.medium : READINESS_DESCRIPTIONS.integrationComplexity.low}
+                    onChange={(v) => handleReadinessChange('integrationComplexity', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.integrationComplexity.tooltip}
+                  />
+                </div>
+
+                {/* Data Quality */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Settings className="h-4 w-4" /> First-Party Data Quality
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.dataQuality.title}
+                    description={READINESS_DESCRIPTIONS.dataQuality.description}
+                    value={(readinessFactors?.dataQuality ?? 0.8) * 100}
+                    defaultValue={80}
+                    min={60}
+                    max={100}
+                    step={5}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.dataQuality.high : v >= 75 ? READINESS_DESCRIPTIONS.dataQuality.medium : READINESS_DESCRIPTIONS.dataQuality.low}
+                    onChange={(v) => handleReadinessChange('dataQuality', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.dataQuality.tooltip}
+                  />
+                </div>
+
+                {/* Resource Availability */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" /> Resource Availability
+                  </h4>
+                  
+                  <AssumptionSlider
+                    label={READINESS_DESCRIPTIONS.resourceAvailability.title}
+                    description={READINESS_DESCRIPTIONS.resourceAvailability.description}
+                    value={(readinessFactors?.resourceAvailability ?? 0.75) * 100}
+                    defaultValue={75}
+                    min={60}
+                    max={100}
+                    step={5}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.resourceAvailability.high : v >= 75 ? READINESS_DESCRIPTIONS.resourceAvailability.medium : READINESS_DESCRIPTIONS.resourceAvailability.low}
+                    onChange={(v) => handleReadinessChange('resourceAvailability', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.resourceAvailability.tooltip}
+                  />
+                </div>
+
+                <Separator />
 
                 {/* Advanced Technical Settings (Nested Collapsible) */}
                 <Collapsible>

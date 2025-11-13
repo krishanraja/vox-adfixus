@@ -16,29 +16,53 @@ export interface ReadinessFactors {
   
   // 5. Market Conditions
   marketConditions: number; // 0.7 = recession/cautious, 1.0 = growth mode
+  
+  // 6. Training Gaps (0-1 scale)
+  trainingGaps: number; // 0.5 = no training plan, 1.0 = comprehensive training
+  
+  // 7. Integration Complexity (0-1 scale)
+  integrationComplexity: number; // 0.6 = many dependencies, 1.0 = clean integration
+  
+  // 8. Data Quality (0-1 scale)
+  dataQuality: number; // 0.6 = fragmented data, 1.0 = clean first-party data
+  
+  // 9. Resource Availability (0-1 scale)
+  resourceAvailability: number; // 0.6 = shared resources, 1.0 = dedicated team
 }
 
-export const READINESS_PRESETS: Record<'weak' | 'moderate' | 'strong', ReadinessFactors> = {
-  weak: {
+export const READINESS_PRESETS: Record<'conservative' | 'normal' | 'optimistic', ReadinessFactors> = {
+  conservative: {
     salesReadiness: 0.5,
     technicalDeploymentMonths: 18,
     advertiserBuyIn: 0.6,
     organizationalOwnership: 0.6,
     marketConditions: 0.7,
+    trainingGaps: 0.5,
+    integrationComplexity: 0.6,
+    dataQuality: 0.6,
+    resourceAvailability: 0.6,
   },
-  moderate: {
+  normal: {
     salesReadiness: 0.75,
     technicalDeploymentMonths: 12,
     advertiserBuyIn: 0.8,
     organizationalOwnership: 0.8,
     marketConditions: 0.85,
+    trainingGaps: 0.75,
+    integrationComplexity: 0.8,
+    dataQuality: 0.8,
+    resourceAvailability: 0.75,
   },
-  strong: {
+  optimistic: {
     salesReadiness: 1.0,
     technicalDeploymentMonths: 6,
     advertiserBuyIn: 1.0,
     organizationalOwnership: 1.0,
     marketConditions: 1.0,
+    trainingGaps: 1.0,
+    integrationComplexity: 1.0,
+    dataQuality: 1.0,
+    resourceAvailability: 1.0,
   },
 };
 
@@ -48,8 +72,12 @@ export function readinessToRiskScenario(factors: ReadinessFactors): RiskScenario
     factors.salesReadiness + 
     factors.advertiserBuyIn + 
     factors.organizationalOwnership + 
-    factors.marketConditions
-  ) / 4;
+    factors.marketConditions +
+    (factors.trainingGaps ?? 0.75) +
+    (factors.integrationComplexity ?? 0.8) +
+    (factors.dataQuality ?? 0.8) +
+    (factors.resourceAvailability ?? 0.75)
+  ) / 8;
   
   if (avgReadiness >= 0.9) return 'optimistic';
   if (avgReadiness >= 0.7) return 'moderate';
@@ -93,5 +121,37 @@ export const READINESS_DESCRIPTIONS = {
     low: '🔴 Cautious',
     medium: '🟡 Stable',
     high: '🟢 Growth Mode',
+  },
+  trainingGaps: {
+    title: 'Training & Enablement',
+    description: 'Comprehensive training plan for sales and operations',
+    tooltip: 'Do you have a structured training program? Are there regular enablement sessions? Can your team articulate the value proposition?',
+    low: '🔴 No Training Plan',
+    medium: '🟡 Basic Training',
+    high: '🟢 Comprehensive Program',
+  },
+  integrationComplexity: {
+    title: 'Integration Complexity',
+    description: 'Technical dependencies and system integration difficulty',
+    tooltip: 'How many systems need updates? Are APIs well-documented? Do you have test environments? Clean integration = few dependencies.',
+    low: '🔴 Many Dependencies',
+    medium: '🟡 Moderate Complexity',
+    high: '🟢 Clean Integration',
+  },
+  dataQuality: {
+    title: 'First-Party Data Quality',
+    description: 'Cleanliness and completeness of user data',
+    tooltip: 'Is your user data clean and well-structured? Do you have good email coverage? Are authentication rates high?',
+    low: '🔴 Fragmented Data',
+    medium: '🟡 Decent Quality',
+    high: '🟢 High Quality',
+  },
+  resourceAvailability: {
+    title: 'Resource Availability',
+    description: 'Dedicated engineering and operational resources',
+    tooltip: 'Do you have dedicated engineers for this project? Or are resources shared across multiple initiatives?',
+    low: '🔴 Shared Resources',
+    medium: '🟡 Part-Time Dedication',
+    high: '🟢 Dedicated Team',
   },
 };

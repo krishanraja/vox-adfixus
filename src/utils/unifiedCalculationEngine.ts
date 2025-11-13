@@ -41,6 +41,10 @@ export class UnifiedCalculationEngine {
       if (rf.salesReadiness !== undefined) {
         risk.salesEffectiveness *= rf.salesReadiness;
       }
+      if (rf.trainingGaps !== undefined) {
+        // Training gaps affect sales effectiveness and adoption
+        risk.salesEffectiveness *= rf.trainingGaps;
+      }
       if (rf.advertiserBuyIn !== undefined) {
         risk.capiDeploymentRate *= rf.advertiserBuyIn;
       }
@@ -49,6 +53,24 @@ export class UnifiedCalculationEngine {
       }
       if (rf.technicalDeploymentMonths !== undefined) {
         risk.rampUpMonths = rf.technicalDeploymentMonths;
+      }
+      if (rf.integrationComplexity !== undefined) {
+        // Integration complexity affects technical deployment speed
+        risk.addressabilityEfficiency *= rf.integrationComplexity;
+        risk.capiDeploymentRate *= rf.integrationComplexity;
+      }
+      if (rf.dataQuality !== undefined) {
+        // Data quality affects addressability and CAPI match rates
+        risk.addressabilityEfficiency *= rf.dataQuality;
+        risk.capiDeploymentRate *= rf.dataQuality;
+      }
+      if (rf.resourceAvailability !== undefined) {
+        // Resource availability affects adoption rate and ramp-up
+        risk.adoptionRate *= rf.resourceAvailability;
+        // Adjust ramp-up based on resource availability (less resources = longer ramp-up)
+        if (rf.resourceAvailability < 0.75) {
+          risk.rampUpMonths = Math.min(18, risk.rampUpMonths * (1 + (0.75 - rf.resourceAvailability)));
+        }
       }
       
       // Apply market conditions as overall dampener to financial metrics

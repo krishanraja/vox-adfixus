@@ -38,6 +38,10 @@ export interface AssumptionOverrides {
     advertiserBuyIn?: number; // 0.6-1.0, affects CAPI deployment rate
     organizationalOwnership?: number; // 0.6-1.0, affects adoption rate
     marketConditions?: number; // 0.7-1.0, overall market dampener
+    trainingGaps?: number; // 0.5-1.0, training program quality
+    integrationComplexity?: number; // 0.6-1.0, technical integration difficulty
+    dataQuality?: number; // 0.6-1.0, first-party data quality
+    resourceAvailability?: number; // 0.6-1.0, dedicated resources
   };
 }
 
