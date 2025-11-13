@@ -471,7 +471,8 @@ export const SimplifiedResults = ({
                 
                 {/* Vertical line at month 3 (POC end) */}
                 <ReferenceLine 
-                  x="Month 3" 
+                  x="Month 3"
+                  yAxisId="revenue"
                   stroke="#f59e0b" 
                   strokeDasharray="3 3"
                   label={{ value: 'POC → Full Contract', position: 'top', fill: '#f59e0b', fontSize: 11 }}
