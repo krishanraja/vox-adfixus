@@ -840,43 +840,23 @@ export const SimplifiedResults = ({
                   />
                 </div>
 
-                {/* Integration Complexity */}
+                {/* Integration Delays */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-sm flex items-center gap-2">
-                    <Code className="h-4 w-4" /> Integration Complexity
+                    <Code className="h-4 w-4" /> Integration Delays
                   </h4>
                   
                   <AssumptionSlider
-                    label={READINESS_DESCRIPTIONS.integrationComplexity.title}
-                    description={READINESS_DESCRIPTIONS.integrationComplexity.description}
-                    value={(readinessFactors?.integrationComplexity ?? 0.8) * 100}
+                    label={READINESS_DESCRIPTIONS.integrationDelays.title}
+                    description={READINESS_DESCRIPTIONS.integrationDelays.description}
+                    value={(readinessFactors?.integrationDelays ?? 0.8) * 100}
                     defaultValue={80}
                     min={60}
                     max={100}
                     step={5}
-                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.integrationComplexity.high : v >= 75 ? READINESS_DESCRIPTIONS.integrationComplexity.medium : READINESS_DESCRIPTIONS.integrationComplexity.low}
-                    onChange={(v) => handleReadinessChange('integrationComplexity', v / 100)}
-                    tooltipContent={READINESS_DESCRIPTIONS.integrationComplexity.tooltip}
-                  />
-                </div>
-
-                {/* Data Quality */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm flex items-center gap-2">
-                    <Settings className="h-4 w-4" /> First-Party Data Quality
-                  </h4>
-                  
-                  <AssumptionSlider
-                    label={READINESS_DESCRIPTIONS.dataQuality.title}
-                    description={READINESS_DESCRIPTIONS.dataQuality.description}
-                    value={(readinessFactors?.dataQuality ?? 0.8) * 100}
-                    defaultValue={80}
-                    min={60}
-                    max={100}
-                    step={5}
-                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.dataQuality.high : v >= 75 ? READINESS_DESCRIPTIONS.dataQuality.medium : READINESS_DESCRIPTIONS.dataQuality.low}
-                    onChange={(v) => handleReadinessChange('dataQuality', v / 100)}
-                    tooltipContent={READINESS_DESCRIPTIONS.dataQuality.tooltip}
+                    formatValue={(v) => v >= 90 ? READINESS_DESCRIPTIONS.integrationDelays.high : v >= 75 ? READINESS_DESCRIPTIONS.integrationDelays.medium : READINESS_DESCRIPTIONS.integrationDelays.low}
+                    onChange={(v) => handleReadinessChange('integrationDelays', v / 100)}
+                    tooltipContent={READINESS_DESCRIPTIONS.integrationDelays.tooltip}
                   />
                 </div>
 

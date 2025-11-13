@@ -82,22 +82,27 @@ export const Hero: React.FC<HeroProps> = ({ onStartQuiz }) => {
         <h2 className="text-2xl font-bold text-center text-foreground mb-8">
           Key Value Drivers
         </h2>
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           <div className="text-center">
-            <div className="text-3xl font-bold text-revenue-gain mb-2">65%</div>
-            <div className="text-muted-foreground text-sm">Safari Addressability Gain</div>
+            <div className="text-3xl font-bold text-revenue-gain mb-2">+35%</div>
+            <div className="text-muted-foreground text-sm">Addressability Gain</div>
+            <p className="text-xs text-muted-foreground/80 mt-2">
+              Most publishers are blind to Safari traffic, making 35% a reasonable improvement when you have a durable IP ID.
+            </p>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-primary mb-2">25%</div>
-            <div className="text-muted-foreground text-sm">CPM Uplift on Premium</div>
+            <div className="text-3xl font-bold text-primary mb-2">+45%</div>
+            <div className="text-muted-foreground text-sm">Yield Lift</div>
+            <p className="text-xs text-muted-foreground/80 mt-2">
+              Knowing your customer and meeting them with direct ad sales packages increases ad yield drastically compared to ad exchanges.
+            </p>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-accent mb-2">35%</div>
-            <div className="text-muted-foreground text-sm">CDP Cost Reduction</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-brand-secondary mb-2">12.5%</div>
-            <div className="text-muted-foreground text-sm">CAPI Service Fees</div>
+            <div className="text-3xl font-bold text-accent mb-2">+60%</div>
+            <div className="text-muted-foreground text-sm">CDP Coverage</div>
+            <p className="text-xs text-muted-foreground/80 mt-2">
+              Most CDPs installed by open web publishers only see logged in users (10-30% of customers). With a stable anonymous ID, that can drastically increase.
+            </p>
           </div>
         </div>
         <p className="text-xs italic text-muted-foreground mt-6 text-center">

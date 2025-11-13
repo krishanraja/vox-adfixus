@@ -54,15 +54,10 @@ export class UnifiedCalculationEngine {
       if (rf.technicalDeploymentMonths !== undefined) {
         risk.rampUpMonths = rf.technicalDeploymentMonths;
       }
-      if (rf.integrationComplexity !== undefined) {
-        // Integration complexity affects technical deployment speed
-        risk.addressabilityEfficiency *= rf.integrationComplexity;
-        risk.capiDeploymentRate *= rf.integrationComplexity;
-      }
-      if (rf.dataQuality !== undefined) {
-        // Data quality affects addressability and CAPI match rates
-        risk.addressabilityEfficiency *= rf.dataQuality;
-        risk.capiDeploymentRate *= rf.dataQuality;
+      if (rf.integrationDelays !== undefined) {
+        // Integration delays affect technical deployment speed
+        risk.addressabilityEfficiency *= rf.integrationDelays;
+        risk.capiDeploymentRate *= rf.integrationDelays;
       }
       if (rf.resourceAvailability !== undefined) {
         // Resource availability affects adoption rate and ramp-up

@@ -20,13 +20,10 @@ export interface ReadinessFactors {
   // 6. Training Gaps (0-1 scale)
   trainingGaps: number; // 0.5 = no training plan, 1.0 = comprehensive training
   
-  // 7. Integration Complexity (0-1 scale)
-  integrationComplexity: number; // 0.6 = many dependencies, 1.0 = clean integration
+  // 7. Integration Delays (0-1 scale)
+  integrationDelays: number; // 0.6 = many delays, 1.0 = on schedule
   
-  // 8. Data Quality (0-1 scale)
-  dataQuality: number; // 0.6 = fragmented data, 1.0 = clean first-party data
-  
-  // 9. Resource Availability (0-1 scale)
+  // 8. Resource Availability (0-1 scale)
   resourceAvailability: number; // 0.6 = shared resources, 1.0 = dedicated team
 }
 
@@ -38,8 +35,7 @@ export const READINESS_PRESETS: Record<'conservative' | 'normal' | 'optimistic',
     organizationalOwnership: 0.6,
     marketConditions: 0.7,
     trainingGaps: 0.5,
-    integrationComplexity: 0.6,
-    dataQuality: 0.6,
+    integrationDelays: 0.6,
     resourceAvailability: 0.6,
   },
   normal: {
@@ -49,8 +45,7 @@ export const READINESS_PRESETS: Record<'conservative' | 'normal' | 'optimistic',
     organizationalOwnership: 0.8,
     marketConditions: 0.85,
     trainingGaps: 0.75,
-    integrationComplexity: 0.8,
-    dataQuality: 0.8,
+    integrationDelays: 0.8,
     resourceAvailability: 0.75,
   },
   optimistic: {
@@ -60,8 +55,7 @@ export const READINESS_PRESETS: Record<'conservative' | 'normal' | 'optimistic',
     organizationalOwnership: 1.0,
     marketConditions: 1.0,
     trainingGaps: 1.0,
-    integrationComplexity: 1.0,
-    dataQuality: 1.0,
+    integrationDelays: 1.0,
     resourceAvailability: 1.0,
   },
 };
@@ -74,10 +68,9 @@ export function readinessToRiskScenario(factors: ReadinessFactors): RiskScenario
     factors.organizationalOwnership + 
     factors.marketConditions +
     (factors.trainingGaps ?? 0.75) +
-    (factors.integrationComplexity ?? 0.8) +
-    (factors.dataQuality ?? 0.8) +
+    (factors.integrationDelays ?? 0.8) +
     (factors.resourceAvailability ?? 0.75)
-  ) / 8;
+  ) / 7;
   
   if (avgReadiness >= 0.9) return 'optimistic';
   if (avgReadiness >= 0.7) return 'moderate';
@@ -130,21 +123,13 @@ export const READINESS_DESCRIPTIONS = {
     medium: '🟡 Basic Training',
     high: '🟢 Comprehensive Program',
   },
-  integrationComplexity: {
-    title: 'Integration Complexity',
-    description: 'Technical dependencies and system integration difficulty',
-    tooltip: 'How many systems need updates? Are APIs well-documented? Do you have test environments? Clean integration = few dependencies.',
-    low: '🔴 Many Dependencies',
-    medium: '🟡 Moderate Complexity',
-    high: '🟢 Clean Integration',
-  },
-  dataQuality: {
-    title: 'First-Party Data Quality',
-    description: 'Cleanliness and completeness of user data',
-    tooltip: 'Is your user data clean and well-structured? Do you have good email coverage? Are authentication rates high?',
-    low: '🔴 Fragmented Data',
-    medium: '🟡 Decent Quality',
-    high: '🟢 High Quality',
+  integrationDelays: {
+    title: 'Integration Delays',
+    description: 'Potential delays from integrating with existing systems',
+    tooltip: 'What timeline delays are expected from system integrations? Are there dependencies that could slow deployment?',
+    low: '🔴 Significant Delays',
+    medium: '🟡 Minor Delays',
+    high: '🟢 On Schedule',
   },
   resourceAvailability: {
     title: 'Resource Availability',

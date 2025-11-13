@@ -39,8 +39,7 @@ export interface AssumptionOverrides {
     organizationalOwnership?: number; // 0.6-1.0, affects adoption rate
     marketConditions?: number; // 0.7-1.0, overall market dampener
     trainingGaps?: number; // 0.5-1.0, training program quality
-    integrationComplexity?: number; // 0.6-1.0, technical integration difficulty
-    dataQuality?: number; // 0.6-1.0, first-party data quality
+    integrationDelays?: number; // 0.6-1.0, potential integration delays
     resourceAvailability?: number; // 0.6-1.0, dedicated resources
   };
 }
