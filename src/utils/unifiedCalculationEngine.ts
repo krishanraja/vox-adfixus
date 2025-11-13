@@ -455,6 +455,9 @@ export class UnifiedCalculationEngine {
     
     // Get ramp-up months from risk scenario
     const rampUpMonths = results.riskScenario ? RISK_SCENARIOS[results.riskScenario].rampUpMonths : 12;
+    
+    // Get pricing info for ROI calculation
+    const { costs } = results.roiAnalysis;
 
     return Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
@@ -482,6 +485,14 @@ export class UnifiedCalculationEngine {
 
       const monthlyUplift = totalMonthlyUplift * rampUpFactor;
       const projectedRevenue = currentMonthlyRevenue + monthlyUplift;
+      
+      // Calculate ROI for this month
+      const monthlyCost = month <= 3 
+        ? costs.pocPhaseMonthly  // POC pricing months 1-3
+        : costs.fullContractMonthly; // Full contract month 4+
+      
+      const netROI = monthlyUplift - monthlyCost;
+      const roiMultiple = monthlyCost > 0 ? monthlyUplift / monthlyCost : 0;
 
       return {
         month,
@@ -490,6 +501,8 @@ export class UnifiedCalculationEngine {
         projectedRevenue,
         uplift: monthlyUplift,
         rampUpFactor,
+        netROI,
+        roiMultiple,
       };
     });
   }

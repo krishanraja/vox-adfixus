@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank } from 'lucide-react';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank, LineChart as LineChartIcon } from 'lucide-react';
 import type { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
 import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -11,10 +11,12 @@ import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { RISK_SCENARIO_DESCRIPTIONS, type RiskScenario } from '@/constants/riskScenarios';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { AssumptionSlider } from './calculator/AssumptionSlider';
 import { Badge } from './ui/badge';
+import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { UnifiedCalculationEngine } from '@/utils/unifiedCalculationEngine';
 
 interface SimplifiedResultsProps {
   results: UnifiedResults;
@@ -41,10 +43,17 @@ export const SimplifiedResults = ({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+  
   const aggregated = aggregateDomainInputs(
     results.inputs.selectedDomains, 
     results.inputs.displayCPM, 
     results.inputs.videoCPM
+  );
+
+  // Generate monthly projections with ROI data
+  const monthlyProjections = useMemo(() => 
+    UnifiedCalculationEngine.generateMonthlyProjection(results),
+    [results]
   );
 
   const toggleSection = (section: string) => {
@@ -305,135 +314,187 @@ export const SimplifiedResults = ({
         </div>
       </Card>
 
-      {/* ROI Analysis Card */}
-      <Card className="border-2 border-green-600/30 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+      {/* Simplified ROI Card */}
+      <Card className="p-6 border-2 border-green-500/20 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-            <PiggyBank className="h-6 w-6" />
-            Return on Investment Analysis
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-6 w-6 text-green-600" />
+            Return on Investment
           </CardTitle>
-          <CardDescription>
-            Net revenue impact after AdFixus platform costs
-          </CardDescription>
+          <p className="text-sm text-muted-foreground">
+            Revenue benefit multiple vs AdFixus investment
+          </p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Pricing Summary */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-muted-foreground mb-1">POC Phase (3 months)</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatCurrency(results.roiAnalysis.costs.pocPhaseMonthly)}/mo
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* POC Phase ROI */}
+            <div className="text-center p-6 bg-white dark:bg-gray-900 rounded-xl border-2 border-green-300 dark:border-green-700 shadow-sm">
+              <div className="text-sm font-medium text-muted-foreground mb-2">
+                POC Phase (Months 1-3)
               </div>
-              <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                <div>Platform: {formatCurrency(results.roiAnalysis.costs.platformFeePOC)}/mo</div>
-                <div>CAPI Fees: {formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
+              <div className="text-6xl font-bold text-green-600 dark:text-green-400 mb-2">
+                {results.roiAnalysis.roiMultiple.pocPhase.toFixed(1)}x
               </div>
-            </div>
-            
-            <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="text-sm text-muted-foreground mb-1">Full Contract</div>
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {formatCurrency(results.roiAnalysis.costs.fullContractMonthly)}/mo
-              </div>
-              <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                <div>Platform: {formatCurrency(results.roiAnalysis.costs.platformFeeFull)}/mo</div>
-                <div>CAPI Fees: {formatCurrency(results.roiAnalysis.costs.capiServiceFees)}/mo</div>
+              <div className="text-xs text-muted-foreground">
+                ROI Multiple
               </div>
             </div>
-          </div>
 
-          <Separator />
-
-          {/* Net ROI Comparison */}
-          <div>
-            <h4 className="font-semibold mb-3 text-foreground">Net Monthly Revenue Uplift (After Costs)</h4>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-5 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-lg border-2 border-green-300 dark:border-green-700">
-                <div className="text-sm font-medium text-green-800 dark:text-green-300 mb-2">POC Phase (Months 1-3)</div>
-                <div className="text-3xl font-bold text-green-700 dark:text-green-400">
-                  +{formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}
-                </div>
-                <div className="text-sm text-green-700 dark:text-green-400 mt-2 space-y-1">
-                  <div className="font-semibold">{results.roiAnalysis.roiMultiple.pocPhase.toFixed(1)}x ROI</div>
-                  <div className="text-xs">Annual: {formatCurrency(results.roiAnalysis.netAnnualROI.pocPhase)}</div>
-                  <div className="text-xs">Payback: {results.roiAnalysis.paybackMonths.pocPhase.toFixed(1)} months</div>
-                </div>
+            {/* Full Contract ROI */}
+            <div className="text-center p-6 bg-white dark:bg-gray-900 rounded-xl border-2 border-emerald-300 dark:border-emerald-700 shadow-sm">
+              <div className="text-sm font-medium text-muted-foreground mb-2">
+                Full Contract (Month 4+)
               </div>
-              
-              <div className="p-5 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 rounded-lg border-2 border-purple-300 dark:border-purple-700">
-                <div className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-2">Full Contract (Month 4+)</div>
-                <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
-                  +{formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}
-                </div>
-                <div className="text-sm text-purple-700 dark:text-purple-400 mt-2 space-y-1">
-                  <div className="font-semibold">{results.roiAnalysis.roiMultiple.fullContract.toFixed(1)}x ROI</div>
-                  <div className="text-xs">Annual: {formatCurrency(results.roiAnalysis.netAnnualROI.fullContract)}</div>
-                  <div className="text-xs">Payback: {results.roiAnalysis.paybackMonths.fullContract.toFixed(1)} months</div>
-                </div>
+              <div className="text-6xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
+                {results.roiAnalysis.roiMultiple.fullContract.toFixed(1)}x
+              </div>
+              <div className="text-xs text-muted-foreground">
+                ROI Multiple
               </div>
             </div>
           </div>
 
-          {/* Breakdown Collapsible */}
-          <Collapsible>
-            <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400 hover:underline">
-              <Calculator className="h-4 w-4" />
-              View ROI Calculation Breakdown
-              <ChevronDown className="h-4 w-4" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4 space-y-3 text-sm bg-white dark:bg-gray-900 p-4 rounded-lg border">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Total Monthly Benefits:</span>
-                <span className="font-semibold text-green-600 dark:text-green-400">
-                  +{formatCurrency(results.roiAnalysis.totalMonthlyBenefits)}
-                </span>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="font-medium text-xs uppercase text-muted-foreground">POC Phase Costs:</div>
-                <div className="flex justify-between pl-4">
-                  <span className="text-muted-foreground">Platform Fee (monthly):</span>
-                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.platformFeePOC)}</span>
-                </div>
-                <div className="flex justify-between pl-4">
-                  <span className="text-muted-foreground">CAPI Service Fees (12.5%):</span>
-                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
-                </div>
-                <div className="flex justify-between pl-4 font-semibold pt-2 border-t">
-                  <span>Net POC ROI:</span>
-                  <span className="text-green-600 dark:text-green-400">+{formatCurrency(results.roiAnalysis.netMonthlyROI.pocPhase)}</span>
-                </div>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="font-medium text-xs uppercase text-muted-foreground">Full Contract Costs:</div>
-                <div className="flex justify-between pl-4">
-                  <span className="text-muted-foreground">Platform Fee (monthly):</span>
-                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.platformFeeFull)}</span>
-                </div>
-                <div className="flex justify-between pl-4">
-                  <span className="text-muted-foreground">CAPI Service Fees (12.5%):</span>
-                  <span className="text-red-600 dark:text-red-400">-{formatCurrency(results.roiAnalysis.costs.capiServiceFees)}</span>
-                </div>
-                <div className="flex justify-between pl-4 font-semibold pt-2 border-t">
-                  <span>Net Full Contract ROI:</span>
-                  <span className="text-green-600 dark:text-green-400">+{formatCurrency(results.roiAnalysis.netMonthlyROI.fullContract)}</span>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Full functionality during POC at discounted rate, transitioning to standard contract pricing
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* Pricing Disclaimer */}
-          <Alert className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertDescription className="text-xs text-blue-900 dark:text-blue-200">
-              <strong>POC Pricing:</strong> $15,000 flat fee (3-month term) represents 50% discount, valid until Dec 31, 2025. 
-              Covers full technology capabilities from AdFixus (infrastructure provisioning, monitoring, and CAPI enablement).
-              <br/><br/>
-              <strong>Full Contract:</strong> Estimated $26K/month for 16 domains / 600M pageviews. 
-              Final pricing subject to full scope and terms negotiation.
-            </AlertDescription>
-          </Alert>
+      {/* Monthly Projection Chart */}
+      <Card className="p-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LineChartIcon className="h-6 w-6" />
+            12-Month Revenue & ROI Projection
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Revenue uplift and ROI multiple over time with implementation ramp-up
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={monthlyProjections}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="monthLabel" 
+                  tick={{ fontSize: 12 }}
+                  stroke="currentColor"
+                />
+                
+                {/* Left Y-Axis: Revenue in dollars */}
+                <YAxis 
+                  yAxisId="revenue"
+                  tick={{ fontSize: 12 }}
+                  stroke="currentColor"
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
+                  label={{ value: 'Monthly Revenue Uplift', angle: -90, position: 'insideLeft' }}
+                />
+                
+                {/* Right Y-Axis: ROI multiple */}
+                <YAxis 
+                  yAxisId="roi"
+                  orientation="right"
+                  tick={{ fontSize: 12 }}
+                  stroke="currentColor"
+                  domain={[0, 'auto']}
+                  tickFormatter={(value) => `${value.toFixed(1)}x`}
+                  label={{ value: 'ROI Multiple', angle: 90, position: 'insideRight' }}
+                />
+                
+                <RechartsTooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg border">
+                          <p className="font-semibold mb-2">{data.monthLabel}</p>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between gap-4">
+                              <span className="text-muted-foreground">Revenue Uplift:</span>
+                              <span className="font-semibold text-blue-600">
+                                {formatCurrency(data.uplift)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-muted-foreground">Net ROI:</span>
+                              <span className="font-semibold text-green-600">
+                                {formatCurrency(data.netROI)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-muted-foreground">ROI Multiple:</span>
+                              <span className="font-semibold text-emerald-600">
+                                {data.roiMultiple.toFixed(1)}x
+                              </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-2">
+                              Ramp-up: {(data.rampUpFactor * 100).toFixed(0)}%
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="line"
+                />
+                
+                {/* Revenue Uplift Line */}
+                <Line
+                  yAxisId="revenue"
+                  type="monotone"
+                  dataKey="uplift"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  name="Revenue Uplift"
+                  dot={{ fill: '#3b82f6', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                
+                {/* ROI Multiple Line */}
+                <Line
+                  yAxisId="roi"
+                  type="monotone"
+                  dataKey="roiMultiple"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  name="ROI Multiple"
+                  dot={{ fill: '#10b981', r: 4 }}
+                  activeDot={{ r: 6 }}
+                  strokeDasharray="5 5"
+                />
+                
+                {/* Vertical line at month 3 (POC end) */}
+                <ReferenceLine 
+                  x="Month 3" 
+                  stroke="#f59e0b" 
+                  strokeDasharray="3 3"
+                  label={{ value: 'POC → Full Contract', position: 'top', fill: '#f59e0b', fontSize: 11 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          
+          {/* Chart Legend/Key */}
+          <div className="mt-4 flex flex-wrap gap-4 justify-center text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-0.5 bg-blue-500"></div>
+              <span className="text-muted-foreground">Revenue Uplift (Left Axis)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-0.5 bg-green-500 border-t-2 border-dashed border-green-500"></div>
+              <span className="text-muted-foreground">ROI Multiple (Right Axis)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-0.5 bg-orange-500 border-t-2 border-dashed border-orange-500"></div>
+              <span className="text-muted-foreground">POC Phase Transition</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

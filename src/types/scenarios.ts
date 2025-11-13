@@ -169,6 +169,8 @@ export interface MonthlyProjection {
   projectedRevenue: number;
   uplift: number;
   rampUpFactor: number;
+  roiMultiple: number;
+  netROI: number;
 }
 
 export interface ComparisonData {
