@@ -17,9 +17,13 @@ export interface AggregatedInputs {
 export const aggregateDomainInputs = (
   domainIds: string[], 
   displayCPM: number = 4.50, 
-  videoCPM: number = 15.00
+  videoCPM: number = 15.00,
+  pageviewOverrides?: Record<string, number>
 ): AggregatedInputs => {
-  const domains = VOX_MEDIA_DOMAINS.filter(d => domainIds.includes(d.id));
+  const domains = VOX_MEDIA_DOMAINS.filter(d => domainIds.includes(d.id)).map(d => ({
+    ...d,
+    monthlyPageviews: pageviewOverrides?.[d.id] ?? d.monthlyPageviews
+  }));
   
   if (domains.length === 0) {
     // Return defaults if no domains selected

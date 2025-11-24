@@ -50,7 +50,8 @@ export const SimplifiedResults = ({
   const aggregated = aggregateDomainInputs(
     results.inputs.selectedDomains, 
     results.inputs.displayCPM, 
-    results.inputs.videoCPM
+    results.inputs.videoCPM,
+    results.inputs.domainPageviewOverrides
   );
 
   // Generate monthly projections with ROI data
@@ -510,7 +511,7 @@ export const SimplifiedResults = ({
               <CollapsibleContent>
                 <div className="p-6 pt-0 space-y-3 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Based on {results.inputs.capiCampaignsPerMonth} campaigns per month at {formatCurrency(results.inputs.avgCampaignSpend)} average spend using AdFixus Stream (CAPI). Each campaign requires individual deployment. The uplift shown is NET of the 12.5% service fees.
+                    Based on {results.inputs.capiCampaignsPerMonth} campaigns per month at {formatCurrency(results.inputs.avgCampaignSpend)} average spend using AdFixus Stream (CAPI). Only {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} of campaign spend ({formatCurrency(results.capiCapabilities.capiEligibleSpend)}/mo) requires CAPI tracking. The uplift shown is NET of the 12.5% service fees applied only to CAPI-enabled line items.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -533,7 +534,7 @@ export const SimplifiedResults = ({
                   <Alert className="mt-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
                     <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <AlertDescription className="text-xs text-blue-900 dark:text-blue-100">
-                      <strong>CAPI Revenue Calculation:</strong> Baseline campaign spend ({formatCurrency(results.inputs.capiCampaignsPerMonth * results.inputs.avgCampaignSpend)}/mo) improved by {formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)} = Gross benefit. Service fees ({formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo at 12.5%) are deducted to show NET uplift to Vox.
+                      <strong>CAPI Revenue Calculation:</strong> Of the {formatCurrency(results.inputs.capiCampaignsPerMonth * results.inputs.avgCampaignSpend)}/mo total campaign spend, only {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} ({formatCurrency(results.capiCapabilities.capiEligibleSpend)}/mo) are CAPI-enabled line items. These improve by {formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)} = {formatCurrency(results.capiCapabilities.conversionTrackingRevenue)}/mo gross benefit. Service fees ({formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo at 12.5%) apply only to CAPI-enabled spend and are deducted to show NET uplift to Vox.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -650,7 +651,8 @@ export const SimplifiedResults = ({
                     <li>• Durable ID enables user recognition beyond 7-day ITP cookie limit</li>
                     <li>• CPM uplift: 25% on newly addressable inventory</li>
                     <li>• CDP cost reduction: 10-18% of platform fees (from reduced ID bloat)</li>
-                    <li>• CAPI service fee: 12.5% of campaign spend (deducted from gross CAPI benefit)</li>
+                     <li>• CAPI service fee: 12.5% of CAPI-enabled campaign spend only (deducted from gross CAPI benefit)</li>
+                    <li>• CAPI line item share: {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} of campaigns use CAPI tracking</li>
                     <li>• CAPI uplift shown is NET of service fees</li>
                     <li>• Premium inventory: 30% of total (receives 25% yield uplift)</li>
                     <li>• Ramp-up schedule: varies by business readiness assessment</li>
