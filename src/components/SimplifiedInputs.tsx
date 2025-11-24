@@ -3,9 +3,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import type { SimplifiedInputs } from '@/types/scenarios';
 import { DomainSelector } from '@/components/DomainSelector';
-import { TrendingUp, Info } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface SimplifiedInputsFormProps {
   inputs: SimplifiedInputs;
@@ -199,42 +198,6 @@ export const SimplifiedInputsForm = ({
               />
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="capi-line-item-share" className="text-sm font-medium flex items-center gap-2">
-                  CAPI Line Item Share
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-3 w-3 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p>Only the line items requiring conversion tracking incur the 12.5% AdFixus service fee. Typically 60% of campaign spend.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </Label>
-                <span className="text-sm font-semibold text-primary">
-                  {Math.round(inputs.capiLineItemShare * 100)}%
-                </span>
-              </div>
-              <Slider
-                id="capi-line-item-share"
-                min={0.2}
-                max={1.0}
-                step={0.05}
-                value={[inputs.capiLineItemShare]}
-                onValueChange={(value) =>
-                  onInputChange('capiLineItemShare', value[0])
-                }
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>20%</span>
-                <span>Default 60%</span>
-                <span>100%</span>
-              </div>
-            </div>
           </div>
         </Card>
       )}
