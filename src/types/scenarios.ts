@@ -16,6 +16,7 @@ export interface SimplifiedInputs {
   avgCampaignSpend: number;
   capiLineItemShare: number; // 0.20 - 1.00, default 0.60 (60% of campaign spend is CAPI-enabled)
   domainPageviewOverrides?: Record<string, number>; // Optional overrides for domain monthly pageviews
+  safariShareOverrides?: Record<string, number>; // Optional overrides for domain Safari traffic share (0.0 - 1.0)
 }
 
 export interface AssumptionOverrides {

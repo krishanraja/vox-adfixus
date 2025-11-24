@@ -51,7 +51,8 @@ export const SimplifiedResults = ({
     results.inputs.selectedDomains, 
     results.inputs.displayCPM, 
     results.inputs.videoCPM,
-    results.inputs.domainPageviewOverrides
+    results.inputs.domainPageviewOverrides,
+    results.inputs.safariShareOverrides
   );
 
   // Generate monthly projections with ROI data
@@ -949,7 +950,7 @@ export const SimplifiedResults = ({
                         min={40}
                         max={70}
                         step={1}
-                        formatValue={(v) => `${v}%`}
+                        formatValue={(v) => `${Math.round(v)}%`}
                         onChange={(v) => handleAssumptionChange('safariBaselineAddressability', v / 100)}
                         tooltipContent="With Safari's 7-day ITP limit, tracking typically works for ~7 days. Industry average is 55%, with some publishers achieving 60-65% through first-party relationships."
                       />
@@ -962,7 +963,7 @@ export const SimplifiedResults = ({
                         min={75}
                         max={95}
                         step={5}
-                        formatValue={(v) => `${v}%`}
+                        formatValue={(v) => `${Math.round(v)}%`}
                         onChange={(v) => handleAssumptionChange('safariWithDurableId', v / 100)}
                         tooltipContent="Durable IDs recognize returning users beyond Safari's 7-day limit. Conservative estimate is 85%, with some publishers achieving 90%+ with strong authentication."
                       />
@@ -975,7 +976,7 @@ export const SimplifiedResults = ({
                         min={10}
                         max={40}
                         step={5}
-                        formatValue={(v) => `${v}%`}
+                        formatValue={(v) => `${Math.round(v)}%`}
                         onChange={(v) => handleAssumptionChange('cpmUpliftFactor', v / 100)}
                         tooltipContent="Addressable inventory commands premium CPMs due to better targeting and measurement. Industry benchmarks show 20-30% uplift, with performance campaigns seeing up to 40%."
                       />
@@ -988,7 +989,7 @@ export const SimplifiedResults = ({
                         min={10}
                         max={18}
                         step={1}
-                        formatValue={(v) => `${v}%`}
+                        formatValue={(v) => `${Math.round(v)}%`}
                         onChange={(v) => handleAssumptionChange('cdpCostReduction', v / 100)}
                         tooltipContent="Based on ~18% ID overlap observed in production. Reducing ID bloat from 3.0x to 1.1x per user lowers CDP/martech platform costs that charge per profile or API call."
                       />
@@ -1009,7 +1010,7 @@ export const SimplifiedResults = ({
                             min={10}
                             max={20}
                             step={2.5}
-                            formatValue={(v) => `${v}%`}
+                            formatValue={(v) => `${v.toFixed(1)}%`}
                             onChange={(v) => handleAssumptionChange('capiServiceFee', v / 100)}
                             tooltipContent="Service fee for managed CAPI campaigns. Industry standard is 10-15% for self-serve, 15-20% for managed services with optimization."
                           />
@@ -1022,7 +1023,7 @@ export const SimplifiedResults = ({
                             min={50}
                             max={90}
                             step={5}
-                            formatValue={(v) => `${v}%`}
+                            formatValue={(v) => `${Math.round(v)}%`}
                             onChange={(v) => handleAssumptionChange('capiMatchRate', v / 100)}
                             tooltipContent="Match rate improvement from baseline 30% to 75%+ with AdFixus. Conservative estimate is 75%, though premium publishers with strong authentication can achieve 80-85%."
                           />
@@ -1045,7 +1046,7 @@ export const SimplifiedResults = ({
                             min={20}
                             max={50}
                             step={5}
-                            formatValue={(v) => `${v}%`}
+                            formatValue={(v) => `${Math.round(v)}%`}
                             onChange={(v) => handleAssumptionChange('premiumInventoryShare', v / 100)}
                             tooltipContent="Percentage of total inventory sold as premium or performance-based campaigns. Premium publishers typically range from 25-40%, with top-tier reaching 50%."
                           />
@@ -1058,7 +1059,7 @@ export const SimplifiedResults = ({
                             min={15}
                             max={40}
                             step={5}
-                            formatValue={(v) => `${v}%`}
+                            formatValue={(v) => `${Math.round(v)}%`}
                             onChange={(v) => handleAssumptionChange('premiumYieldUplift', v / 100)}
                             tooltipContent="Additional yield on premium inventory due to better performance and measurement. Industry benchmarks show 20-30% uplift, with guaranteed campaigns seeing up to 40%."
                           />
