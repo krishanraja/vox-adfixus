@@ -9,6 +9,7 @@ export const useScenarioCalculator = () => {
     videoCPM: 15.00,
     capiCampaignsPerMonth: 10,
     avgCampaignSpend: 100000,
+    capiLineItemShare: 0.60, // Default 60% of campaign spend is CAPI-enabled
   });
 
   const [scenario, setScenario] = useState<ScenarioState>({
@@ -49,6 +50,7 @@ export const useScenarioCalculator = () => {
       videoCPM: 15.00,
       capiCampaignsPerMonth: 10,
       avgCampaignSpend: 100000,
+      capiLineItemShare: 0.60,
     });
     setScenario({
       deployment: 'multi',

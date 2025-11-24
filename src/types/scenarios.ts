@@ -14,6 +14,8 @@ export interface SimplifiedInputs {
   videoCPM: number;
   capiCampaignsPerMonth: number;
   avgCampaignSpend: number;
+  capiLineItemShare: number; // 0.20 - 1.00, default 0.60 (60% of campaign spend is CAPI-enabled)
+  domainPageviewOverrides?: Record<string, number>; // Optional overrides for domain monthly pageviews
 }
 
 export interface AssumptionOverrides {
@@ -129,8 +131,12 @@ export interface UnifiedResults {
   // CAPI Capabilities (optional)
   capiCapabilities?: {
     matchRateImprovement: number;
+    baselineCapiSpend: number;
+    capiEligibleSpend: number; // CAPI-enabled portion of campaign spend
+    totalCapiSpendWithImprovement: number;
     conversionTrackingRevenue: number;
     campaignServiceFees: number;
+    capiLaborSavings: number;
     monthlyUplift: number;
     annualUplift: number;
     details: {

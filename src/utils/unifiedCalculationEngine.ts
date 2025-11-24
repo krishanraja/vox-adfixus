@@ -17,11 +17,12 @@ export class UnifiedCalculationEngine {
     riskScenario: RiskScenario = 'moderate',
     overrides?: AssumptionOverrides
   ): UnifiedResults {
-    // Aggregate domain inputs with user-provided CPMs
+    // Aggregate domain inputs with user-provided CPMs and pageview overrides
     const aggregated = aggregateDomainInputs(
       inputs.selectedDomains, 
       inputs.displayCPM, 
-      inputs.videoCPM
+      inputs.videoCPM,
+      inputs.domainPageviewOverrides
     );
     const { 
       totalMonthlyPageviews, 
@@ -310,23 +311,27 @@ export class UnifiedCalculationEngine {
     // Now using user-configurable inputs instead of hardcoded values
     const estimatedCapiCampaigns = inputs.capiCampaignsPerMonth;
     const avgCampaignSpend = inputs.avgCampaignSpend;
+    const capiLineItemShare = inputs.capiLineItemShare; // % of campaign spend that is CAPI-enabled
     const serviceFee = overrides?.capiServiceFee ?? CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
 
     // Total baseline CAPI campaign spend
     const baselineCapiSpend = estimatedCapiCampaigns * avgCampaignSpend;
+    
+    // CAPI-eligible spend (only line items running CAPI tracking)
+    const capiEligibleSpend = baselineCapiSpend * capiLineItemShare;
 
     // Operational labor savings from CAPI (reduced troubleshooting, better data quality)
     const capiLaborSavings = OPERATIONAL_BENCHMARKS.MANUAL_LABOR_HOURS_SAVED * OPERATIONAL_BENCHMARKS.HOURLY_RATE;
 
-    // With better conversion tracking, advertisers increase spend by 40%
+    // With better conversion tracking, advertisers increase spend by 40% on CAPI-enabled line items
     const conversionImprovement = CAPI_CAMPAIGN_VALUES.CONVERSION_RATE_MULTIPLIER - 1;
-    const totalCapiSpendWithImprovement = baselineCapiSpend * (1 + conversionImprovement);
+    const improvedCapiEligibleSpend = capiEligibleSpend * (1 + conversionImprovement);
 
-    // Additional revenue from improved conversion tracking
-    const conversionTrackingRevenue = baselineCapiSpend * conversionImprovement;
+    // Additional revenue from improved conversion tracking (only on CAPI-enabled line items)
+    const conversionTrackingRevenue = capiEligibleSpend * conversionImprovement;
 
-    // Service fee on TOTAL CAPI campaign volume (baseline + growth)
-    const campaignServiceFees = totalCapiSpendWithImprovement * serviceFee;
+    // Service fee applies ONLY to CAPI-enabled line items (with improvement)
+    const campaignServiceFees = improvedCapiEligibleSpend * serviceFee;
 
     // Apply deployment multiplier only (CAPI works the same regardless of addressability)
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
@@ -334,14 +339,15 @@ export class UnifiedCalculationEngine {
     // NET Publisher benefit from CAPI:
     // 1. Additional revenue from better conversion tracking: +conversionTrackingRevenue
     // 2. Operational labor savings: +capiLaborSavings
-    // 3. MINUS service fees paid to AdFixus: -campaignServiceFees
+    // 3. MINUS service fees paid to AdFixus (only on CAPI-enabled spend): -campaignServiceFees
     const monthlyUplift = (conversionTrackingRevenue + capiLaborSavings - campaignServiceFees) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
     return {
       matchRateImprovement,
       baselineCapiSpend,
-      totalCapiSpendWithImprovement,
+      capiEligibleSpend,
+      totalCapiSpendWithImprovement: baselineCapiSpend + conversionTrackingRevenue, // Total including all campaigns
       conversionTrackingRevenue,
       campaignServiceFees,
       capiLaborSavings,
