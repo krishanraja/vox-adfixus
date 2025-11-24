@@ -22,7 +22,8 @@ export const SimplifiedInputsForm = ({
     inputs.selectedDomains, 
     inputs.displayCPM, 
     inputs.videoCPM,
-    inputs.domainPageviewOverrides
+    inputs.domainPageviewOverrides,
+    inputs.safariShareOverrides
   );
   const showCapiInputs = inputs.selectedDomains.length > 0;
   
@@ -34,6 +35,17 @@ export const SimplifiedInputsForm = ({
     } else {
       newOverrides[domainId] = pageviews;
       onInputChange('domainPageviewOverrides', newOverrides);
+    }
+  };
+  
+  const handleSafariShareOverride = (domainId: string, safariShare: number | undefined) => {
+    const newOverrides = { ...inputs.safariShareOverrides };
+    if (safariShare === undefined) {
+      delete newOverrides[domainId];
+      onInputChange('safariShareOverrides', Object.keys(newOverrides).length > 0 ? newOverrides : undefined);
+    } else {
+      newOverrides[domainId] = safariShare;
+      onInputChange('safariShareOverrides', newOverrides);
     }
   };
 
@@ -53,6 +65,8 @@ export const SimplifiedInputsForm = ({
         onChange={(domains) => onInputChange('selectedDomains', domains)}
         pageviewOverrides={inputs.domainPageviewOverrides}
         onPageviewOverrideChange={handlePageviewOverride}
+        safariShareOverrides={inputs.safariShareOverrides}
+        onSafariShareOverrideChange={handleSafariShareOverride}
       />
 
       {/* CPM Configuration */}
@@ -201,7 +215,7 @@ export const SimplifiedInputsForm = ({
                   </TooltipProvider>
                 </Label>
                 <span className="text-sm font-semibold text-primary">
-                  {(inputs.capiLineItemShare * 100).toFixed(0)}%
+                  {Math.round(inputs.capiLineItemShare * 100)}%
                 </span>
               </div>
               <Slider

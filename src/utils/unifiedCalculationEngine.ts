@@ -17,12 +17,13 @@ export class UnifiedCalculationEngine {
     riskScenario: RiskScenario = 'moderate',
     overrides?: AssumptionOverrides
   ): UnifiedResults {
-    // Aggregate domain inputs with user-provided CPMs and pageview overrides
+    // Aggregate domain inputs with user-provided CPMs and pageview/safari overrides
     const aggregated = aggregateDomainInputs(
       inputs.selectedDomains, 
       inputs.displayCPM, 
       inputs.videoCPM,
-      inputs.domainPageviewOverrides
+      inputs.domainPageviewOverrides,
+      inputs.safariShareOverrides
     );
     const { 
       totalMonthlyPageviews, 

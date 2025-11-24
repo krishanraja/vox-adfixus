@@ -28,7 +28,7 @@ export const AssumptionSlider = ({
   onChange,
   tooltipContent,
 }: AssumptionSliderProps) => {
-  const isModified = Math.abs(value - defaultValue) > 0.001;
+  const isModified = Math.abs(value - defaultValue) > 0.0001;
   
   return (
     <div className="space-y-2 p-4 rounded-lg border border-border hover:border-primary/30 transition-colors">

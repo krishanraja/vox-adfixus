@@ -13,11 +13,18 @@ interface DomainSelectorProps {
   onChange: (domains: string[]) => void;
   pageviewOverrides?: Record<string, number>;
   onPageviewOverrideChange?: (domainId: string, pageviews: number | undefined) => void;
+  safariShareOverrides?: Record<string, number>;
+  onSafariShareOverrideChange?: (domainId: string, safariShare: number | undefined) => void;
 }
 
-export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, onPageviewOverrideChange }: DomainSelectorProps) => {
+export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, onPageviewOverrideChange, safariShareOverrides, onSafariShareOverrideChange }: DomainSelectorProps) => {
   const [editingDomain, setEditingDomain] = useState<string | null>(null);
-  const aggregated = aggregateDomainInputs(selectedDomains, 4.50, 15.00, pageviewOverrides);
+  const [editingSafari, setEditingSafari] = useState<string | null>(null);
+  const aggregated = aggregateDomainInputs(selectedDomains, 4.50, 15.00, pageviewOverrides, safariShareOverrides);
+  
+  const formatNumberWithCommas = (num: number) => {
+    return num.toLocaleString('en-US');
+  };
   
   const handleToggleDomain = (domainId: string) => {
     if (selectedDomains.includes(domainId)) {
@@ -109,8 +116,11 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
                 {domains.map((domain) => {
                   const isSelected = selectedDomains.includes(domain.id);
                   const currentPageviews = pageviewOverrides?.[domain.id] ?? domain.monthlyPageviews;
-                  const isOverridden = pageviewOverrides?.[domain.id] !== undefined;
-                  const isEditing = editingDomain === domain.id;
+                  const isPageviewOverridden = pageviewOverrides?.[domain.id] !== undefined;
+                  const isEditingPageviews = editingDomain === domain.id;
+                  const currentSafariShare = safariShareOverrides?.[domain.id] ?? domain.audienceProfile.safariShare;
+                  const isSafariOverridden = safariShareOverrides?.[domain.id] !== undefined;
+                  const isEditingSafariShare = editingSafari === domain.id;
                   
                   return (
                     <div
@@ -139,20 +149,19 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
                           {/* Editable Pageviews */}
                           {isSelected && onPageviewOverrideChange && (
                             <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
-                              {isEditing ? (
+                              {isEditingPageviews ? (
                                 <div className="flex items-center gap-2">
                                   <Input
-                                    type="number"
-                                    value={currentPageviews}
+                                    type="text"
+                                    value={formatNumberWithCommas(currentPageviews)}
                                     onChange={(e) => {
-                                      const value = parseInt(e.target.value);
+                                      const value = parseInt(e.target.value.replace(/,/g, ''));
                                       if (!isNaN(value)) {
                                         onPageviewOverrideChange(domain.id, value);
                                       }
                                     }}
                                     className="h-7 text-xs"
-                                    step={1000000}
-                                    min={0}
+                                    placeholder="Monthly pageviews"
                                   />
                                   <Button
                                     size="sm"
@@ -165,11 +174,11 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
                                 </div>
                               ) : (
                                 <div className="flex items-center justify-between gap-2">
-                                  <Badge variant={isOverridden ? "default" : "secondary"} className="text-xs">
-                                    {formatPageviews(currentPageviews)}/mo
+                                  <Badge variant={isPageviewOverridden ? "default" : "secondary"} className="text-xs">
+                                    {formatNumberWithCommas(currentPageviews)}/mo
                                   </Badge>
                                   <div className="flex items-center gap-1">
-                                    {isOverridden && (
+                                    {isPageviewOverridden && (
                                       <Button
                                         size="sm"
                                         variant="ghost"
@@ -195,15 +204,76 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
                             </div>
                           )}
                           
-                          {!isSelected && (
-                            <Badge variant="secondary" className="text-xs">
-                              {formatPageviews(domain.monthlyPageviews)}/mo
-                            </Badge>
+                          {/* Editable Safari Share */}
+                          {isSelected && onSafariShareOverrideChange && (
+                            <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
+                              {isEditingSafariShare ? (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    value={Math.round(currentSafariShare * 100)}
+                                    onChange={(e) => {
+                                      const value = parseInt(e.target.value);
+                                      if (!isNaN(value) && value >= 0 && value <= 100) {
+                                        onSafariShareOverrideChange(domain.id, value / 100);
+                                      }
+                                    }}
+                                    className="h-7 text-xs"
+                                    min={0}
+                                    max={100}
+                                  />
+                                  <span className="text-xs">%</span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingSafari(null)}
+                                    className="h-7 px-2"
+                                  >
+                                    Done
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    Safari: {Math.round(currentSafariShare * 100)}% of traffic
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    {isSafariOverridden && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => onSafariShareOverrideChange(domain.id, undefined)}
+                                        className="h-6 w-6 p-0"
+                                        title="Reset to default"
+                                      >
+                                        <RotateCcw className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => setEditingSafari(domain.id)}
+                                      className="h-6 w-6 p-0"
+                                      title="Edit Safari traffic %"
+                                    >
+                                      <Edit2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           )}
                           
-                          <div className="text-xs text-muted-foreground">
-                            Safari: {(domain.audienceProfile.safariShare * 100).toFixed(0)}% of traffic
-                          </div>
+                          {!isSelected && (
+                            <>
+                              <Badge variant="secondary" className="text-xs">
+                                {formatNumberWithCommas(domain.monthlyPageviews)}/mo
+                              </Badge>
+                              <div className="text-xs text-muted-foreground">
+                                Safari: {Math.round(domain.audienceProfile.safariShare * 100)}% of traffic
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -226,7 +296,7 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
               </div>
               <div>
                 <div className="text-2xl font-bold text-primary">
-                  {formatPageviews(aggregated.totalMonthlyPageviews)}
+                  {formatNumberWithCommas(aggregated.totalMonthlyPageviews)}
                 </div>
                 <div className="text-xs text-muted-foreground">Total Monthly Pageviews</div>
               </div>
