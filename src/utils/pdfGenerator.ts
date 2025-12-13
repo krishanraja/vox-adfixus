@@ -197,12 +197,14 @@ export const buildAdfixusProposalPdf = async (
   calculatorResults: UnifiedResults | CalculatorResults,
   leadData?: any
 ) => {
-  const logoDataUrl = await convertImageToBase64('/lovable-uploads/e51c9dd5-2c62-4f48-83ea-2b4cb61eed6c.png');
+  // Load both logos
+  const adfixusLogoDataUrl = await convertImageToBase64('/lovable-uploads/e51c9dd5-2c62-4f48-83ea-2b4cb61eed6c.png');
+  const voxLogoDataUrl = await convertImageToBase64('/lovable-uploads/vox-media-logo.png');
   
   // Handle both UnifiedResults (new) and CalculatorResults (legacy)
   if (!isUnifiedResults(calculatorResults)) {
     // Legacy CalculatorResults - use simplified PDF generation
-    return buildLegacyPdf(quizResults, calculatorResults, leadData, logoDataUrl);
+    return buildLegacyPdf(quizResults, calculatorResults, leadData, adfixusLogoDataUrl);
   }
   
   const results = calculatorResults;
@@ -289,15 +291,22 @@ export const buildAdfixusProposalPdf = async (
     header: (currentPage: number) => ({
       columns: [
         {
-          image: logoDataUrl,
+          image: adfixusLogoDataUrl,
           fit: [90, 24],
           margin: [40, 25, 0, 0]
         },
         {
           text: 'Revenue Impact Analysis',
           style: 'headerTitle',
+          alignment: 'center',
+          margin: [0, 28, 0, 0],
+          width: '*'
+        },
+        {
+          image: voxLogoDataUrl,
+          fit: [60, 22],
           alignment: 'right',
-          margin: [0, 28, 40, 0]
+          margin: [0, 24, 40, 0]
         }
       ]
     }),
