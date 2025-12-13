@@ -20,12 +20,26 @@ export const MEDIA_PERFORMANCE_BENCHMARKS = {
   YIELD_UPLIFT_PERCENTAGE: 0.25, // 25% yield uplift on premium inventory
 };
 
+// Vox Media browser traffic shares (blended mobile/desktop from Dec 2024 data)
+// Mobile: 47% Safari / 44% Chrome / 9% Other
+// Desktop: 55% Chrome / 20% Safari / 25% Other
+// Weighted average: ~35% Safari overall
 export const ADDRESSABILITY_BENCHMARKS = {
-  CHROME_SHARE: 0.50, // 50% default
-  SAFARI_IOS_SHARE: 0.35, // 35% default
-  FIREFOX_OTHER: 0.15, // 15%
-  WITHOUT_ADFIXUS: 0.55, // 55% Safari addressable without durable ID (~7 days tracking)
-  WITH_ADFIXUS: 0.85, // 85% Safari addressable with durable ID (30% improvement)
+  // Vox-specific browser traffic shares (NOT addressability)
+  CHROME_SHARE: 0.48, // 48% Chrome traffic
+  SAFARI_IOS_SHARE: 0.35, // 35% Safari traffic (from domain-weighted average)
+  FIREFOX_OTHER: 0.17, // 17% Other browsers
+  
+  // SAFARI-SPECIFIC addressability rates (THE KEY POC KPI)
+  // This is % of Safari users who are addressable, NOT traffic share
+  WITHOUT_ADFIXUS: 0.55, // 55% of Safari users addressable without durable ID (~7 days tracking)
+  WITH_ADFIXUS: 0.85, // 85% of Safari users addressable with durable ID
+  // Improvement: +30 percentage points on Safari-specific addressability
+  
+  // Chrome/Other assumed 100% addressable (no ITP restrictions)
+  CHROME_ADDRESSABILITY: 1.0,
+  OTHER_ADDRESSABILITY: 1.0,
+  
   CPM_IMPROVEMENT_FACTOR: 0.25, // 25% CPM boost on newly addressable
   CPM_PREMIUM_MULTIPLIER: 1.20, // 20% premium on improved inventory
 };

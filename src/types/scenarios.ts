@@ -119,11 +119,18 @@ export interface UnifiedResults {
     monthlyUplift: number;
     annualUplift: number;
     details: {
+      // Safari-specific metrics (POC KPI focus)
+      safariShare: number;
+      currentSafariAddressability: number;
+      improvedSafariAddressability: number;
+      safariAddressabilityImprovement: number;
+      // Total inventory metrics
       currentAddressability: number;
       improvedAddressability: number;
+      totalAddressabilityImprovement: number;
       newlyAddressableImpressions: number;
-      addressabilityRevenue: number; // Separated from CDP
-      cdpSavingsRevenue: number; // Separated from addressability
+      addressabilityRevenue: number;
+      cdpSavingsRevenue: number;
       idReductionPercentage: number;
       monthlyCdpSavings: number;
     };

@@ -314,12 +314,12 @@ export const buildAdfixusProposalPdf = async (
     footer: (currentPage: number, pageCount: number) => ({
       columns: [
         {
-          text: 'CONFIDENTIAL — Prepared for Vox Media Executive Team',
+          text: 'CONFIDENTIAL — Scenario Model for Planning Purposes Only',
           style: 'footerText',
           margin: [40, 0, 0, 0]
         },
         {
-          text: `Page ${currentPage} of ${pageCount}`,
+          text: `All figures are modeled projections  |  Page ${currentPage} of ${pageCount}`,
           style: 'footerText',
           alignment: 'right',
           margin: [0, 0, 40, 0]
@@ -333,6 +333,32 @@ export const buildAdfixusProposalPdf = async (
         text: 'Executive Summary',
         style: 'h1',
         margin: [0, 0, 0, 15]
+      },
+      // SCENARIO MODEL DISCLAIMER BOX
+      {
+        table: {
+          widths: ['*'],
+          body: [
+            [
+              {
+                text: [
+                  { text: 'SCENARIO MODEL DISCLAIMER: ', bold: true },
+                  { text: 'This document presents modeled projections based on stated assumptions and industry benchmarks. All figures are indicative estimates subject to variables including market conditions, deployment execution, advertiser behavior, and organizational readiness. This analysis does not constitute a guarantee or commitment of specific outcomes.' }
+                ],
+                style: 'disclaimerBox',
+                fillColor: '#F8FAFC',
+                margin: [10, 10, 10, 10]
+              }
+            ]
+          ]
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#E2E8F0',
+          vLineColor: () => '#E2E8F0',
+        },
+        margin: [0, 0, 0, 20]
       },
       {
         columns: [
@@ -369,7 +395,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 20]
       },
       {
-        text: 'Key Financial Metrics',
+        text: 'Scenario Model Summary',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -378,8 +404,8 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', '*', '*'],
           body: [
             [
-              { text: 'Monthly Revenue Uplift', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Annual Revenue Opportunity', style: 'metricHeader', fillColor: '#F1F5F9' },
+              { text: 'Modeled Monthly Uplift*', style: 'metricHeader', fillColor: '#F1F5F9' },
+              { text: 'Modeled Annual Opportunity*', style: 'metricHeader', fillColor: '#F1F5F9' },
               { text: 'Contract Cost (Year 1)', style: 'metricHeader', fillColor: '#F1F5F9' }
             ],
             [
@@ -397,9 +423,9 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', '*', '*'],
           body: [
             [
-              { text: 'Net Annual ROI', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Payback Period', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'ROI Multiple', style: 'metricHeader', fillColor: '#F1F5F9' }
+              { text: 'Modeled Net ROI*', style: 'metricHeader', fillColor: '#F1F5F9' },
+              { text: 'Estimated Payback Period', style: 'metricHeader', fillColor: '#F1F5F9' },
+              { text: 'Projected ROI Multiple', style: 'metricHeader', fillColor: '#F1F5F9' }
             ],
             [
               { text: formatCurrency(netMonthlyROI * 12), style: 'metricValueHighlight', alignment: 'center' },
@@ -409,7 +435,12 @@ export const buildAdfixusProposalPdf = async (
           ]
         },
         layout: tableLayout,
-        margin: [0, 0, 0, 25]
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '*Modeled projections based on stated assumptions. See Assumptions & Methodology for details.',
+        style: 'footnote',
+        margin: [0, 0, 0, 20]
       },
       {
         text: 'Methodology',
@@ -417,7 +448,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 8]
       },
       {
-        text: 'This analysis models revenue impact from three sources: (1) ID Infrastructure improvements that restore addressability in Safari/iOS environments, (2) CAPI capabilities that enhance conversion tracking and match rates, and (3) Media Performance optimization that unlocks premium CPMs. All projections are risk-adjusted based on the selected scenario parameters.',
+        text: 'This scenario model estimates potential revenue impact from three sources: (1) ID Infrastructure improvements that may restore addressability in Safari/iOS environments, (2) CAPI capabilities that may enhance conversion tracking and match rates, and (3) Media Performance optimization that may unlock premium CPMs. All projections are illustrative, risk-adjusted based on selected scenario parameters, and contingent on successful deployment, market conditions, and organizational execution. These figures do not represent commitments or guarantees.',
         style: 'body',
         margin: [0, 0, 0, 0]
       },
@@ -466,28 +497,65 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 25]
       },
       {
-        text: 'Addressability Impact',
+        text: 'Addressability Impact Analysis',
         style: 'h3',
         margin: [0, 0, 0, 10]
+      },
+      // Safari-specific metrics (POC KPI focus)
+      {
+        text: 'Safari Addressability (POC Success Metric)',
+        style: 'tableSubheader',
+        margin: [0, 0, 0, 6]
       },
       {
         table: {
           widths: ['*', 'auto'],
           body: [
             [
-              { text: 'Current Safari Addressability', style: 'tableLabel' },
-              { text: formatPercentage(currentAddressability), style: 'tableValue', alignment: 'right' }
+              { text: 'Safari Traffic Share', style: 'tableLabel' },
+              { text: formatPercentage(idInfra?.details?.safariShare || weightedSafariShare * 100), style: 'tableValue', alignment: 'right' }
+            ],
+            [
+              { text: 'Current Safari Addressability (baseline)', style: 'tableLabel' },
+              { text: formatPercentage(idInfra?.details?.currentSafariAddressability || 55), style: 'tableValue', alignment: 'right' }
             ],
             [
               { text: 'Projected Safari Addressability (with Durable ID)', style: 'tableLabel' },
+              { text: formatPercentage(idInfra?.details?.improvedSafariAddressability || 85), style: 'tableValue', alignment: 'right' }
+            ],
+            [
+              { text: 'Estimated Safari Addressability Improvement', style: 'tableLabel' },
+              { text: `+${(idInfra?.details?.safariAddressabilityImprovement || 30).toFixed(0)} percentage points`, style: 'tableValueHighlight', alignment: 'right' }
+            ]
+          ]
+        },
+        layout: 'noBorders',
+        margin: [0, 0, 0, 15]
+      },
+      // Total inventory metrics
+      {
+        text: 'Total Inventory Addressability',
+        style: 'tableSubheader',
+        margin: [0, 0, 0, 6]
+      },
+      {
+        table: {
+          widths: ['*', 'auto'],
+          body: [
+            [
+              { text: 'Current Total Addressability', style: 'tableLabel' },
+              { text: formatPercentage(currentAddressability), style: 'tableValue', alignment: 'right' }
+            ],
+            [
+              { text: 'Projected Total Addressability', style: 'tableLabel' },
               { text: formatPercentage(improvedAddressability), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Addressability Improvement', style: 'tableLabel' },
-              { text: `+${(improvedAddressability - currentAddressability).toFixed(0)} percentage points`, style: 'tableValueHighlight', alignment: 'right' }
+              { text: 'Estimated Total Improvement', style: 'tableLabel' },
+              { text: `+${(idInfra?.details?.totalAddressabilityImprovement || (improvedAddressability - currentAddressability)).toFixed(1)} percentage points`, style: 'tableValueHighlight', alignment: 'right' }
             ],
             [
-              { text: 'Newly Addressable Impressions (Monthly)', style: 'tableLabel' },
+              { text: 'Est. Newly Addressable Impressions (Monthly)', style: 'tableLabel' },
               { text: formatNumber(newlyAddressableImpressions), style: 'tableValue', alignment: 'right' }
             ]
           ]
@@ -499,12 +567,12 @@ export const buildAdfixusProposalPdf = async (
       // ==================== PAGE 3: REVENUE IMPACT BREAKDOWN ====================
       {
         pageBreak: 'before',
-        text: 'Revenue Impact Breakdown',
+        text: 'Modeled Revenue Impact Breakdown',
         style: 'h1',
         margin: [0, 0, 0, 15]
       },
       {
-        text: 'Revenue Uplift by Source',
+        text: 'Modeled Revenue Uplift by Source*',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -515,8 +583,8 @@ export const buildAdfixusProposalPdf = async (
           body: [
             [
               { text: 'Source', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Monthly Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Annual Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'Modeled Monthly', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'Modeled Annual', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: '% of Total', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
@@ -538,7 +606,7 @@ export const buildAdfixusProposalPdf = async (
               { text: formatPercentage(breakdown.performancePercent), style: 'tableCell', alignment: 'right' }
             ]] : []),
             [
-              { text: 'TOTAL', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'MODELED TOTAL', style: 'tableHeader', fillColor: '#F1F5F9' },
               { text: formatCurrency(monthlyUplift), style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: formatCurrency(annualUplift), style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: '100%', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
@@ -546,7 +614,12 @@ export const buildAdfixusProposalPdf = async (
           ]
         },
         layout: tableLayout,
-        margin: [0, 0, 0, 25]
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '*All figures are modeled projections. Actual results will depend on deployment, market conditions, and organizational execution.',
+        style: 'footnote',
+        margin: [0, 0, 0, 20]
       },
       {
         text: 'ID Infrastructure Detail',
@@ -606,7 +679,7 @@ export const buildAdfixusProposalPdf = async (
       // ==================== PAGE 4: ROI & COST ANALYSIS ====================
       {
         pageBreak: 'before',
-        text: 'ROI & Cost Analysis',
+        text: 'Modeled ROI & Cost Analysis',
         style: 'h1',
         margin: [0, 0, 0, 15]
       },
@@ -624,21 +697,21 @@ export const buildAdfixusProposalPdf = async (
               { text: 'Phase', style: 'tableHeader', fillColor: '#F1F5F9' },
               { text: 'Duration', style: 'tableHeader', fillColor: '#F1F5F9' },
               { text: 'Platform Fee', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'CAPI Fees', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Total Monthly', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
+              { text: 'Est. CAPI Fees', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'Est. Total Monthly', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
               { text: 'POC', style: 'tableCell' },
               { text: '3 months', style: 'tableCell' },
               { text: formatCurrency(pocMonthly) + '/mo', style: 'tableCell', alignment: 'right' },
-              { text: 'Est. ' + formatCurrency(capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' },
+              { text: formatCurrency(capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(pocMonthly + capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Year 1', style: 'tableCell' },
               { text: '12 months', style: 'tableCell' },
               { text: formatCurrency(fullContractMonthly) + '/mo', style: 'tableCell', alignment: 'right' },
-              { text: 'Est. ' + formatCurrency(capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' },
+              { text: formatCurrency(capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(fullContractMonthly + capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' }
             ]
           ]
@@ -647,7 +720,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 25]
       },
       {
-        text: 'ROI Calculation',
+        text: 'Modeled ROI Calculation*',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -662,7 +735,7 @@ export const buildAdfixusProposalPdf = async (
               { text: 'Full Contract', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
-              { text: 'Monthly Benefits', style: 'tableCell' },
+              { text: 'Modeled Monthly Benefits', style: 'tableCell' },
               { text: formatCurrency(roiAnalysis?.totalMonthlyBenefits || 0), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(roiAnalysis?.totalMonthlyBenefits || 0), style: 'tableCell', alignment: 'right' }
             ],
@@ -672,30 +745,35 @@ export const buildAdfixusProposalPdf = async (
               { text: formatCurrency(roiAnalysis?.costs?.fullContractMonthly || 0), style: 'tableCell', alignment: 'right' }
             ],
             [
-              { text: 'Net Monthly ROI', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Modeled Net Monthly ROI', style: 'tableHeader', fillColor: '#F1F5F9' },
               { text: formatCurrency(roiAnalysis?.netMonthlyROI?.pocPhase || 0), style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: formatCurrency(roiAnalysis?.netMonthlyROI?.fullContract || 0), style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
-              { text: 'ROI Multiple', style: 'tableCell' },
+              { text: 'Projected ROI Multiple', style: 'tableCell' },
               { text: (roiAnalysis?.roiMultiple?.pocPhase || 0).toFixed(1) + 'x', style: 'tableCell', alignment: 'right' },
               { text: (roiAnalysis?.roiMultiple?.fullContract || 0).toFixed(1) + 'x', style: 'tableCell', alignment: 'right' }
             ],
             [
-              { text: 'Payback Period', style: 'tableCell' },
+              { text: 'Estimated Payback Period', style: 'tableCell' },
               { text: (roiAnalysis?.paybackMonths?.pocPhase || 0).toFixed(1) + ' months', style: 'tableCell', alignment: 'right' },
               { text: (roiAnalysis?.paybackMonths?.fullContract || 0).toFixed(1) + ' months', style: 'tableCell', alignment: 'right' }
             ]
           ]
         },
         layout: tableLayout,
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '*ROI projections are modeled estimates. Actual returns will depend on deployment success, market conditions, and organizational execution.',
+        style: 'footnote',
         margin: [0, 0, 0, 0]
       },
 
       // ==================== PAGE 5: RISK-ADJUSTED PROJECTIONS ====================
       {
         pageBreak: 'before',
-        text: 'Risk-Adjusted Projections',
+        text: 'Risk-Adjusted Scenario Projections',
         style: 'h1',
         margin: [0, 0, 0, 15]
       },
@@ -719,15 +797,15 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', 'auto'],
           body: [
             [
-              { text: 'Unadjusted Monthly Uplift', style: 'tableLabel' },
+              { text: 'Baseline Modeled Monthly Uplift', style: 'tableLabel' },
               { text: formatCurrency(riskAdjustment?.unadjustedMonthlyUplift || monthlyUplift), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Risk-Adjusted Monthly Uplift', style: 'tableLabel' },
+              { text: 'Risk-Adjusted Modeled Monthly Uplift', style: 'tableLabel' },
               { text: formatCurrency(riskAdjustment?.adjustedMonthlyUplift || monthlyUplift), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Adjustment Factor', style: 'tableLabel' },
+              { text: 'Adjustment Factor Applied', style: 'tableLabel' },
               { text: `-${((riskAdjustment?.adjustmentPercentage || 0) * 100).toFixed(0)}%`, style: 'tableValue', alignment: 'right' }
             ]
           ]
@@ -736,7 +814,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 25]
       },
       {
-        text: 'Quarterly Ramp-Up Schedule',
+        text: 'Illustrative Quarterly Ramp-Up Schedule*',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -747,8 +825,8 @@ export const buildAdfixusProposalPdf = async (
           body: [
             [
               { text: 'Quarter', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Revenue Factor', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Projected Monthly Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
+              { text: 'Est. Realization', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'Modeled Monthly Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
               { text: 'Q1 (Months 1-3)', style: 'tableCell' },
@@ -773,6 +851,11 @@ export const buildAdfixusProposalPdf = async (
           ]
         },
         layout: tableLayout,
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '*Ramp-up schedule is illustrative. Actual timeline will depend on deployment pace, integration complexity, and organizational readiness.',
+        style: 'footnote',
         margin: [0, 0, 0, 0]
       },
 
@@ -837,9 +920,9 @@ export const buildAdfixusProposalPdf = async (
       },
       {
         ul: [
-          'Minimum +20% addressability improvement in Safari ad products',
+          'Target: measurable addressability improvement in Safari ad products',
           'Demonstrate real conversion reporting on Vox campaign reports',
-          'Foundation for speaking to 100% of users as though logged in'
+          'Foundation for speaking to more users as addressable inventory'
         ],
         style: 'listItem',
         margin: [0, 0, 0, 0]
@@ -931,31 +1014,36 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 25]
       },
       {
-        text: 'Important Caveats',
+        text: 'Important Caveats & Risk Factors',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
       {
-        text: 'This analysis is subject to the following organizational factors which may impact realized ROI:',
+        text: 'This scenario model is subject to the following organizational factors which may significantly impact any realized outcomes:',
         style: 'caveatIntro',
         margin: [0, 0, 0, 8]
       },
       {
         ol: [
-          { text: 'Sales Team Readiness: Training, incentives, and active pipeline development directly affect revenue realization.' },
-          { text: 'Technical Deployment: DNS setup, consent management, and ad server configuration timeline may extend ramp-up.' },
-          { text: 'Advertiser Adoption: Willingness of advertisers to test CAPI and outcome-based buying varies by vertical.' },
+          { text: 'Sales Team Readiness: Training, incentives, and active pipeline development directly affect any revenue realization.' },
+          { text: 'Technical Deployment: DNS setup, consent management, and ad server configuration timeline may extend ramp-up periods.' },
+          { text: 'Advertiser Adoption: Willingness of advertisers to test CAPI and outcome-based buying varies by vertical and market conditions.' },
           { text: 'Project Ownership: Clear accountability and cross-functional alignment are required for successful execution.' },
-          { text: 'Budget Environment: Advertiser spending confidence and market conditions influence campaign volumes.' },
-          { text: 'Training & Enablement: Structured training programs for sales and operations teams accelerate adoption.' },
-          { text: 'Integration Delays: Dependencies on existing systems and potential deployment friction may impact timelines.' },
+          { text: 'Budget Environment: Advertiser spending confidence and market conditions influence campaign volumes and willingness to pay premium CPMs.' },
+          { text: 'Training & Enablement: Structured training programs for sales and operations teams accelerate adoption but require investment.' },
+          { text: 'Integration Delays: Dependencies on existing systems and potential deployment friction may impact timelines significantly.' },
           { text: 'Resource Availability: Dedicated engineering and operational resources are critical for implementation success.' }
         ],
         style: 'caveatList',
         margin: [0, 0, 0, 15]
       },
       {
-        text: 'All projections assume successful completion of POC KPIs and are based on industry benchmarks as of December 2024. Actual results may vary based on market conditions, advertiser demand, and organizational execution. AdFixus makes no guarantees regarding specific revenue outcomes.',
+        text: 'MODELING DISCLAIMER',
+        style: 'disclaimerHeader',
+        margin: [0, 0, 0, 6]
+      },
+      {
+        text: 'This document presents scenario-based projections using industry benchmarks and stated assumptions as of December 2024. All figures are estimates only and do not constitute forecasts, commitments, or guarantees of performance. Actual results will depend on factors including but not limited to: deployment execution, advertiser demand, market conditions, sales team performance, and organizational readiness. AdFixus accepts no liability for variance between modeled projections and actual outcomes. This analysis is provided for planning and evaluation purposes only.',
         style: 'disclaimer',
         margin: [0, 0, 0, 0]
       }
@@ -1013,6 +1101,12 @@ export const buildAdfixusProposalPdf = async (
         bold: true,
         color: '#0D9488'
       },
+      tableSubheader: {
+        fontSize: 10,
+        bold: true,
+        color: '#475569',
+        italics: true
+      },
       metricHeader: {
         fontSize: 9,
         bold: true,
@@ -1034,6 +1128,16 @@ export const buildAdfixusProposalPdf = async (
         color: '#475569',
         lineHeight: 1.5
       },
+      footnote: {
+        fontSize: 8,
+        color: '#64748B',
+        italics: true
+      },
+      disclaimerBox: {
+        fontSize: 9,
+        color: '#475569',
+        lineHeight: 1.3
+      },
       caveatIntro: {
         fontSize: 9,
         color: '#475569'
@@ -1042,6 +1146,11 @@ export const buildAdfixusProposalPdf = async (
         fontSize: 8,
         color: '#64748B',
         lineHeight: 1.4
+      },
+      disclaimerHeader: {
+        fontSize: 9,
+        bold: true,
+        color: '#64748B'
       },
       disclaimer: {
         fontSize: 8,
