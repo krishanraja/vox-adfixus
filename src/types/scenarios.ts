@@ -122,7 +122,7 @@ export interface UnifiedResults {
       // Safari-specific metrics (POC KPI focus)
       safariShare: number;
       currentSafariAddressability: number;
-      improvedSafariAddressability: number;
+      targetSafariAddressability: number; // Renamed from improvedSafariAddressability
       safariAddressabilityImprovement: number;
       // Total inventory metrics
       currentAddressability: number;

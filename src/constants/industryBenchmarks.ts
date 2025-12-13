@@ -31,10 +31,12 @@ export const ADDRESSABILITY_BENCHMARKS = {
   FIREFOX_OTHER: 0.17, // 17% Other browsers
   
   // SAFARI-SPECIFIC addressability rates (THE KEY POC KPI)
-  // This is % of Safari users who are addressable, NOT traffic share
-  WITHOUT_ADFIXUS: 0.55, // 55% of Safari users addressable without durable ID (~7 days tracking)
-  WITH_ADFIXUS: 0.85, // 85% of Safari users addressable with durable ID
-  // Improvement: +30 percentage points on Safari-specific addressability
+  // Vox CANNOT track Safari users due to ITP - they lose identity almost immediately
+  // Current state: effectively 0% addressable (cannot add to segments)
+  // POC Target: +20% addressability improvement via Durable ID
+  CURRENT_SAFARI_ADDRESSABILITY: 0.0, // 0% - Safari users unaddressable due to ITP
+  TARGET_SAFARI_ADDRESSABILITY: 0.20, // 20% POC target improvement
+  STRETCH_SAFARI_ADDRESSABILITY: 0.30, // 30% internal stretch goal
   
   // Chrome/Other assumed 100% addressable (no ITP restrictions)
   CHROME_ADDRESSABILITY: 1.0,

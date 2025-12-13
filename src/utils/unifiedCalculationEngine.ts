@@ -245,28 +245,29 @@ export class UnifiedCalculationEngine {
     const nonSafariShare = 1 - safariShare; // Chrome + Other (assumed 100% addressable)
     
     // Safari-specific addressability rates (THE KEY METRIC FOR POC)
-    // Without AdFixus: Safari users lose identity after 7 days (~55% addressable)
-    // With AdFixus: Durable ID recognizes returning users beyond 7 days (~85% addressable)
-    const currentSafariAddressability = overrides?.safariBaselineAddressability ?? ADDRESSABILITY_BENCHMARKS.WITHOUT_ADFIXUS;
-    const improvedSafariAddressability = overrides?.safariWithDurableId ?? ADDRESSABILITY_BENCHMARKS.WITH_ADFIXUS;
-    const safariAddressabilityImprovement = improvedSafariAddressability - currentSafariAddressability; // +30 pts
+    // Current: Vox CANNOT track Safari users due to ITP - effectively 0% addressable
+    // Target: +20% addressability improvement via AdFixus Durable ID
+    const currentSafariAddressability = overrides?.safariBaselineAddressability ?? ADDRESSABILITY_BENCHMARKS.CURRENT_SAFARI_ADDRESSABILITY;
+    const targetSafariAddressability = overrides?.safariWithDurableId ?? ADDRESSABILITY_BENCHMARKS.TARGET_SAFARI_ADDRESSABILITY;
+    const safariAddressabilityImprovement = targetSafariAddressability - currentSafariAddressability; // +20% target
 
     // ============ TOTAL INVENTORY ADDRESSABILITY ============
     // Non-Safari (Chrome/Other) = 100% addressable (no ITP restrictions)
-    // Safari = 55% → 85% addressable
+    // Safari = 0% → 20% addressable (POC target)
     const chromeOtherAddressability = ADDRESSABILITY_BENCHMARKS.CHROME_ADDRESSABILITY ?? 1.0;
     const currentTotalAddressability = 
       nonSafariShare * chromeOtherAddressability + 
       safariShare * currentSafariAddressability;
     const improvedTotalAddressability = 
       nonSafariShare * chromeOtherAddressability + 
-      safariShare * improvedSafariAddressability;
+      safariShare * targetSafariAddressability;
     const totalAddressabilityImprovement = improvedTotalAddressability - currentTotalAddressability;
 
     // ============ NEWLY ADDRESSABLE SAFARI IMPRESSIONS ============
     const totalImpressions = displayImpressions + videoImpressions;
     const safariImpressions = totalImpressions * safariShare;
     // Only Safari impressions gain addressability (Chrome/Other already at 100%)
+    // POC Target: +20% of Safari impressions become addressable
     const newlyAddressableSafariImpressions = safariImpressions * safariAddressabilityImprovement;
     const newlyAddressableDisplay = displayImpressions * safariShare * safariAddressabilityImprovement;
     const newlyAddressableVideo = videoImpressions * safariShare * safariAddressabilityImprovement;
@@ -302,14 +303,14 @@ export class UnifiedCalculationEngine {
       details: {
         // Safari-specific metrics (POC KPI focus)
         safariShare: safariShare * 100,
-        currentSafariAddressability: currentSafariAddressability * 100, // 55%
-        improvedSafariAddressability: improvedSafariAddressability * 100, // 85%
-        safariAddressabilityImprovement: safariAddressabilityImprovement * 100, // +30 pts
+        currentSafariAddressability: currentSafariAddressability * 100, // 0% (untrackable due to ITP)
+        targetSafariAddressability: targetSafariAddressability * 100, // 20% POC target
+        safariAddressabilityImprovement: safariAddressabilityImprovement * 100, // +20 pts target
         
         // Total inventory metrics
-        currentAddressability: currentTotalAddressability * 100, // ~84%
-        improvedAddressability: improvedTotalAddressability * 100, // ~95%
-        totalAddressabilityImprovement: totalAddressabilityImprovement * 100, // ~10.5 pts
+        currentAddressability: currentTotalAddressability * 100,
+        improvedAddressability: improvedTotalAddressability * 100,
+        totalAddressabilityImprovement: totalAddressabilityImprovement * 100,
         
         newlyAddressableImpressions: newlyAddressableSafariImpressions,
         addressabilityRevenue, // Separated for transparency
