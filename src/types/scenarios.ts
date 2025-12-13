@@ -12,11 +12,19 @@ export interface SimplifiedInputs {
   selectedDomains: string[]; // Array of domain IDs from VOX_MEDIA_DOMAINS
   displayCPM: number;
   videoCPM: number;
-  capiCampaignsPerMonth: number;
-  avgCampaignSpend: number;
+  // REMOVED: capiCampaignsPerMonth, avgCampaignSpend - now calculated from Business Readiness
   capiLineItemShare: number; // 0.20 - 1.00, default 0.60 (60% of campaign spend is CAPI-enabled)
   domainPageviewOverrides?: Record<string, number>; // Optional overrides for domain monthly pageviews
   safariShareOverrides?: Record<string, number>; // Optional overrides for domain Safari traffic share (0.0 - 1.0)
+}
+
+// CAPI Configuration - calculated output based on Business Readiness factors
+export interface CapiConfiguration {
+  yearlyCampaigns: number;
+  avgCampaignSpend: number;
+  pocCampaigns: number; // Campaigns in first 3 months
+  fullYearCampaigns: number; // Same as yearlyCampaigns, for display
+  monthlyDistribution: number[]; // 12-month distribution of campaigns
 }
 
 export interface AssumptionOverrides {
@@ -153,6 +161,8 @@ export interface UnifiedResults {
       conversionImprovement: number;
       ctrImprovement: number;
     };
+    // New: CAPI Configuration derived from Business Readiness
+    capiConfiguration: CapiConfiguration;
   };
   
   // Media Performance (optional)

@@ -546,7 +546,7 @@ export const SimplifiedResults = ({
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold">CAPI Capabilities</h3>
-                    <p className="text-sm text-muted-foreground">{formatCurrency(results.capiCapabilities.monthlyUplift)}/month from {results.inputs.capiCampaignsPerMonth} campaigns</p>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(results.capiCapabilities.monthlyUplift)}/month from {results.capiCapabilities.capiConfiguration.yearlyCampaigns} campaigns/year</p>
                   </div>
                 </div>
                 <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('capi') ? 'rotate-180' : ''}`} />
@@ -554,8 +554,37 @@ export const SimplifiedResults = ({
               
               <CollapsibleContent>
                 <div className="p-6 pt-0 space-y-3 border-t border-border">
+                  {/* CAPI Campaign Projection - OUTPUT based on Business Readiness */}
+                  <div className="p-4 bg-gradient-to-br from-accent/5 to-primary/5 rounded-lg border border-accent/20 mb-4">
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <Target className="h-4 w-4 text-accent" />
+                      CAPI Campaign Projection (Based on Business Readiness)
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">Year 1 Total</div>
+                        <div className="text-lg font-bold text-primary">{results.capiCapabilities.capiConfiguration.yearlyCampaigns} campaigns</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">POC (Months 1-3)</div>
+                        <div className="text-lg font-bold text-accent">{results.capiCapabilities.capiConfiguration.pocCampaigns} campaigns</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Avg Campaign Spend</div>
+                        <div className="text-lg font-bold">{formatCurrency(results.capiCapabilities.capiConfiguration.avgCampaignSpend)}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Monthly CAPI Spend</div>
+                        <div className="text-lg font-bold">{formatCurrency(results.capiCapabilities.baselineCapiSpend)}</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Campaign volume and spend are calculated based on your Business Readiness settings (Sales Readiness, Training, Advertiser Buy-In, Budget Environment).
+                    </p>
+                  </div>
+                  
                   <p className="text-sm text-muted-foreground mb-4">
-                    Based on {results.inputs.capiCampaignsPerMonth} campaigns per month at {formatCurrency(results.inputs.avgCampaignSpend)} average spend using AdFixus Stream (CAPI). Only {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} of campaign spend ({formatCurrency(results.capiCapabilities.capiEligibleSpend)}/mo) requires CAPI tracking. The uplift shown is NET of the 12.5% service fees applied only to CAPI-enabled line items.
+                    Only {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} of campaign spend ({formatCurrency(results.capiCapabilities.capiEligibleSpend)}/mo avg) requires CAPI tracking. The uplift shown is NET of the 12.5% service fees applied only to CAPI-enabled line items.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -578,7 +607,7 @@ export const SimplifiedResults = ({
                   <Alert className="mt-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
                     <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <AlertDescription className="text-xs text-blue-900 dark:text-blue-100">
-                      <strong>CAPI Revenue Calculation:</strong> Of the {formatCurrency(results.inputs.capiCampaignsPerMonth * results.inputs.avgCampaignSpend)}/mo total campaign spend, only {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} ({formatCurrency(results.capiCapabilities.capiEligibleSpend)}/mo) are CAPI-enabled line items. These improve by {formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)} = {formatCurrency(results.capiCapabilities.conversionTrackingRevenue)}/mo gross benefit. Service fees ({formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo at 12.5%) apply only to CAPI-enabled spend and are deducted to show NET uplift to Vox.
+                      <strong>CAPI Revenue Calculation:</strong> Based on projected {results.capiCapabilities.capiConfiguration.yearlyCampaigns} campaigns/year at {formatCurrency(results.capiCapabilities.capiConfiguration.avgCampaignSpend)} avg spend. Only {formatPercentage(results.inputs.capiLineItemShare * 100, 0)} ({formatCurrency(results.capiCapabilities.capiEligibleSpend)}/mo avg) are CAPI-enabled line items. These improve by {formatPercentage(results.capiCapabilities.details.conversionImprovement, 0)} = {formatCurrency(results.capiCapabilities.conversionTrackingRevenue)}/mo gross benefit. Service fees ({formatCurrency(results.capiCapabilities.campaignServiceFees)}/mo at 12.5%) apply only to CAPI-enabled spend and are deducted to show NET uplift to Vox.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -680,8 +709,8 @@ export const SimplifiedResults = ({
                     <li>• Display CPM: ${aggregated.displayCPM.toFixed(2)}</li>
                     <li>• Video CPM: ${aggregated.videoCPM.toFixed(2)}</li>
                     <li>• Display/Video Split: {aggregated.weightedDisplayVideoSplit.toFixed(0)}% / {(100 - aggregated.weightedDisplayVideoSplit).toFixed(0)}%</li>
-                    <li>• CAPI Campaigns: {results.inputs.capiCampaignsPerMonth} per month</li>
-                    <li>• Avg Campaign Spend: {formatCurrency(results.inputs.avgCampaignSpend)}</li>
+                    <li>• CAPI Campaigns: {results.capiCapabilities?.capiConfiguration.yearlyCampaigns || 0} per year</li>
+                    <li>• Avg Campaign Spend: {formatCurrency(results.capiCapabilities?.capiConfiguration.avgCampaignSpend || 0)}</li>
                   </ul>
                 </div>
                 
@@ -938,38 +967,40 @@ export const SimplifiedResults = ({
 
                 <Separator />
 
-                {/* CAPI Configuration */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm flex items-center gap-2">
-                    <Target className="h-4 w-4" /> CAPI Campaign Configuration
-                  </h4>
-                  
-                  <AssumptionSlider
-                    label="CAPI Campaigns Per Month"
-                    description="Number of conversion API campaigns running monthly"
-                    value={results.inputs.capiCampaignsPerMonth}
-                    defaultValue={10}
-                    min={0}
-                    max={50}
-                    step={1}
-                    formatValue={(v) => `${v} campaigns`}
-                    onChange={(v) => onInputChange('capiCampaignsPerMonth', v)}
-                    tooltipContent="How many campaigns per month will use CAPI conversion tracking capabilities?"
-                  />
-
-                  <AssumptionSlider
-                    label="Average Campaign Spend"
-                    description="Average monthly spend per CAPI campaign"
-                    value={results.inputs.avgCampaignSpend}
-                    defaultValue={50000}
-                    min={5000}
-                    max={500000}
-                    step={5000}
-                    formatValue={(v) => formatCurrency(v)}
-                    onChange={(v) => onInputChange('avgCampaignSpend', v)}
-                    tooltipContent="What is the average monthly spend across your CAPI-enabled campaigns?"
-                  />
-                </div>
+                {/* CAPI Campaign Projection - OUTPUT (not editable) */}
+                {results.capiCapabilities && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Target className="h-4 w-4" /> CAPI Campaign Projection (Calculated)
+                    </h4>
+                    <Alert className="bg-gradient-to-br from-accent/5 to-primary/5 border-accent/20">
+                      <Target className="h-4 w-4 text-accent" />
+                      <AlertDescription className="text-sm">
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <div>
+                            <span className="text-muted-foreground">Year 1 Campaigns:</span>
+                            <span className="ml-2 font-bold text-primary">{results.capiCapabilities.capiConfiguration.yearlyCampaigns}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">POC Campaigns:</span>
+                            <span className="ml-2 font-bold text-accent">{results.capiCapabilities.capiConfiguration.pocCampaigns}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Avg Spend:</span>
+                            <span className="ml-2 font-bold">{formatCurrency(results.capiCapabilities.capiConfiguration.avgCampaignSpend)}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Monthly Avg:</span>
+                            <span className="ml-2 font-bold">{formatCurrency(results.capiCapabilities.baselineCapiSpend)}</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-3">
+                          These values are calculated from your Sales Readiness, Training, Advertiser Buy-In, and Budget Environment settings above.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
 
                 <Separator />
 

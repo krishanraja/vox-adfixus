@@ -1,4 +1,4 @@
-import type { SimplifiedInputs, UnifiedResults, ScenarioState, MonthlyProjection, AssumptionOverrides, PricingModel, ROIAnalysis } from '@/types/scenarios';
+import type { SimplifiedInputs, UnifiedResults, ScenarioState, MonthlyProjection, AssumptionOverrides, PricingModel, ROIAnalysis, CapiConfiguration } from '@/types/scenarios';
 import {
   CAPI_BENCHMARKS,
   MEDIA_PERFORMANCE_BENCHMARKS,
@@ -6,6 +6,7 @@ import {
   OPERATIONAL_BENCHMARKS,
   SCENARIO_MULTIPLIERS,
   CAPI_CAMPAIGN_VALUES,
+  CAPI_BASE_PARAMETERS,
 } from '@/constants/industryBenchmarks';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
 import { RISK_SCENARIOS, type RiskScenario } from '@/constants/riskScenarios';
@@ -198,7 +199,7 @@ export class UnifiedCalculationEngine {
     };
 
     // Calculate ROI Analysis with contract pricing
-    const pricing = this.calculatePricing(inputs);
+    const pricing = this.calculatePricing(inputs, overrides);
     const roiAnalysis = this.calculateROI(totalMonthlyUplift, pricing);
 
     return {
@@ -313,51 +314,107 @@ export class UnifiedCalculationEngine {
     };
   }
 
+  /**
+   * Calculate CAPI configuration based on Business Readiness factors
+   * CAPI campaigns are now OUTPUTS, not manual inputs
+   */
+  private static calculateCapiConfiguration(
+    overrides?: AssumptionOverrides
+  ): CapiConfiguration {
+    const base = CAPI_BASE_PARAMETERS;
+    
+    // Get readiness factors (defaults to "normal" readiness)
+    const salesReadiness = overrides?.readinessFactors?.salesReadiness ?? 0.75;
+    const trainingGaps = overrides?.readinessFactors?.trainingGaps ?? 0.75;
+    const advertiserBuyIn = overrides?.readinessFactors?.advertiserBuyIn ?? 0.8;
+    const marketConditions = overrides?.readinessFactors?.marketConditions ?? 0.85;
+    
+    // Calculate campaign volume multiplier based on:
+    // - Sales Readiness: directly affects ability to sell CAPI campaigns
+    // - Training Gaps: affects sales effectiveness
+    // - Advertiser Buy-In: affects deal close rate
+    const salesMultiplier = salesReadiness >= 0.9 ? 1.5 : salesReadiness >= 0.7 ? 1.0 : 0.6;
+    const trainingMultiplier = trainingGaps >= 0.9 ? 1.3 : trainingGaps >= 0.7 ? 1.0 : 0.7;
+    const buyInMultiplier = advertiserBuyIn >= 0.9 ? 1.4 : advertiserBuyIn >= 0.75 ? 1.0 : 0.6;
+    
+    const volumeMultiplier = Math.min(
+      base.MAX_VOLUME_MULTIPLIER,
+      salesMultiplier * trainingMultiplier * buyInMultiplier
+    );
+    
+    // Calculate spend multiplier based on:
+    // - Market Conditions (Budget Environment): affects how much advertisers spend
+    const spendMultiplier = Math.min(
+      base.MAX_SPEND_MULTIPLIER,
+      marketConditions >= 0.9 ? 1.4 : marketConditions >= 0.8 ? 1.0 : 0.7
+    );
+    
+    // Calculate yearly campaigns and average spend
+    const yearlyCampaigns = Math.max(2, Math.round(base.BASE_YEARLY_CAMPAIGNS * volumeMultiplier));
+    const avgCampaignSpend = Math.round(base.BASE_AVG_CAMPAIGN_SPEND * spendMultiplier);
+    
+    // POC campaigns (first 3 months) - use ramp weights
+    const pocWeight = base.MONTHLY_RAMP_WEIGHTS.slice(0, 3).reduce((a, b) => a + b, 0);
+    const pocCampaigns = Math.max(1, Math.round(yearlyCampaigns * pocWeight));
+    
+    // Monthly distribution based on ramp weights
+    const monthlyDistribution = base.MONTHLY_RAMP_WEIGHTS.map(weight => 
+      Math.round(yearlyCampaigns * weight * 10) / 10 // Allow decimals for display
+    );
+    
+    return {
+      yearlyCampaigns,
+      avgCampaignSpend,
+      pocCampaigns,
+      fullYearCampaigns: yearlyCampaigns,
+      monthlyDistribution,
+    };
+  }
+
   private static calculateCapiCapabilities(
     inputs: SimplifiedInputs,
     scenario: ScenarioState,
     currentMonthlyRevenue: number,
     overrides?: AssumptionOverrides
   ) {
+    // Calculate CAPI configuration from Business Readiness factors
+    const capiConfig = this.calculateCapiConfiguration(overrides);
+    
     // Match rate improvement
     const baselineMatchRate = CAPI_BENCHMARKS.BASELINE_MATCH_RATE;
     const improvedMatchRate = overrides?.capiMatchRate ?? CAPI_BENCHMARKS.IMPROVED_MATCH_RATE;
     const matchRateImprovement = (improvedMatchRate / baselineMatchRate - 1) * 100;
 
-    // Campaign-based service fees (Benefit #4: Ad Performance/CAPI)
-    // CAPI benefits come from individual campaigns sold with AdFixus Stream
-    // Now using user-configurable inputs instead of hardcoded values
-    const estimatedCapiCampaigns = inputs.capiCampaignsPerMonth;
-    const avgCampaignSpend = inputs.avgCampaignSpend;
-    const capiLineItemShare = inputs.capiLineItemShare; // % of campaign spend that is CAPI-enabled
+    // Campaign-based service fees using calculated CAPI configuration
+    // Convert yearly campaigns to monthly average for calculations
+    const avgMonthlyCapiCampaigns = capiConfig.yearlyCampaigns / 12;
+    const avgCampaignSpend = capiConfig.avgCampaignSpend;
+    const capiLineItemShare = inputs.capiLineItemShare;
     const serviceFee = overrides?.capiServiceFee ?? CONTRACT_PRICING.CAPI_SERVICE_FEE_RATE;
 
-    // Total baseline CAPI campaign spend
-    const baselineCapiSpend = estimatedCapiCampaigns * avgCampaignSpend;
+    // Total baseline CAPI campaign spend (monthly average)
+    const baselineCapiSpend = avgMonthlyCapiCampaigns * avgCampaignSpend;
     
     // CAPI-eligible spend (only line items running CAPI tracking)
     const capiEligibleSpend = baselineCapiSpend * capiLineItemShare;
 
-    // Operational labor savings from CAPI (reduced troubleshooting, better data quality)
+    // Operational labor savings from CAPI
     const capiLaborSavings = OPERATIONAL_BENCHMARKS.MANUAL_LABOR_HOURS_SAVED * OPERATIONAL_BENCHMARKS.HOURLY_RATE;
 
     // With better conversion tracking, advertisers increase spend by 40% on CAPI-enabled line items
     const conversionImprovement = CAPI_CAMPAIGN_VALUES.CONVERSION_RATE_MULTIPLIER - 1;
     const improvedCapiEligibleSpend = capiEligibleSpend * (1 + conversionImprovement);
 
-    // Additional revenue from improved conversion tracking (only on CAPI-enabled line items)
+    // Additional revenue from improved conversion tracking
     const conversionTrackingRevenue = capiEligibleSpend * conversionImprovement;
 
     // Service fee applies ONLY to CAPI-enabled line items (with improvement)
     const campaignServiceFees = improvedCapiEligibleSpend * serviceFee;
 
-    // Apply deployment multiplier only (CAPI works the same regardless of addressability)
+    // Apply deployment multiplier
     const deploymentMultiplier = this.getDeploymentMultiplier(scenario.deployment);
 
-    // NET Publisher benefit from CAPI:
-    // 1. Additional revenue from better conversion tracking: +conversionTrackingRevenue
-    // 2. Operational labor savings: +capiLaborSavings
-    // 3. MINUS service fees paid to AdFixus (only on CAPI-enabled spend): -campaignServiceFees
+    // NET Publisher benefit from CAPI
     const monthlyUplift = (conversionTrackingRevenue + capiLaborSavings - campaignServiceFees) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
@@ -365,7 +422,7 @@ export class UnifiedCalculationEngine {
       matchRateImprovement,
       baselineCapiSpend,
       capiEligibleSpend,
-      totalCapiSpendWithImprovement: baselineCapiSpend + conversionTrackingRevenue, // Total including all campaigns
+      totalCapiSpendWithImprovement: baselineCapiSpend + conversionTrackingRevenue,
       conversionTrackingRevenue,
       campaignServiceFees,
       capiLaborSavings,
@@ -377,6 +434,7 @@ export class UnifiedCalculationEngine {
         conversionImprovement: conversionImprovement * 100,
         ctrImprovement: (CAPI_BENCHMARKS.CTR_MULTIPLIER - 1) * 100,
       },
+      capiConfiguration: capiConfig,
     };
   }
 
@@ -448,14 +506,19 @@ export class UnifiedCalculationEngine {
     }
   }
 
-  private static calculatePricing(inputs: SimplifiedInputs): PricingModel {
-    // Use contract pricing from voxMediaDomains.ts
-    const pocFlatFee = CONTRACT_PRICING.POC_FLAT_FEE; // $15K flat fee
-    const pocDurationMonths = CONTRACT_PRICING.POC_DURATION_MONTHS;
-    const fullContractMonthly = CONTRACT_PRICING.FULL_CONTRACT_MONTHLY; // $19,928/month (DOWN from $26K!)
-    const capiServiceFeeRate = CONTRACT_PRICING.CAPI_SERVICE_FEE_RATE; // 12.5%
+  private static calculatePricing(inputs: SimplifiedInputs, overrides?: AssumptionOverrides): PricingModel {
+    // Calculate CAPI configuration to get spend values
+    const capiConfig = this.calculateCapiConfiguration(overrides);
     
-    const totalMonthlyCapiSpend = inputs.capiCampaignsPerMonth * inputs.avgCampaignSpend;
+    // Use contract pricing from voxMediaDomains.ts
+    const pocFlatFee = CONTRACT_PRICING.POC_FLAT_FEE;
+    const pocDurationMonths = CONTRACT_PRICING.POC_DURATION_MONTHS;
+    const fullContractMonthly = CONTRACT_PRICING.FULL_CONTRACT_MONTHLY;
+    const capiServiceFeeRate = CONTRACT_PRICING.CAPI_SERVICE_FEE_RATE;
+    
+    // Use calculated CAPI values (yearly → monthly average)
+    const avgMonthlyCapiCampaigns = capiConfig.yearlyCampaigns / 12;
+    const totalMonthlyCapiSpend = avgMonthlyCapiCampaigns * capiConfig.avgCampaignSpend;
     const monthlyCapiServiceFees = totalMonthlyCapiSpend * capiServiceFeeRate;
     
     return {

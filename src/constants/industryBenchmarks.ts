@@ -75,3 +75,21 @@ export const CAPI_CAMPAIGN_VALUES = {
   SERVICE_FEE_PERCENTAGE: 0.125, // 12.5% service fee
   CONVERSION_RATE_MULTIPLIER: 1.40, // 40% conversion improvement
 };
+
+// CAPI Base Parameters for Dynamic Calculation based on Business Readiness
+// CAPI campaigns are now OUTPUTS based on readiness factors, not manual inputs
+export const CAPI_BASE_PARAMETERS = {
+  // Base annual CAPI campaigns (conservative baseline - 2 in POC period)
+  BASE_YEARLY_CAMPAIGNS: 8,
+  
+  // Base average campaign spend
+  BASE_AVG_CAMPAIGN_SPEND: 75000, // $75K baseline
+  
+  // Maximum multipliers for readiness factors
+  MAX_VOLUME_MULTIPLIER: 3.0, // Can grow to 3x base (24 campaigns/year)
+  MAX_SPEND_MULTIPLIER: 2.0, // Can grow to 2x base ($150K/campaign)
+  
+  // Monthly ramp-up distribution for yearly campaigns
+  // Weighted toward second half of year (realistic POC → scale pattern)
+  MONTHLY_RAMP_WEIGHTS: [0.05, 0.08, 0.08, 0.08, 0.08, 0.10, 0.10, 0.10, 0.10, 0.08, 0.08, 0.07],
+};

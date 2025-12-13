@@ -7,8 +7,7 @@ export const useScenarioCalculator = () => {
     selectedDomains: ['the-verge', 'vox', 'polygon'],
     displayCPM: 4.50,
     videoCPM: 15.00,
-    capiCampaignsPerMonth: 10,
-    avgCampaignSpend: 100000,
+    // REMOVED: capiCampaignsPerMonth, avgCampaignSpend - now calculated from Business Readiness
     capiLineItemShare: 0.60, // Default 60% of campaign spend is CAPI-enabled
   });
 
@@ -48,8 +47,7 @@ export const useScenarioCalculator = () => {
       selectedDomains: ['the-verge', 'vox', 'polygon'],
       displayCPM: 4.50,
       videoCPM: 15.00,
-      capiCampaignsPerMonth: 10,
-      avgCampaignSpend: 100000,
+      // REMOVED: capiCampaignsPerMonth, avgCampaignSpend - now calculated from Business Readiness
       capiLineItemShare: 0.60,
     });
     setScenario({
