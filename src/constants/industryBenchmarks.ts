@@ -14,10 +14,10 @@ export const CAPI_BENCHMARKS = {
 export const MEDIA_PERFORMANCE_BENCHMARKS = {
   BASELINE_ROAS: 2.5,
   IMPROVED_ROAS: 3.5, // 40% improvement
-  BASELINE_MAKEGOOD_RATE: 0.08, // 8%
+  BASELINE_MAKEGOOD_RATE: 0.05, // 5% (reduced from 8%)
   IMPROVED_MAKEGOOD_RATE: 0.02, // 2%
-  PREMIUM_INVENTORY_SHARE: 0.30, // 30% of inventory sold as premium
-  YIELD_UPLIFT_PERCENTAGE: 0.25, // 25% yield uplift on premium inventory
+  PREMIUM_INVENTORY_SHARE: 0.20, // 20% of inventory sold as premium (reduced from 30%)
+  YIELD_UPLIFT_PERCENTAGE: 0.15, // 15% yield uplift on premium inventory (reduced from 25%)
 };
 
 // Vox Media browser traffic shares (blended mobile/desktop from Dec 2024 data)
