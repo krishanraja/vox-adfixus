@@ -361,10 +361,8 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 20]
       },
       {
-        columns: [
-          { text: `Generated: ${generatedDate}`, style: 'metadata' },
-          { text: `Effective Date: January 1, 2026`, style: 'metadata', alignment: 'right' }
-        ],
+        text: `Generated: ${generatedDate}`,
+        style: 'metadata',
         margin: [0, 0, 0, 20]
       },
       {
@@ -401,36 +399,15 @@ export const buildAdfixusProposalPdf = async (
       },
       {
         table: {
-          widths: ['*', '*', '*'],
+          widths: ['*', '*'],
           body: [
             [
               { text: 'Modeled Monthly Uplift*', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Modeled Annual Opportunity*', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Contract Cost (Year 1)', style: 'metricHeader', fillColor: '#F1F5F9' }
+              { text: 'Modeled Annual Opportunity*', style: 'metricHeader', fillColor: '#F1F5F9' }
             ],
             [
               { text: formatCurrency(monthlyUplift), style: 'metricValue', alignment: 'center' },
-              { text: formatCurrency(annualUplift), style: 'metricValue', alignment: 'center' },
-              { text: formatCurrency((fullContractMonthly + capiServiceFees) * 12), style: 'metricValue', alignment: 'center' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 15]
-      },
-      {
-        table: {
-          widths: ['*', '*', '*'],
-          body: [
-            [
-              { text: 'Modeled Net ROI*', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Estimated Payback Period', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Projected ROI Multiple', style: 'metricHeader', fillColor: '#F1F5F9' }
-            ],
-            [
-              { text: formatCurrency(netMonthlyROI * 12), style: 'metricValueHighlight', alignment: 'center' },
-              { text: `${paybackMonths.toFixed(1)} months`, style: 'metricValue', alignment: 'center' },
-              { text: `${roiMultiple.toFixed(1)}x`, style: 'metricValueHighlight', alignment: 'center' }
+              { text: formatCurrency(annualUplift), style: 'metricValue', alignment: 'center' }
             ]
           ]
         },
@@ -501,9 +478,9 @@ export const buildAdfixusProposalPdf = async (
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
-      // Safari-specific metrics (POC KPI focus)
+      // Safari-specific metrics (POC KPI focus) - Impact-focused framing
       {
-        text: 'Safari Addressability (POC Success Metric)',
+        text: 'Safari Addressability (POC Target)',
         style: 'tableSubheader',
         margin: [0, 0, 0, 6]
       },
@@ -516,16 +493,16 @@ export const buildAdfixusProposalPdf = async (
               { text: formatPercentage(idInfra?.details?.safariShare || weightedSafariShare * 100), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Current Safari Addressability (baseline)', style: 'tableLabel' },
-              { text: formatPercentage(idInfra?.details?.currentSafariAddressability || 55), style: 'tableValue', alignment: 'right' }
+              { text: 'Current Safari Tracking', style: 'tableLabel' },
+              { text: 'Limited (ITP restrictions)', style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Projected Safari Addressability (with Durable ID)', style: 'tableLabel' },
-              { text: formatPercentage(idInfra?.details?.improvedSafariAddressability || 85), style: 'tableValue', alignment: 'right' }
+              { text: 'POC Target', style: 'tableLabel' },
+              { text: '+20% addressability improvement on Safari', style: 'tableValueHighlight', alignment: 'right' }
             ],
             [
-              { text: 'Estimated Safari Addressability Improvement', style: 'tableLabel' },
-              { text: `+${(idInfra?.details?.safariAddressabilityImprovement || 30).toFixed(0)} percentage points`, style: 'tableValueHighlight', alignment: 'right' }
+              { text: 'Est. Newly Addressable Impressions', style: 'tableLabel' },
+              { text: formatNumber(newlyAddressableImpressions) + '/month', style: 'tableValue', alignment: 'right' }
             ]
           ]
         },
@@ -534,7 +511,7 @@ export const buildAdfixusProposalPdf = async (
       },
       // Total inventory metrics
       {
-        text: 'Total Inventory Addressability',
+        text: 'Projected Portfolio Impact',
         style: 'tableSubheader',
         margin: [0, 0, 0, 6]
       },
@@ -543,20 +520,16 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', 'auto'],
           body: [
             [
-              { text: 'Current Total Addressability', style: 'tableLabel' },
+              { text: 'Current Addressable Inventory', style: 'tableLabel' },
               { text: formatPercentage(currentAddressability), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Projected Total Addressability', style: 'tableLabel' },
+              { text: 'Projected Addressable Inventory', style: 'tableLabel' },
               { text: formatPercentage(improvedAddressability), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Estimated Total Improvement', style: 'tableLabel' },
+              { text: 'Estimated Improvement', style: 'tableLabel' },
               { text: `+${(idInfra?.details?.totalAddressabilityImprovement || (improvedAddressability - currentAddressability)).toFixed(1)} percentage points`, style: 'tableValueHighlight', alignment: 'right' }
-            ],
-            [
-              { text: 'Est. Newly Addressable Impressions (Monthly)', style: 'tableLabel' },
-              { text: formatNumber(newlyAddressableImpressions), style: 'tableValue', alignment: 'right' }
             ]
           ]
         },
@@ -676,101 +649,7 @@ export const buildAdfixusProposalPdf = async (
         }
       ] : []),
 
-      // ==================== PAGE 4: ROI & COST ANALYSIS ====================
-      {
-        pageBreak: 'before',
-        text: 'Modeled ROI & Cost Analysis',
-        style: 'h1',
-        margin: [0, 0, 0, 15]
-      },
-      {
-        text: 'Contract Pricing Summary',
-        style: 'h3',
-        margin: [0, 0, 0, 10]
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', 'auto', 'auto', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Phase', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Duration', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Platform Fee', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Est. CAPI Fees', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Est. Total Monthly', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
-            ],
-            [
-              { text: 'POC', style: 'tableCell' },
-              { text: '3 months', style: 'tableCell' },
-              { text: formatCurrency(pocMonthly) + '/mo', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(pocMonthly + capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Year 1', style: 'tableCell' },
-              { text: '12 months', style: 'tableCell' },
-              { text: formatCurrency(fullContractMonthly) + '/mo', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(fullContractMonthly + capiServiceFees) + '/mo', style: 'tableCell', alignment: 'right' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 25]
-      },
-      {
-        text: 'Modeled ROI Calculation*',
-        style: 'h3',
-        margin: [0, 0, 0, 10]
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Metric', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'POC Phase', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Full Contract', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
-            ],
-            [
-              { text: 'Modeled Monthly Benefits', style: 'tableCell' },
-              { text: formatCurrency(roiAnalysis?.totalMonthlyBenefits || 0), style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(roiAnalysis?.totalMonthlyBenefits || 0), style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Monthly Costs', style: 'tableCell' },
-              { text: formatCurrency(roiAnalysis?.costs?.pocPhaseMonthly || 0), style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(roiAnalysis?.costs?.fullContractMonthly || 0), style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Modeled Net Monthly ROI', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: formatCurrency(roiAnalysis?.netMonthlyROI?.pocPhase || 0), style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: formatCurrency(roiAnalysis?.netMonthlyROI?.fullContract || 0), style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
-            ],
-            [
-              { text: 'Projected ROI Multiple', style: 'tableCell' },
-              { text: (roiAnalysis?.roiMultiple?.pocPhase || 0).toFixed(1) + 'x', style: 'tableCell', alignment: 'right' },
-              { text: (roiAnalysis?.roiMultiple?.fullContract || 0).toFixed(1) + 'x', style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Estimated Payback Period', style: 'tableCell' },
-              { text: (roiAnalysis?.paybackMonths?.pocPhase || 0).toFixed(1) + ' months', style: 'tableCell', alignment: 'right' },
-              { text: (roiAnalysis?.paybackMonths?.fullContract || 0).toFixed(1) + ' months', style: 'tableCell', alignment: 'right' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 8]
-      },
-      {
-        text: '*ROI projections are modeled estimates. Actual returns will depend on deployment success, market conditions, and organizational execution.',
-        style: 'footnote',
-        margin: [0, 0, 0, 0]
-      },
-
-      // ==================== PAGE 5: RISK-ADJUSTED PROJECTIONS ====================
+      // ==================== PAGE 4: RISK-ADJUSTED PROJECTIONS ====================
       {
         pageBreak: 'before',
         text: 'Risk-Adjusted Scenario Projections',
@@ -949,12 +828,20 @@ export const buildAdfixusProposalPdf = async (
               { text: 'CPM × Addressable Impressions', style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Safari baseline addressability', style: 'tableLabel' },
-              { text: formatPercentage(currentAddressability), style: 'tableValue', alignment: 'right' }
+              { text: 'Safari Traffic Share', style: 'tableLabel' },
+              { text: formatPercentage(weightedSafariShare * 100), style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Safari addressability with Durable ID', style: 'tableLabel' },
-              { text: formatPercentage(improvedAddressability), style: 'tableValue', alignment: 'right' }
+              { text: 'Current Safari Tracking', style: 'tableLabel' },
+              { text: 'Limited (ITP restrictions)', style: 'tableValue', alignment: 'right' }
+            ],
+            [
+              { text: 'POC Target', style: 'tableLabel' },
+              { text: '+20% addressability improvement on Safari', style: 'tableValue', alignment: 'right' }
+            ],
+            [
+              { text: 'Est. Newly Addressable Impressions', style: 'tableLabel' },
+              { text: formatNumber(newlyAddressableImpressions) + '/month', style: 'tableValue', alignment: 'right' }
             ],
             [
               { text: 'CPM uplift on newly addressable inventory', style: 'tableLabel' },
