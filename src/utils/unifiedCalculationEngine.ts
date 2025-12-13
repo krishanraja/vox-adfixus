@@ -339,9 +339,13 @@ export class UnifiedCalculationEngine {
     // Buy-in multiplier: 0.5→0.7, 0.9→1.18 (linear)
     const buyInMultiplier = Math.max(0.5, Math.min(1.3, 0.7 + (advertiserBuyIn - 0.5) * 1.2));
     
-    const volumeMultiplier = Math.min(
-      base.MAX_VOLUME_MULTIPLIER,
-      salesMultiplier * trainingMultiplier * buyInMultiplier
+    // Apply MIN/MAX bounds to compress CAPI variance
+    const volumeMultiplier = Math.max(
+      base.MIN_VOLUME_MULTIPLIER, // Floor at 0.7x
+      Math.min(
+        base.MAX_VOLUME_MULTIPLIER, // Cap at 1.4x
+        salesMultiplier * trainingMultiplier * buyInMultiplier
+      )
     );
     
     // Market conditions multiplier: 0.5→0.7, 0.9→1.1 (linear, tighter range)

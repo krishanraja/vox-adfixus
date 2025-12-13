@@ -35,13 +35,13 @@ export interface RiskMultipliers {
 export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
   conservative: {
     rampUpMonths: 12, // 12 months to full value
-    adoptionRate: 0.65, // 65% of properties get full deployment
-    addressabilityEfficiency: 0.70, // Significant friction in rollout
-    capiDeploymentRate: 0.60, // Only 60% of campaigns use CAPI
+    adoptionRate: 0.68, // 68% of properties get full deployment
+    addressabilityEfficiency: 0.72, // Moderate friction in rollout
+    capiDeploymentRate: 0.70, // 70% of campaigns use CAPI (raised to narrow gap)
     premiumInventoryShare: 0.18, // Sales struggles with premium positioning
-    cpmUpliftRealization: 0.70, // Only 70% of expected uplift realized
-    salesEffectiveness: 0.65, // Sales execution challenges
-    cdpSavingsRealization: 0.75, // Technical delays in ID reduction
+    cpmUpliftRealization: 0.72, // 72% of expected uplift realized
+    salesEffectiveness: 0.72, // Moderate sales challenges (raised to narrow gap)
+    cdpSavingsRealization: 0.78, // Technical delays in ID reduction
     // Conservative: Low readiness → fewer CAPI campaigns → lower ROI
     defaultReadiness: {
       salesReadiness: 0.55,
@@ -71,13 +71,13 @@ export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
   
   optimistic: {
     rampUpMonths: 6, // Fast 6-month ramp
-    adoptionRate: 0.85, // 85% deployment
-    addressabilityEfficiency: 0.90, // Strong efficiency
-    capiDeploymentRate: 0.85, // 85% CAPI adoption
-    premiumInventoryShare: 0.25, // Good premium positioning
-    cpmUpliftRealization: 0.92, // 92% of expected uplift
-    salesEffectiveness: 0.88, // Excellent sales execution
-    cdpSavingsRealization: 0.92, // Quick ID reduction
+    adoptionRate: 0.82, // 82% deployment (lowered to narrow gap)
+    addressabilityEfficiency: 0.85, // Good efficiency (lowered to narrow gap)
+    capiDeploymentRate: 0.78, // 78% CAPI adoption (lowered to narrow gap)
+    premiumInventoryShare: 0.24, // Good premium positioning
+    cpmUpliftRealization: 0.85, // 85% of expected uplift (lowered to narrow gap)
+    salesEffectiveness: 0.80, // Good sales execution (lowered to narrow gap)
+    cdpSavingsRealization: 0.88, // Quick ID reduction
     // Optimistic: High readiness → more CAPI campaigns → higher ROI (capped)
     defaultReadiness: {
       salesReadiness: 0.90,
