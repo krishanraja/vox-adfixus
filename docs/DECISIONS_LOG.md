@@ -14,11 +14,13 @@
 
 ### DEC-002: Risk Scenario Approach
 **Date**: 2024  
-**Status**: Implemented  
+**Status**: Implemented (Updated 2024-12)  
 **Context**: Users skeptical of "best case" projections  
 **Decision**: Implement three risk scenarios (conservative/moderate/optimistic) with transparent multipliers  
 **Rationale**: Builds trust, allows user to model their own confidence level  
 **Impact**: Added 30% more UI complexity but significantly improved credibility
+
+**Update (2024-12)**: Risk scenarios now directly affect CAPI configuration via scenario-specific readiness defaults. This creates a logical connection where conservative = lower readiness = fewer CAPI campaigns = lower ROI. Target ROI range: Conservative ~3.6x, Moderate ~5.2x, Optimistic ~9.1x (full contract).
 
 ---
 
@@ -64,11 +66,13 @@
 
 ### DEC-007: Business Readiness Factors
 **Date**: 2024  
-**Status**: Implemented  
+**Status**: Implemented (Updated 2024-12)  
 **Context**: Technical benefits mean nothing if organization can't capture them  
 **Decision**: Add business readiness factors (sales readiness, training, buy-in, etc.)  
 **Rationale**: Projects realistic scenarios accounting for organizational friction  
 **Impact**: More conservative projections, higher credibility
+
+**Update (2024-12)**: Linked readiness factors to risk scenario selection. Conservative scenario now uses low readiness defaults (55% sales readiness), moderate uses baseline (75%), and optimistic uses high readiness (90%). This directly affects CAPI campaign volume, creating logical differentiation between scenarios.
 
 ---
 

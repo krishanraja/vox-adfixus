@@ -87,9 +87,9 @@ export const CAPI_BASE_PARAMETERS = {
   // Base average campaign spend
   BASE_AVG_CAMPAIGN_SPEND: 75000, // $75K baseline
   
-  // Maximum multipliers for readiness factors
-  MAX_VOLUME_MULTIPLIER: 3.0, // Can grow to 3x base (36 campaigns/year)
-  MAX_SPEND_MULTIPLIER: 2.0, // Can grow to 2x base ($150K/campaign)
+  // Maximum multipliers for readiness factors (capped to prevent runaway optimistic ROI)
+  MAX_VOLUME_MULTIPLIER: 2.0, // CAPPED at 2x base (24 campaigns/year max) - was 3.0
+  MAX_SPEND_MULTIPLIER: 1.5, // CAPPED at 1.5x base ($112.5K/campaign max) - was 2.0
   
   // Monthly ramp-up distribution for yearly campaigns
   // Weighted toward second half of year (realistic POC → scale pattern)

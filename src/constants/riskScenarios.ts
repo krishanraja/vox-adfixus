@@ -2,6 +2,13 @@
 
 export type RiskScenario = 'conservative' | 'moderate' | 'optimistic';
 
+export interface ReadinessDefaults {
+  salesReadiness: number;
+  trainingGaps: number;
+  advertiserBuyIn: number;
+  marketConditions: number;
+}
+
 export interface RiskMultipliers {
   // Time to full value (months)
   rampUpMonths: number;
@@ -20,6 +27,9 @@ export interface RiskMultipliers {
   
   // CDP cost savings confidence
   cdpSavingsRealization: number;
+  
+  // Scenario-specific CAPI readiness defaults (drives campaign volume)
+  defaultReadiness: ReadinessDefaults;
 }
 
 export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
@@ -32,6 +42,13 @@ export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
     cpmUpliftRealization: 0.80, // 80% of expected uplift realized
     salesEffectiveness: 0.80, // Sales training mostly complete
     cdpSavingsRealization: 0.85, // Minor technical delays in ID reduction
+    // Conservative: Low readiness → fewer CAPI campaigns → lower ROI
+    defaultReadiness: {
+      salesReadiness: 0.55,      // Sales team struggles with new products
+      trainingGaps: 0.50,        // Significant training gaps
+      advertiserBuyIn: 0.55,     // Advertisers slow to adopt CAPI
+      marketConditions: 0.65,    // Cautious market environment
+    },
   },
   
   moderate: {
@@ -43,6 +60,13 @@ export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
     cpmUpliftRealization: 0.78, // 78% of expected uplift
     salesEffectiveness: 0.72, // Good but not perfect sales execution
     cdpSavingsRealization: 0.80, // Some delays
+    // Moderate: Standard readiness → baseline CAPI campaigns
+    defaultReadiness: {
+      salesReadiness: 0.75,      // Good sales execution
+      trainingGaps: 0.75,        // Adequate training
+      advertiserBuyIn: 0.80,     // Reasonable adoption
+      marketConditions: 0.85,    // Normal market
+    },
   },
   
   optimistic: {
@@ -54,6 +78,13 @@ export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
     cpmUpliftRealization: 0.82, // 82% of expected uplift
     salesEffectiveness: 0.80, // Very good sales execution
     cdpSavingsRealization: 0.85, // Minor delays
+    // Optimistic: High readiness → more CAPI campaigns → higher ROI (but capped)
+    defaultReadiness: {
+      salesReadiness: 0.90,      // Excellent sales execution
+      trainingGaps: 0.90,        // Comprehensive training
+      advertiserBuyIn: 0.90,     // Strong advertiser adoption
+      marketConditions: 0.90,    // Strong market conditions
+    },
   },
 };
 
