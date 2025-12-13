@@ -74,6 +74,13 @@
 
 **Update (2024-12)**: Linked readiness factors to risk scenario selection. Conservative scenario now uses low readiness defaults (55% sales readiness), moderate uses baseline (75%), and optimistic uses high readiness (90%). This directly affects CAPI campaign volume, creating logical differentiation between scenarios.
 
+**Update (2024-12-13)**: Expanded readiness factor impact to ALL benefit categories:
+- **Sales Readiness**: Now affects cpmUpliftRealization, premiumInventoryShare, salesEffectiveness (0.5→0.7x to 0.9→1.1x range)
+- **Training Gaps**: Now affects adoptionRate, addressabilityEfficiency (0.5→0.75x to 0.9→1.05x range)  
+- **Advertiser Buy-In**: Now affects cpmUpliftRealization, capiDeploymentRate (0.5→0.75x to 0.9→1.1x range)
+
+This creates realistic compounding effects where poor business readiness significantly impacts ALL revenue streams, not just CAPI volume.
+
 ---
 
 ### DEC-008: POC + Full Contract Pricing Model
