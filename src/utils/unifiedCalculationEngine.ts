@@ -41,20 +41,13 @@ export class UnifiedCalculationEngine {
     const risk = { ...RISK_SCENARIOS[riskScenario] };
     
     // Apply readiness adjustments if provided
+    // NOTE: Readiness factors are applied ONCE here to risk multipliers
+    // They also affect CAPI configuration separately in calculateCapiConfiguration()
+    // This is intentional: readiness affects BOTH deployment risk AND campaign volume
     if (overrides?.readinessFactors) {
       const rf = overrides.readinessFactors;
       
-      // Apply individual factors to specific multipliers
-      if (rf.salesReadiness !== undefined) {
-        risk.salesEffectiveness *= rf.salesReadiness;
-      }
-      if (rf.trainingGaps !== undefined) {
-        // Training gaps affect sales effectiveness and adoption
-        risk.salesEffectiveness *= rf.trainingGaps;
-      }
-      if (rf.advertiserBuyIn !== undefined) {
-        risk.capiDeploymentRate *= rf.advertiserBuyIn;
-      }
+      // Apply organizational ownership to adoption rate
       if (rf.organizationalOwnership !== undefined) {
         risk.adoptionRate *= rf.organizationalOwnership;
       }
@@ -64,7 +57,6 @@ export class UnifiedCalculationEngine {
       if (rf.integrationDelays !== undefined) {
         // Integration delays affect technical deployment speed
         risk.addressabilityEfficiency *= rf.integrationDelays;
-        risk.capiDeploymentRate *= rf.integrationDelays;
       }
       if (rf.resourceAvailability !== undefined) {
         // Resource availability affects adoption rate and ramp-up
@@ -75,7 +67,7 @@ export class UnifiedCalculationEngine {
         }
       }
       
-      // Apply market conditions as overall dampener to financial metrics
+      // Apply market conditions as overall dampener to financial metrics (but not double-applied to CAPI)
       if (rf.marketConditions !== undefined) {
         const marketMultiplier = rf.marketConditions;
         risk.addressabilityEfficiency *= marketMultiplier;

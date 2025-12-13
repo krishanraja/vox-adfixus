@@ -33,10 +33,12 @@ export const ADDRESSABILITY_BENCHMARKS = {
   
   // SAFARI-SPECIFIC addressability (THE KEY POC KPI)
   // Current state: 0% - Safari users unaddressable due to ITP
-  // POC Target: +20% addressability improvement on Safari inventory
+  // POC Target (external): +20% addressability improvement on Safari inventory
+  // Internal calculation target: +35% for ROI modeling (not promised to client)
   CURRENT_SAFARI_ADDRESSABILITY: 0.0, // 0% - Safari users unaddressable due to ITP
-  TARGET_SAFARI_ADDRESSABILITY: 0.20, // 20% POC target improvement
-  STRETCH_SAFARI_ADDRESSABILITY: 0.30, // 30% internal stretch goal
+  TARGET_SAFARI_ADDRESSABILITY: 0.35, // 35% INTERNAL calculation target (conservative achievable)
+  POC_PROMISE_ADDRESSABILITY: 0.20, // 20% POC EXTERNAL promise (what we commit to)
+  STRETCH_SAFARI_ADDRESSABILITY: 0.40, // 40% internal stretch goal
   
   // Chrome/Other = 100% addressable (no ITP restrictions)
   CHROME_ADDRESSABILITY: 1.0,
@@ -79,14 +81,14 @@ export const CAPI_CAMPAIGN_VALUES = {
 // CAPI Base Parameters for Dynamic Calculation based on Business Readiness
 // CAPI campaigns are now OUTPUTS based on readiness factors, not manual inputs
 export const CAPI_BASE_PARAMETERS = {
-  // Base annual CAPI campaigns (conservative baseline - 2 in POC period)
-  BASE_YEARLY_CAMPAIGNS: 8,
+  // Base annual CAPI campaigns (increased from 8 for realistic enterprise publisher)
+  BASE_YEARLY_CAMPAIGNS: 12,
   
   // Base average campaign spend
   BASE_AVG_CAMPAIGN_SPEND: 75000, // $75K baseline
   
   // Maximum multipliers for readiness factors
-  MAX_VOLUME_MULTIPLIER: 3.0, // Can grow to 3x base (24 campaigns/year)
+  MAX_VOLUME_MULTIPLIER: 3.0, // Can grow to 3x base (36 campaigns/year)
   MAX_SPEND_MULTIPLIER: 2.0, // Can grow to 2x base ($150K/campaign)
   
   // Monthly ramp-up distribution for yearly campaigns

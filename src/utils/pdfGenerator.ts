@@ -492,11 +492,7 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: 'POC Target', style: 'tableLabel' },
-              { text: '+20% addressability improvement on Safari inventory', style: 'tableValueHighlight', alignment: 'right' }
-            ],
-            [
-              { text: 'Est. Newly Addressable Impressions', style: 'tableLabel' },
-              { text: formatNumber(newlyAddressableImpressions) + '/month', style: 'tableValue', alignment: 'right' }
+              { text: 'Measurable addressability improvement on Safari inventory', style: 'tableValueHighlight', alignment: 'right' }
             ]
           ]
         },
@@ -522,25 +518,25 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', 'auto', 'auto', 'auto'],
           body: [
             [
-              { text: 'Source', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Revenue Category', style: 'tableHeader', fillColor: '#F1F5F9' },
               { text: 'Modeled Monthly', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: 'Modeled Annual', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: '% of Total', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
-              { text: 'ID Infrastructure (Addressability, Analytics etc)', style: 'tableCell' },
+              { text: 'Net New Revenue: Safari/iOS Inventory Recovery', style: 'tableCell' },
               { text: formatCurrency(idInfra?.monthlyUplift || 0), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency((idInfra?.monthlyUplift || 0) * 12), style: 'tableCell', alignment: 'right' },
               { text: formatPercentage(breakdown.idInfrastructurePercent), style: 'tableCell', alignment: 'right' }
             ],
             ...(capi && capi.monthlyUplift > 0 ? [[
-              { text: 'Conversion API capability to compete with walled gardens', style: 'tableCell' },
+              { text: 'Yield Lift: Outcome-Based Campaign Revenue', style: 'tableCell' },
               { text: formatCurrency(capi.monthlyUplift), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(capi.monthlyUplift * 12), style: 'tableCell', alignment: 'right' },
               { text: formatPercentage(breakdown.capiPercent), style: 'tableCell', alignment: 'right' }
             ]] : []),
             ...(mediaPerf && mediaPerf.monthlyUplift > 0 ? [[
-              { text: 'Ad Performance, Retention & Partnerships', style: 'tableCell' },
+              { text: 'Sales Efficiency: Reduced Make-Goods & Premium Yield', style: 'tableCell' },
               { text: formatCurrency(mediaPerf.monthlyUplift), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(mediaPerf.monthlyUplift * 12), style: 'tableCell', alignment: 'right' },
               { text: formatPercentage(breakdown.performancePercent), style: 'tableCell', alignment: 'right' }
@@ -559,10 +555,36 @@ export const buildAdfixusProposalPdf = async (
       {
         text: '*All figures are modeled projections. Actual results will depend on deployment, market conditions, and organizational execution.',
         style: 'footnote',
+        margin: [0, 0, 0, 15]
+      },
+      // Defensive value callout
+      {
+        table: {
+          widths: ['*'],
+          body: [
+            [
+              {
+                text: [
+                  { text: 'DEFENSIVE VALUE: ', bold: true },
+                  { text: `Without AdFixus, Vox Media leaves approximately ${formatCurrency((idInfra?.details?.addressabilityRevenue || 0) * 12)}/year on the table from unaddressable Safari/iOS inventory. This is revenue that competitors with first-party identity solutions are already capturing.` }
+                ],
+                style: 'disclaimerBox',
+                fillColor: '#FEF3C7',
+                margin: [10, 10, 10, 10]
+              }
+            ]
+          ]
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#F59E0B',
+          vLineColor: () => '#F59E0B',
+        },
         margin: [0, 0, 0, 20]
       },
       {
-        text: 'ID Infrastructure (Addressability, Analytics etc) Detail',
+        text: 'Net New Revenue: Safari/iOS Inventory Recovery',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -571,11 +593,11 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', 'auto'],
           body: [
             [
-              { text: 'Addressability Revenue', style: 'tableLabel' },
+              { text: 'Addressability Revenue (CPM uplift on recovered inventory)', style: 'tableLabel' },
               { text: formatCurrency(idInfra?.details?.addressabilityRevenue || 0) + '/month', style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'CDP Cost Savings', style: 'tableLabel' },
+              { text: 'CDP Cost Savings (ID deduplication)', style: 'tableLabel' },
               { text: formatCurrency(idInfra?.details?.cdpSavingsRevenue || 0) + '/month', style: 'tableValue', alignment: 'right' }
             ]
           ]
@@ -640,10 +662,10 @@ export const buildAdfixusProposalPdf = async (
         }
       ] : []),
 
-      // ==================== PAGE 4: RISK-ADJUSTED PROJECTIONS ====================
+      // ==================== PAGE 4: TIME HORIZON & PROJECTIONS ====================
       {
         pageBreak: 'before',
-        text: 'Scenario Projections',
+        text: 'Time Horizon & Value Realization',
         style: 'h1',
         margin: [0, 0, 0, 15]
       },
@@ -656,6 +678,46 @@ export const buildAdfixusProposalPdf = async (
         text: riskConfig.description,
         style: 'body',
         margin: [0, 0, 0, 15]
+      },
+      // Time Horizon Phases
+      {
+        text: 'Value Realization Phases',
+        style: 'h3',
+        margin: [0, 0, 0, 10]
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['auto', 'auto', '*', 'auto'],
+          body: [
+            [
+              { text: 'Phase', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Months', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+              { text: 'Goal', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Expected ROI', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
+            ],
+            [
+              { text: 'POC Phase', style: 'tableCell', bold: true },
+              { text: '1-3', style: 'tableCell', alignment: 'center' },
+              { text: 'Prove it doesn\'t break things; validate addressability uplift', style: 'tableCell' },
+              { text: '1-2x', style: 'tableCell', alignment: 'right' }
+            ],
+            [
+              { text: 'Scaling Phase', style: 'tableCell', bold: true },
+              { text: '4-6', style: 'tableCell', alignment: 'center' },
+              { text: 'Early upside; expand to additional domains; sales enablement', style: 'tableCell' },
+              { text: '2-4x', style: 'tableCell', alignment: 'right' }
+            ],
+            [
+              { text: 'Value Phase', style: 'tableCell', bold: true },
+              { text: '7-12', style: 'tableCell', alignment: 'center' },
+              { text: 'Full ROI realization; CAPI campaigns at scale; premium yield', style: 'tableCell' },
+              { text: '5-9x', style: 'tableCell', alignment: 'right' }
+            ]
+          ]
+        },
+        layout: tableLayout,
+        margin: [0, 0, 0, 20]
       },
       {
         text: 'Business Readiness Impact',
@@ -690,37 +752,42 @@ export const buildAdfixusProposalPdf = async (
       {
         table: {
           headerRows: 1,
-          widths: ['*', 'auto', 'auto', 'auto'],
+          widths: ['*', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Quarter', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Phase', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
               { text: 'Est. Realization', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: 'Modeled Monthly Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
               { text: 'Est. CAPI Campaigns', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
               { text: 'Q1 (Months 1-3)', style: 'tableCell' },
+              { text: 'POC', style: 'tableCell', alignment: 'center', color: '#0D9488' },
               { text: riskScenario === 'conservative' ? '25%' : riskScenario === 'moderate' ? '40%' : '60%', style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.25 : riskScenario === 'moderate' ? 0.40 : 0.60)), style: 'tableCell', alignment: 'right' },
               { text: `${capi?.capiConfiguration?.pocCampaigns || 2}`, style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Q2 (Months 4-6)', style: 'tableCell' },
+              { text: 'Scaling', style: 'tableCell', alignment: 'center', color: '#2563EB' },
               { text: riskScenario === 'conservative' ? '50%' : riskScenario === 'moderate' ? '70%' : '85%', style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.50 : riskScenario === 'moderate' ? 0.70 : 0.85)), style: 'tableCell', alignment: 'right' },
-              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 8) * 0.25)}`, style: 'tableCell', alignment: 'right' }
+              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 12) * 0.25)}`, style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Q3 (Months 7-9)', style: 'tableCell' },
+              { text: 'Value', style: 'tableCell', alignment: 'center', color: '#7C3AED' },
               { text: riskScenario === 'conservative' ? '75%' : riskScenario === 'moderate' ? '90%' : '100%', style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.75 : riskScenario === 'moderate' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' },
-              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 8) * 0.25)}`, style: 'tableCell', alignment: 'right' }
+              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 12) * 0.25)}`, style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Q4 (Months 10-12)', style: 'tableCell' },
+              { text: 'Value', style: 'tableCell', alignment: 'center', color: '#7C3AED' },
               { text: riskScenario === 'conservative' ? '90%' : '100%', style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' },
-              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 8) * 0.29)}`, style: 'tableCell', alignment: 'right' }
+              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 12) * 0.29)}`, style: 'tableCell', alignment: 'right' }
             ]
           ]
         },
@@ -828,7 +895,7 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: 'POC Target', style: 'tableLabel' },
-              { text: '+20% addressability on Safari', style: 'tableValue', alignment: 'right' }
+              { text: 'Measurable addressability improvement', style: 'tableValue', alignment: 'right' }
             ],
             [
               { text: 'CPM uplift on newly addressable', style: 'tableLabel' },
