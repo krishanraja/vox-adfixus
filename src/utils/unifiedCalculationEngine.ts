@@ -116,7 +116,7 @@ export class UnifiedCalculationEngine {
     // Calculate CAPI Capabilities (if enabled) - BASE before risk adjustment
     let capiCapabilities;
     if (scenario.scope === 'id-capi' || scenario.scope === 'id-capi-performance') {
-      const baseCapiCapabilities = this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, overrides);
+      const baseCapiCapabilities = this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, riskScenario, overrides);
       
       // Apply risk adjustments to CAPI
       capiCapabilities = {
@@ -167,7 +167,7 @@ export class UnifiedCalculationEngine {
     const optimisticRisk = RISK_SCENARIOS.optimistic;
     const unadjustedMonthlyUplift = (
       baseIdInfrastructure.monthlyUplift +
-      (capiCapabilities ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue).monthlyUplift : 0) +
+      (capiCapabilities ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, 'optimistic').monthlyUplift : 0) +
       (mediaPerformance ? this.calculateMediaPerformance(
         totalMonthlyPageviews,
         displayCPM,
@@ -191,7 +191,7 @@ export class UnifiedCalculationEngine {
     };
 
     // Calculate ROI Analysis with contract pricing
-    const pricing = this.calculatePricing(inputs, overrides);
+    const pricing = this.calculatePricing(inputs, riskScenario, overrides);
     const roiAnalysis = this.calculateROI(totalMonthlyUplift, pricing);
 
     return {
@@ -309,17 +309,22 @@ export class UnifiedCalculationEngine {
   /**
    * Calculate CAPI configuration based on Business Readiness factors
    * CAPI campaigns are now OUTPUTS, not manual inputs
+   * KEY FIX: Now uses scenario-specific readiness defaults to link ROI to scenario
    */
   private static calculateCapiConfiguration(
+    riskScenario: RiskScenario = 'moderate',
     overrides?: AssumptionOverrides
   ): CapiConfiguration {
     const base = CAPI_BASE_PARAMETERS;
     
-    // Get readiness factors (defaults to "normal" readiness)
-    const salesReadiness = overrides?.readinessFactors?.salesReadiness ?? 0.75;
-    const trainingGaps = overrides?.readinessFactors?.trainingGaps ?? 0.75;
-    const advertiserBuyIn = overrides?.readinessFactors?.advertiserBuyIn ?? 0.8;
-    const marketConditions = overrides?.readinessFactors?.marketConditions ?? 0.85;
+    // Get scenario-specific readiness defaults (THIS IS THE KEY FIX)
+    const scenarioDefaults = RISK_SCENARIOS[riskScenario].defaultReadiness;
+    
+    // Use overrides if provided, otherwise use scenario-specific defaults
+    const salesReadiness = overrides?.readinessFactors?.salesReadiness ?? scenarioDefaults.salesReadiness;
+    const trainingGaps = overrides?.readinessFactors?.trainingGaps ?? scenarioDefaults.trainingGaps;
+    const advertiserBuyIn = overrides?.readinessFactors?.advertiserBuyIn ?? scenarioDefaults.advertiserBuyIn;
+    const marketConditions = overrides?.readinessFactors?.marketConditions ?? scenarioDefaults.marketConditions;
     
     // Calculate campaign volume multiplier based on:
     // - Sales Readiness: directly affects ability to sell CAPI campaigns
@@ -367,10 +372,11 @@ export class UnifiedCalculationEngine {
     inputs: SimplifiedInputs,
     scenario: ScenarioState,
     currentMonthlyRevenue: number,
+    riskScenario: RiskScenario = 'moderate',
     overrides?: AssumptionOverrides
   ) {
-    // Calculate CAPI configuration from Business Readiness factors
-    const capiConfig = this.calculateCapiConfiguration(overrides);
+    // Calculate CAPI configuration from Business Readiness factors + risk scenario
+    const capiConfig = this.calculateCapiConfiguration(riskScenario, overrides);
     
     // Match rate improvement
     const baselineMatchRate = CAPI_BENCHMARKS.BASELINE_MATCH_RATE;
@@ -498,9 +504,13 @@ export class UnifiedCalculationEngine {
     }
   }
 
-  private static calculatePricing(inputs: SimplifiedInputs, overrides?: AssumptionOverrides): PricingModel {
-    // Calculate CAPI configuration to get spend values
-    const capiConfig = this.calculateCapiConfiguration(overrides);
+  private static calculatePricing(
+    inputs: SimplifiedInputs, 
+    riskScenario: RiskScenario = 'moderate',
+    overrides?: AssumptionOverrides
+  ): PricingModel {
+    // Calculate CAPI configuration to get spend values (now scenario-aware)
+    const capiConfig = this.calculateCapiConfiguration(riskScenario, overrides);
     
     // Use contract pricing from voxMediaDomains.ts
     const pocFlatFee = CONTRACT_PRICING.POC_FLAT_FEE;
