@@ -25,35 +25,35 @@ export interface RiskMultipliers {
 export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
   conservative: {
     rampUpMonths: 12, // 12 months to full value (aligned with sales ramp, not deployment)
-    adoptionRate: 0.70, // 70% of properties/campaigns get full deployment
-    addressabilityEfficiency: 0.75, // DNS delays, incomplete rollout
-    capiDeploymentRate: 0.65, // Sales challenges, 65% of campaigns use CAPI
+    adoptionRate: 0.78, // 78% of properties/campaigns get full deployment
+    addressabilityEfficiency: 0.82, // Minor DNS delays, mostly complete rollout
+    capiDeploymentRate: 0.75, // 75% of campaigns use CAPI
     premiumInventoryShare: 0.20, // Sales doesn't position premium effectively
-    cpmUpliftRealization: 0.75, // 75% of expected uplift realized
-    salesEffectiveness: 0.75, // Sales training partial
-    cdpSavingsRealization: 0.80, // Some technical delays in ID reduction
+    cpmUpliftRealization: 0.80, // 80% of expected uplift realized
+    salesEffectiveness: 0.80, // Sales training mostly complete
+    cdpSavingsRealization: 0.85, // Minor technical delays in ID reduction
   },
   
   moderate: {
     rampUpMonths: 9, // 9 months to full value (faster with good execution)
-    adoptionRate: 0.75, // 75% deployment across portfolio
-    addressabilityEfficiency: 0.80, // Slight friction expected
-    capiDeploymentRate: 0.70, // 70% of expected campaigns
+    adoptionRate: 0.72, // 72% deployment across portfolio
+    addressabilityEfficiency: 0.75, // Expected friction
+    capiDeploymentRate: 0.65, // 65% of expected campaigns
     premiumInventoryShare: 0.22, // Slightly below optimal
-    cpmUpliftRealization: 0.80, // 80% of expected uplift
-    salesEffectiveness: 0.78, // Good but not perfect sales execution
-    cdpSavingsRealization: 0.82, // Minor delays
+    cpmUpliftRealization: 0.78, // 78% of expected uplift
+    salesEffectiveness: 0.72, // Good but not perfect sales execution
+    cdpSavingsRealization: 0.80, // Some delays
   },
   
   optimistic: {
     rampUpMonths: 6, // Fast 6-month ramp
-    adoptionRate: 0.92, // 92% deployment (realistic ceiling)
-    addressabilityEfficiency: 0.95, // Near-full efficiency
-    capiDeploymentRate: 0.90, // Strong CAPI adoption
-    premiumInventoryShare: 0.28, // Near-achieves target
-    cpmUpliftRealization: 0.95, // 95% of expected uplift (not 100%)
-    salesEffectiveness: 0.95, // Excellent sales execution
-    cdpSavingsRealization: 0.95, // Minimal delays
+    adoptionRate: 0.80, // 80% deployment (realistic ceiling)
+    addressabilityEfficiency: 0.82, // Good efficiency with some friction
+    capiDeploymentRate: 0.75, // Strong but realistic CAPI adoption
+    premiumInventoryShare: 0.25, // Good premium positioning
+    cpmUpliftRealization: 0.82, // 82% of expected uplift
+    salesEffectiveness: 0.80, // Very good sales execution
+    cdpSavingsRealization: 0.85, // Minor delays
   },
 };
 
