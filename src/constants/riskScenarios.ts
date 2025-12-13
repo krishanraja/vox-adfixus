@@ -34,56 +34,56 @@ export interface RiskMultipliers {
 
 export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
   conservative: {
-    rampUpMonths: 12, // 12 months to full value (aligned with sales ramp, not deployment)
-    adoptionRate: 0.78, // 78% of properties/campaigns get full deployment
-    addressabilityEfficiency: 0.82, // Minor DNS delays, mostly complete rollout
-    capiDeploymentRate: 0.75, // 75% of campaigns use CAPI
-    premiumInventoryShare: 0.20, // Sales doesn't position premium effectively
-    cpmUpliftRealization: 0.80, // 80% of expected uplift realized
-    salesEffectiveness: 0.80, // Sales training mostly complete
-    cdpSavingsRealization: 0.85, // Minor technical delays in ID reduction
+    rampUpMonths: 12, // 12 months to full value
+    adoptionRate: 0.65, // 65% of properties get full deployment
+    addressabilityEfficiency: 0.70, // Significant friction in rollout
+    capiDeploymentRate: 0.60, // Only 60% of campaigns use CAPI
+    premiumInventoryShare: 0.18, // Sales struggles with premium positioning
+    cpmUpliftRealization: 0.70, // Only 70% of expected uplift realized
+    salesEffectiveness: 0.65, // Sales execution challenges
+    cdpSavingsRealization: 0.75, // Technical delays in ID reduction
     // Conservative: Low readiness → fewer CAPI campaigns → lower ROI
     defaultReadiness: {
-      salesReadiness: 0.55,      // Sales team struggles with new products
-      trainingGaps: 0.50,        // Significant training gaps
-      advertiserBuyIn: 0.55,     // Advertisers slow to adopt CAPI
-      marketConditions: 0.65,    // Cautious market environment
+      salesReadiness: 0.55,
+      trainingGaps: 0.50,
+      advertiserBuyIn: 0.55,
+      marketConditions: 0.65,
     },
   },
   
   moderate: {
-    rampUpMonths: 9, // 9 months to full value (faster with good execution)
-    adoptionRate: 0.72, // 72% deployment across portfolio
-    addressabilityEfficiency: 0.75, // Expected friction
-    capiDeploymentRate: 0.65, // 65% of expected campaigns
-    premiumInventoryShare: 0.22, // Slightly below optimal
-    cpmUpliftRealization: 0.78, // 78% of expected uplift
-    salesEffectiveness: 0.72, // Good but not perfect sales execution
-    cdpSavingsRealization: 0.80, // Some delays
+    rampUpMonths: 9, // 9 months to full value
+    adoptionRate: 0.75, // 75% deployment across portfolio
+    addressabilityEfficiency: 0.80, // Expected friction
+    capiDeploymentRate: 0.72, // 72% of campaigns use CAPI
+    premiumInventoryShare: 0.22, // Reasonable premium share
+    cpmUpliftRealization: 0.82, // 82% of expected uplift
+    salesEffectiveness: 0.78, // Good sales execution
+    cdpSavingsRealization: 0.85, // Minor delays
     // Moderate: Standard readiness → baseline CAPI campaigns
     defaultReadiness: {
-      salesReadiness: 0.75,      // Good sales execution
-      trainingGaps: 0.75,        // Adequate training
-      advertiserBuyIn: 0.80,     // Reasonable adoption
-      marketConditions: 0.85,    // Normal market
+      salesReadiness: 0.75,
+      trainingGaps: 0.75,
+      advertiserBuyIn: 0.80,
+      marketConditions: 0.85,
     },
   },
   
   optimistic: {
     rampUpMonths: 6, // Fast 6-month ramp
-    adoptionRate: 0.80, // 80% deployment (realistic ceiling)
-    addressabilityEfficiency: 0.82, // Good efficiency with some friction
-    capiDeploymentRate: 0.75, // Strong but realistic CAPI adoption
+    adoptionRate: 0.85, // 85% deployment
+    addressabilityEfficiency: 0.90, // Strong efficiency
+    capiDeploymentRate: 0.85, // 85% CAPI adoption
     premiumInventoryShare: 0.25, // Good premium positioning
-    cpmUpliftRealization: 0.82, // 82% of expected uplift
-    salesEffectiveness: 0.80, // Very good sales execution
-    cdpSavingsRealization: 0.85, // Minor delays
-    // Optimistic: High readiness → more CAPI campaigns → higher ROI (but capped)
+    cpmUpliftRealization: 0.92, // 92% of expected uplift
+    salesEffectiveness: 0.88, // Excellent sales execution
+    cdpSavingsRealization: 0.92, // Quick ID reduction
+    // Optimistic: High readiness → more CAPI campaigns → higher ROI (capped)
     defaultReadiness: {
-      salesReadiness: 0.90,      // Excellent sales execution
-      trainingGaps: 0.90,        // Comprehensive training
-      advertiserBuyIn: 0.90,     // Strong advertiser adoption
-      marketConditions: 0.90,    // Strong market conditions
+      salesReadiness: 0.90,
+      trainingGaps: 0.90,
+      advertiserBuyIn: 0.90,
+      marketConditions: 0.90,
     },
   },
 };

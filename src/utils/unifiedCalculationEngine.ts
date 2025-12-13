@@ -326,24 +326,28 @@ export class UnifiedCalculationEngine {
     const advertiserBuyIn = overrides?.readinessFactors?.advertiserBuyIn ?? scenarioDefaults.advertiserBuyIn;
     const marketConditions = overrides?.readinessFactors?.marketConditions ?? scenarioDefaults.marketConditions;
     
-    // Calculate campaign volume multiplier based on:
-    // - Sales Readiness: directly affects ability to sell CAPI campaigns
-    // - Training Gaps: affects sales effectiveness
-    // - Advertiser Buy-In: affects deal close rate
-    const salesMultiplier = salesReadiness >= 0.9 ? 1.5 : salesReadiness >= 0.7 ? 1.0 : 0.6;
-    const trainingMultiplier = trainingGaps >= 0.9 ? 1.3 : trainingGaps >= 0.7 ? 1.0 : 0.7;
-    const buyInMultiplier = advertiserBuyIn >= 0.9 ? 1.4 : advertiserBuyIn >= 0.75 ? 1.0 : 0.6;
+    // LINEAR INTERPOLATION for controlled variance (replaces step functions)
+    // At 0.5 readiness = low multiplier, at 0.9 = high multiplier
+    // This creates ~3.7x difference instead of 8x from step functions
+    
+    // Sales multiplier: 0.5→0.7, 0.9→1.3 (linear)
+    const salesMultiplier = Math.max(0.5, Math.min(1.5, 0.7 + (salesReadiness - 0.5) * 1.5));
+    
+    // Training multiplier: 0.5→0.8, 0.9→1.2 (linear)
+    const trainingMultiplier = Math.max(0.6, Math.min(1.3, 0.8 + (trainingGaps - 0.5) * 1.0));
+    
+    // Buy-in multiplier: 0.5→0.7, 0.9→1.18 (linear)
+    const buyInMultiplier = Math.max(0.5, Math.min(1.3, 0.7 + (advertiserBuyIn - 0.5) * 1.2));
     
     const volumeMultiplier = Math.min(
       base.MAX_VOLUME_MULTIPLIER,
       salesMultiplier * trainingMultiplier * buyInMultiplier
     );
     
-    // Calculate spend multiplier based on:
-    // - Market Conditions (Budget Environment): affects how much advertisers spend
+    // Market conditions multiplier: 0.5→0.7, 0.9→1.1 (linear, tighter range)
     const spendMultiplier = Math.min(
       base.MAX_SPEND_MULTIPLIER,
-      marketConditions >= 0.9 ? 1.4 : marketConditions >= 0.8 ? 1.0 : 0.7
+      Math.max(0.6, Math.min(1.2, 0.7 + (marketConditions - 0.5) * 1.0))
     );
     
     // Calculate yearly campaigns and average spend
