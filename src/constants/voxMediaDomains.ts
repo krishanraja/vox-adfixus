@@ -1,5 +1,5 @@
-// Vox Media property data - FINAL December 2024 volumes from contract
-// Total portfolio reach: ~303.4M monthly pageviews (Final PVs)
+// Vox Media property data - Briar's Internal Reporting (December 2024)
+// Total portfolio reach: ~203.5M monthly pageviews (Briar's numbers)
 // Pricing based on 70M pageview/month allowance at $239,140/year
 
 export interface VoxDomain {
@@ -21,7 +21,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'sbnation',
     name: 'SB Nation',
-    monthlyPageviews: 152000000, // Final PVs
+    monthlyPageviews: 102866201, // Briar's internal reporting
     displayVideoSplit: 90,
     category: 'sports',
     adsPerPage: 2.5,
@@ -34,7 +34,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'eater',
     name: 'Eater',
-    monthlyPageviews: 24926000, // Final PVs
+    monthlyPageviews: 10518128, // Briar's internal reporting
     displayVideoSplit: 85,
     category: 'lifestyle-food',
     adsPerPage: 2.0,
@@ -47,7 +47,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'the-verge',
     name: 'The Verge',
-    monthlyPageviews: 23000000, // Final PVs
+    monthlyPageviews: 22808519, // Briar's internal reporting
     displayVideoSplit: 75,
     category: 'news-tech',
     adsPerPage: 2.0,
@@ -61,7 +61,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'the-dodo',
     name: 'The Dodo',
-    monthlyPageviews: 18900000, // Final PVs
+    monthlyPageviews: 15877015, // Briar's internal reporting
     displayVideoSplit: 88,
     category: 'entertainment',
     adsPerPage: 2.5,
@@ -73,7 +73,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'vulture',
     name: 'Vulture',
-    monthlyPageviews: 18540000, // Final PVs
+    monthlyPageviews: 14422791, // Briar's internal reporting
     displayVideoSplit: 75,
     category: 'entertainment',
     adsPerPage: 1.5,
@@ -86,7 +86,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'nymag',
     name: 'NYMag',
-    monthlyPageviews: 14230000, // Final PVs
+    monthlyPageviews: 4362773, // Briar's internal reporting
     displayVideoSplit: 75,
     category: 'entertainment',
     adsPerPage: 1.5,
@@ -100,7 +100,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'vox',
     name: 'Vox',
-    monthlyPageviews: 12300000, // Final PVs
+    monthlyPageviews: 6015197, // Briar's internal reporting
     displayVideoSplit: 70,
     category: 'news-tech',
     adsPerPage: 2.0,
@@ -114,7 +114,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'the-cut',
     name: 'The Cut',
-    monthlyPageviews: 11740000, // Final PVs
+    monthlyPageviews: 9110699, // Briar's internal reporting
     displayVideoSplit: 80,
     category: 'entertainment',
     adsPerPage: 1.5,
@@ -128,7 +128,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'strategist',
     name: 'Strategist',
-    monthlyPageviews: 10020000, // Final PVs
+    monthlyPageviews: 6566186, // Briar's internal reporting
     displayVideoSplit: 82,
     category: 'lifestyle-food',
     adsPerPage: 1.5,
@@ -140,7 +140,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'intelligencer',
     name: 'Intelligencer',
-    monthlyPageviews: 6927000, // Final PVs
+    monthlyPageviews: 3997307, // Briar's internal reporting
     displayVideoSplit: 70,
     category: 'news-tech',
     adsPerPage: 1.5,
@@ -152,7 +152,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'popsugar',
     name: 'PopSugar',
-    monthlyPageviews: 5280000, // Final PVs
+    monthlyPageviews: 3269639, // Briar's internal reporting
     displayVideoSplit: 85,
     category: 'lifestyle-food',
     adsPerPage: 2.5,
@@ -164,7 +164,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'thrillist',
     name: 'Thrillist',
-    monthlyPageviews: 2140000, // Final PVs
+    monthlyPageviews: 1323468, // Briar's internal reporting
     displayVideoSplit: 88,
     category: 'lifestyle-food',
     adsPerPage: 2.5,
@@ -176,7 +176,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'punch',
     name: 'Punch',
-    monthlyPageviews: 1570000, // Final PVs
+    monthlyPageviews: 926506, // Briar's internal reporting
     displayVideoSplit: 80,
     category: 'lifestyle-food',
     adsPerPage: 1.5,
@@ -188,7 +188,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'curbed',
     name: 'Curbed',
-    monthlyPageviews: 1115000, // Final PVs
+    monthlyPageviews: 833480, // Briar's internal reporting
     displayVideoSplit: 85,
     category: 'real-estate',
     adsPerPage: 2.0,
@@ -200,7 +200,7 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   {
     id: 'grub-street',
     name: 'Grub Street',
-    monthlyPageviews: 757000, // Final PVs
+    monthlyPageviews: 648815, // Briar's internal reporting
     displayVideoSplit: 85,
     category: 'lifestyle-food',
     adsPerPage: 1.5,

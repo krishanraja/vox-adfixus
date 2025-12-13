@@ -32,6 +32,7 @@ export class UnifiedCalculationEngine {
       displayCPM, 
       videoCPM, 
       weightedDisplayVideoSplit,
+      weightedSafariShare,
       weightedAdsPerPage 
     } = aggregated;
     
@@ -103,6 +104,7 @@ export class UnifiedCalculationEngine {
       currentMonthlyRevenue,
       displayImpressions,
       videoImpressions,
+      weightedSafariShare, // Pass domain-weighted Safari share
       overrides
     );
 
@@ -181,17 +183,18 @@ export class UnifiedCalculationEngine {
         scenario,
         currentMonthlyRevenue,
         displayImpressions,
-        videoImpressions
+        videoImpressions,
+        undefined // No overrides for comparison calculation
       ).monthlyUplift : 0)
     ) * optimisticRisk.adoptionRate;
     
     const adjustmentPercentage = ((unadjustedMonthlyUplift - totalMonthlyUplift) / unadjustedMonthlyUplift) * 100;
 
-    // Calculate breakdown percentages (use baseMonthlyUplift before adoption rate)
+    // Calculate breakdown percentages (use baseMonthlyUplift before adoption rate) with division-by-zero protection
     const breakdown = {
-      idInfrastructurePercent: (idInfrastructure.monthlyUplift / baseMonthlyUplift) * 100,
-      capiPercent: ((capiCapabilities?.monthlyUplift || 0) / baseMonthlyUplift) * 100,
-      performancePercent: ((mediaPerformance?.monthlyUplift || 0) / baseMonthlyUplift) * 100,
+      idInfrastructurePercent: baseMonthlyUplift > 0 ? (idInfrastructure.monthlyUplift / baseMonthlyUplift) * 100 : 0,
+      capiPercent: baseMonthlyUplift > 0 ? ((capiCapabilities?.monthlyUplift || 0) / baseMonthlyUplift) * 100 : 0,
+      performancePercent: baseMonthlyUplift > 0 ? ((mediaPerformance?.monthlyUplift || 0) / baseMonthlyUplift) * 100 : 0,
     };
 
     // Calculate ROI Analysis with contract pricing
@@ -232,12 +235,14 @@ export class UnifiedCalculationEngine {
     currentMonthlyRevenue: number,
     displayImpressions: number,
     videoImpressions: number,
+    weightedSafariShare: number, // Domain-weighted Safari share
     overrides?: AssumptionOverrides
   ) {
     // Safari addressability: Binary improvement with durable ID
     // Without AdFixus: Safari users lose identity after 7 days
     // With AdFixus: Durable ID recognizes returning users beyond 7 days
-    const safariShare = ADDRESSABILITY_BENCHMARKS.SAFARI_IOS_SHARE;
+    // Use domain-weighted Safari share (typically 32-45% for Vox properties)
+    const safariShare = weightedSafariShare;
     const currentSafariAddressability = overrides?.safariBaselineAddressability ?? ADDRESSABILITY_BENCHMARKS.WITHOUT_ADFIXUS;
     const improvedSafariAddressability = overrides?.safariWithDurableId ?? ADDRESSABILITY_BENCHMARKS.WITH_ADFIXUS;
 
