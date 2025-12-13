@@ -41,16 +41,58 @@ export class UnifiedCalculationEngine {
     const risk = { ...RISK_SCENARIOS[riskScenario] };
     
     // Apply readiness adjustments if provided
-    // NOTE: Readiness factors are applied ONCE here to risk multipliers
+    // NOTE: Readiness factors now affect ALL benefit categories (ID Infra, CAPI, Media Performance)
     // They also affect CAPI configuration separately in calculateCapiConfiguration()
     // This is intentional: readiness affects BOTH deployment risk AND campaign volume
     if (overrides?.readinessFactors) {
       const rf = overrides.readinessFactors;
       
+      // ========== SALES READINESS (Core Business Driver) ==========
+      // Impacts: CPM realization (must sell premium), premium inventory positioning, sales execution
+      if (rf.salesReadiness !== undefined) {
+        // CPM uplift requires sales to articulate value to buyers
+        // Range: 0.5 → 0.7x, 0.9 → 1.1x (significant impact)
+        const salesCpmFactor = 0.4 + (rf.salesReadiness * 0.8);
+        risk.cpmUpliftRealization *= salesCpmFactor;
+        
+        // Premium inventory positioning requires trained sales team
+        risk.premiumInventoryShare *= salesCpmFactor;
+        
+        // Direct impact on sales effectiveness
+        risk.salesEffectiveness *= rf.salesReadiness;
+      }
+      
+      // ========== TRAINING GAPS (Operational Efficiency) ==========
+      // Impacts: Adoption rate (untrained = slower rollout), addressability efficiency
+      if (rf.trainingGaps !== undefined) {
+        // Training directly affects how quickly teams can adopt new workflows
+        // Range: 0.5 → 0.75x, 0.9 → 1.05x
+        const trainingAdoptionFactor = 0.5 + (rf.trainingGaps * 0.6);
+        risk.adoptionRate *= trainingAdoptionFactor;
+        
+        // Operational efficiency depends on training
+        risk.addressabilityEfficiency *= trainingAdoptionFactor;
+      }
+      
+      // ========== ADVERTISER BUY-IN (External Factor) ==========
+      // Impacts: CPM realization (advertisers set prices!), CAPI deployment (they must enable CAPI)
+      if (rf.advertiserBuyIn !== undefined) {
+        // Advertisers directly control premium pricing acceptance
+        // Range: 0.5 → 0.75x, 0.9 → 1.1x
+        const buyInCpmFactor = 0.5 + (rf.advertiserBuyIn * 0.7);
+        risk.cpmUpliftRealization *= buyInCpmFactor;
+        
+        // CAPI requires advertiser participation
+        risk.capiDeploymentRate *= rf.advertiserBuyIn;
+      }
+      
+      // ========== ORGANIZATIONAL OWNERSHIP ==========
       // Apply organizational ownership to adoption rate
       if (rf.organizationalOwnership !== undefined) {
         risk.adoptionRate *= rf.organizationalOwnership;
       }
+      
+      // ========== TECHNICAL FACTORS ==========
       if (rf.technicalDeploymentMonths !== undefined) {
         risk.rampUpMonths = rf.technicalDeploymentMonths;
       }
@@ -67,7 +109,8 @@ export class UnifiedCalculationEngine {
         }
       }
       
-      // Apply market conditions as overall dampener to financial metrics (but not double-applied to CAPI)
+      // ========== MARKET CONDITIONS (External Macro Factor) ==========
+      // Apply market conditions as overall dampener to financial metrics
       if (rf.marketConditions !== undefined) {
         const marketMultiplier = rf.marketConditions;
         risk.addressabilityEfficiency *= marketMultiplier;
