@@ -21,39 +21,38 @@ export const MEDIA_PERFORMANCE_BENCHMARKS = {
 };
 
 // Vox Media browser traffic shares (blended mobile/desktop from Dec 2024 data)
-// Mobile: 47% Safari / 44% Chrome / 9% Other
-// Desktop: 55% Chrome / 20% Safari / 25% Other
-// Weighted average: ~35% Safari overall
+// FIXED VALUES - DO NOT CALCULATE FROM DOMAIN DATA
 export const ADDRESSABILITY_BENCHMARKS = {
-  // Vox-specific browser traffic shares (NOT addressability)
+  // Fixed Safari share for all calculations (35% per Vox Dec 2024 data)
+  SAFARI_SHARE: 0.35, // 35% Safari traffic - FIXED, not calculated
   CHROME_SHARE: 0.48, // 48% Chrome traffic
-  SAFARI_IOS_SHARE: 0.35, // 35% Safari traffic (from domain-weighted average)
-  FIREFOX_OTHER: 0.17, // 17% Other browsers
+  OTHER_SHARE: 0.17, // 17% Other browsers
   
-  // SAFARI-SPECIFIC addressability rates (THE KEY POC KPI)
-  // Vox CANNOT track Safari users due to ITP - they lose identity almost immediately
-  // Current state: effectively 0% addressable (cannot add to segments)
-  // POC Target: +20% addressability improvement via Durable ID
+  // Fixed baseline addressability (65% per Vox guidance)
+  BASELINE_TOTAL_ADDRESSABILITY: 0.65, // 65% of inventory currently addressable
+  
+  // SAFARI-SPECIFIC addressability (THE KEY POC KPI)
+  // Current state: 0% - Safari users unaddressable due to ITP
+  // POC Target: +20% addressability improvement on Safari inventory
   CURRENT_SAFARI_ADDRESSABILITY: 0.0, // 0% - Safari users unaddressable due to ITP
   TARGET_SAFARI_ADDRESSABILITY: 0.20, // 20% POC target improvement
   STRETCH_SAFARI_ADDRESSABILITY: 0.30, // 30% internal stretch goal
   
-  // Chrome/Other assumed 100% addressable (no ITP restrictions)
+  // Chrome/Other = 100% addressable (no ITP restrictions)
   CHROME_ADDRESSABILITY: 1.0,
   OTHER_ADDRESSABILITY: 1.0,
   
   CPM_IMPROVEMENT_FACTOR: 0.25, // 25% CPM boost on newly addressable
-  CPM_PREMIUM_MULTIPLIER: 1.20, // 20% premium on improved inventory
 };
 
 export const OPERATIONAL_BENCHMARKS = {
-  BASELINE_ID_MULTIPLIER: 3.0, // 1 user = 3.0 IDs without solution (more conservative)
-  IMPROVED_ID_MULTIPLIER: 1.1, // 1 user = 1.1 IDs with AdFixus (more conservative)
-  ESTIMATED_MONTHLY_CDP_COSTS: 50000, // $50K/month baseline CDP costs
-  CDP_COST_REDUCTION_PERCENTAGE: 0.14, // 14% reduction (10-18% range, using middle)
+  BASELINE_ID_MULTIPLIER: 3.0, // 1 user = 3.0 IDs without solution
+  IMPROVED_ID_MULTIPLIER: 1.1, // 1 user = 1.1 IDs with AdFixus
+  // CDP Savings: Fixed at $3,500/month per Vox guidance
+  CDP_MONTHLY_SAVINGS: 3500, // $3,500/month - FIXED VALUE
   MANUAL_LABOR_HOURS_SAVED: 40, // hours per month
   HOURLY_RATE: 75, // $75/hour for ad ops labor
-  ID_REDUCTION_PERCENTAGE: 0.63, // 63% reduction in ID bloat ((3.0-1.1)/3.0)
+  ID_REDUCTION_PERCENTAGE: 0.63, // 63% reduction in ID bloat
 };
 
 export const SCENARIO_MULTIPLIERS = {

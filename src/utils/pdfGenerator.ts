@@ -474,15 +474,9 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 25]
       },
       {
-        text: 'Addressability Impact Analysis',
+        text: 'Safari Addressability (POC Focus)',
         style: 'h3',
         margin: [0, 0, 0, 10]
-      },
-      // Safari-specific metrics (POC KPI focus) - Impact-focused framing
-      {
-        text: 'Safari Addressability (POC Target)',
-        style: 'tableSubheader',
-        margin: [0, 0, 0, 6]
       },
       {
         table: {
@@ -490,7 +484,7 @@ export const buildAdfixusProposalPdf = async (
           body: [
             [
               { text: 'Safari Traffic Share', style: 'tableLabel' },
-              { text: formatPercentage(idInfra?.details?.safariShare || weightedSafariShare * 100), style: 'tableValue', alignment: 'right' }
+              { text: '35%', style: 'tableValue', alignment: 'right' }
             ],
             [
               { text: 'Current Safari Tracking', style: 'tableLabel' },
@@ -498,38 +492,11 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: 'POC Target', style: 'tableLabel' },
-              { text: '+20% addressability improvement on Safari', style: 'tableValueHighlight', alignment: 'right' }
+              { text: '+20% addressability improvement on Safari inventory', style: 'tableValueHighlight', alignment: 'right' }
             ],
             [
               { text: 'Est. Newly Addressable Impressions', style: 'tableLabel' },
               { text: formatNumber(newlyAddressableImpressions) + '/month', style: 'tableValue', alignment: 'right' }
-            ]
-          ]
-        },
-        layout: 'noBorders',
-        margin: [0, 0, 0, 15]
-      },
-      // Total inventory metrics
-      {
-        text: 'Projected Portfolio Impact',
-        style: 'tableSubheader',
-        margin: [0, 0, 0, 6]
-      },
-      {
-        table: {
-          widths: ['*', 'auto'],
-          body: [
-            [
-              { text: 'Current Addressable Inventory', style: 'tableLabel' },
-              { text: formatPercentage(currentAddressability), style: 'tableValue', alignment: 'right' }
-            ],
-            [
-              { text: 'Projected Addressable Inventory', style: 'tableLabel' },
-              { text: formatPercentage(improvedAddressability), style: 'tableValue', alignment: 'right' }
-            ],
-            [
-              { text: 'Estimated Improvement', style: 'tableLabel' },
-              { text: `+${(idInfra?.details?.totalAddressabilityImprovement || (improvedAddressability - currentAddressability)).toFixed(1)} percentage points`, style: 'tableValueHighlight', alignment: 'right' }
             ]
           ]
         },
@@ -618,7 +585,7 @@ export const buildAdfixusProposalPdf = async (
       },
       ...(capi && capi.monthlyUplift > 0 ? [
         {
-          text: 'CAPI Capabilities Detail',
+          text: 'CAPI Capabilities',
           style: 'h3',
           margin: [0, 0, 0, 10]
         },
@@ -627,24 +594,17 @@ export const buildAdfixusProposalPdf = async (
             widths: ['*', 'auto'],
             body: [
               [
-                { text: 'Baseline Campaign Spend', style: 'tableLabel' },
-                { text: formatCurrency(capi.baselineCapiSpend) + '/month', style: 'tableValue', alignment: 'right' }
-              ],
-              [
-                { text: 'CAPI-Eligible Spend', style: 'tableLabel' },
-                { text: formatCurrency(capi.capiEligibleSpend) + '/month', style: 'tableValue', alignment: 'right' }
-              ],
-              [
-                { text: 'Conversion Improvement Revenue', style: 'tableLabel' },
-                { text: formatCurrency(capi.conversionTrackingRevenue) + '/month', style: 'tableValue', alignment: 'right' }
-              ],
-              [
-                { text: 'Service Fees (12.5%)', style: 'tableLabel' },
-                { text: '(' + formatCurrency(capi.campaignServiceFees) + ')/month', style: 'tableValue', alignment: 'right' }
+                { text: 'CAPI Net Monthly Benefit', style: 'tableLabel' },
+                { text: formatCurrency(capi.monthlyUplift) + '/month', style: 'tableValueHighlight', alignment: 'right' }
               ]
             ]
           },
           layout: 'noBorders',
+          margin: [0, 0, 0, 6]
+        },
+        {
+          text: 'Includes conversion improvement revenue, labor savings, net of service fees.',
+          style: 'footnote',
           margin: [0, 0, 0, 0]
         }
       ] : []),
@@ -652,7 +612,7 @@ export const buildAdfixusProposalPdf = async (
       // ==================== PAGE 4: RISK-ADJUSTED PROJECTIONS ====================
       {
         pageBreak: 'before',
-        text: 'Risk-Adjusted Scenario Projections',
+        text: 'Scenario Projections',
         style: 'h1',
         margin: [0, 0, 0, 15]
       },
@@ -664,33 +624,17 @@ export const buildAdfixusProposalPdf = async (
       {
         text: riskConfig.description,
         style: 'body',
-        margin: [0, 0, 0, 20]
+        margin: [0, 0, 0, 15]
       },
       {
-        text: 'Risk Adjustment Summary',
+        text: 'Business Readiness Impact',
         style: 'h3',
-        margin: [0, 0, 0, 10]
+        margin: [0, 0, 0, 8]
       },
       {
-        table: {
-          widths: ['*', 'auto'],
-          body: [
-            [
-              { text: 'Baseline Modeled Monthly Uplift', style: 'tableLabel' },
-              { text: formatCurrency(riskAdjustment?.unadjustedMonthlyUplift || monthlyUplift), style: 'tableValue', alignment: 'right' }
-            ],
-            [
-              { text: 'Risk-Adjusted Modeled Monthly Uplift', style: 'tableLabel' },
-              { text: formatCurrency(riskAdjustment?.adjustedMonthlyUplift || monthlyUplift), style: 'tableValue', alignment: 'right' }
-            ],
-            [
-              { text: 'Adjustment Factor Applied', style: 'tableLabel' },
-              { text: `-${((riskAdjustment?.adjustmentPercentage || 0) * 100).toFixed(0)}%`, style: 'tableValue', alignment: 'right' }
-            ]
-          ]
-        },
-        layout: 'noBorders',
-        margin: [0, 0, 0, 25]
+        text: 'This analysis incorporates Business Readiness factors from your organization assessment, including Sales Team Readiness, Technical Deployment Timeline, Advertiser Buy-In, and Organizational Ownership. These factors adjust projections from theoretical maximum to realistic expected outcomes based on your current state and deployment capacity.',
+        style: 'body',
+        margin: [0, 0, 0, 20]
       },
       {
         text: 'Illustrative Quarterly Ramp-Up Schedule*',
@@ -815,7 +759,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 15]
       },
       {
-        text: 'Calculation Methodology',
+        text: 'Key Assumptions',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -824,12 +768,8 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', 'auto'],
           body: [
             [
-              { text: 'Revenue calculation', style: 'tableLabel' },
-              { text: 'CPM × Addressable Impressions', style: 'tableValue', alignment: 'right' }
-            ],
-            [
               { text: 'Safari Traffic Share', style: 'tableLabel' },
-              { text: formatPercentage(weightedSafariShare * 100), style: 'tableValue', alignment: 'right' }
+              { text: '35%', style: 'tableValue', alignment: 'right' }
             ],
             [
               { text: 'Current Safari Tracking', style: 'tableLabel' },
@@ -837,23 +777,19 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: 'POC Target', style: 'tableLabel' },
-              { text: '+20% addressability improvement on Safari', style: 'tableValue', alignment: 'right' }
+              { text: '+20% addressability on Safari', style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'Est. Newly Addressable Impressions', style: 'tableLabel' },
-              { text: formatNumber(newlyAddressableImpressions) + '/month', style: 'tableValue', alignment: 'right' }
-            ],
-            [
-              { text: 'CPM uplift on newly addressable inventory', style: 'tableLabel' },
-              { text: formatPercentage((results?.assumptionOverrides?.cpmUpliftFactor || 0.25) * 100), style: 'tableValue', alignment: 'right' }
+              { text: 'CPM uplift on newly addressable', style: 'tableLabel' },
+              { text: '25%', style: 'tableValue', alignment: 'right' }
             ],
             [
               { text: 'CAPI conversion improvement', style: 'tableLabel' },
-              { text: '40% (industry benchmark)', style: 'tableValue', alignment: 'right' }
+              { text: '40%', style: 'tableValue', alignment: 'right' }
             ],
             [
-              { text: 'CDP cost reduction', style: 'tableLabel' },
-              { text: formatPercentage((results?.assumptionOverrides?.cdpCostReduction || 0.14) * 100), style: 'tableValue', alignment: 'right' }
+              { text: 'CDP Monthly Savings', style: 'tableLabel' },
+              { text: '$3,500', style: 'tableValue', alignment: 'right' }
             ]
           ]
         },
@@ -861,7 +797,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 25]
       },
       {
-        text: 'Key Assumptions Applied',
+        text: 'Scenario Parameters',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -876,11 +812,6 @@ export const buildAdfixusProposalPdf = async (
               { text: 'Description', style: 'tableHeader', fillColor: '#F1F5F9' }
             ],
             [
-              { text: 'Portfolio Safari Share', style: 'tableCell' },
-              { text: formatPercentage(weightedSafariShare * 100), style: 'tableCell', alignment: 'center' },
-              { text: 'Impression-weighted average across selected domains', style: 'tableCell' }
-            ],
-            [
               { text: 'Adoption Rate', style: 'tableCell' },
               { text: formatPercentage(riskConfig.adoptionRate * 100), style: 'tableCell', alignment: 'center' },
               { text: 'Expected portfolio deployment percentage', style: 'tableCell' }
@@ -889,11 +820,6 @@ export const buildAdfixusProposalPdf = async (
               { text: 'Ramp-Up Period', style: 'tableCell' },
               { text: `${riskConfig.rampMonths} months`, style: 'tableCell', alignment: 'center' },
               { text: 'Time to reach full projected value', style: 'tableCell' }
-            ],
-            [
-              { text: 'CAPI Line Item Share', style: 'tableCell' },
-              { text: formatPercentage((results?.inputs?.capiLineItemShare || 0.60) * 100), style: 'tableCell', alignment: 'center' },
-              { text: 'Percentage of campaign budget using CAPI', style: 'tableCell' }
             ]
           ]
         },
