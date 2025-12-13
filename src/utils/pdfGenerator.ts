@@ -528,19 +528,19 @@ export const buildAdfixusProposalPdf = async (
               { text: '% of Total', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
-              { text: 'ID Infrastructure', style: 'tableCell' },
+              { text: 'ID Infrastructure (Addressability, Analytics etc)', style: 'tableCell' },
               { text: formatCurrency(idInfra?.monthlyUplift || 0), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency((idInfra?.monthlyUplift || 0) * 12), style: 'tableCell', alignment: 'right' },
               { text: formatPercentage(breakdown.idInfrastructurePercent), style: 'tableCell', alignment: 'right' }
             ],
             ...(capi && capi.monthlyUplift > 0 ? [[
-              { text: 'CAPI Capabilities', style: 'tableCell' },
+              { text: 'Conversion API capability to compete with walled gardens', style: 'tableCell' },
               { text: formatCurrency(capi.monthlyUplift), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(capi.monthlyUplift * 12), style: 'tableCell', alignment: 'right' },
               { text: formatPercentage(breakdown.capiPercent), style: 'tableCell', alignment: 'right' }
             ]] : []),
             ...(mediaPerf && mediaPerf.monthlyUplift > 0 ? [[
-              { text: 'Media Performance', style: 'tableCell' },
+              { text: 'Ad Performance, Retention & Partnerships', style: 'tableCell' },
               { text: formatCurrency(mediaPerf.monthlyUplift), style: 'tableCell', alignment: 'right' },
               { text: formatCurrency(mediaPerf.monthlyUplift * 12), style: 'tableCell', alignment: 'right' },
               { text: formatPercentage(breakdown.performancePercent), style: 'tableCell', alignment: 'right' }
@@ -562,7 +562,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 20]
       },
       {
-        text: 'ID Infrastructure Detail',
+        text: 'ID Infrastructure (Addressability, Analytics etc) Detail',
         style: 'h3',
         margin: [0, 0, 0, 10]
       },
@@ -585,7 +585,7 @@ export const buildAdfixusProposalPdf = async (
       },
       ...(capi && capi.monthlyUplift > 0 ? [
         {
-          text: 'CAPI Capabilities',
+          text: 'Conversion API capability to compete with walled gardens',
           style: 'h3',
           margin: [0, 0, 0, 10]
         },
@@ -632,8 +632,23 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 8]
       },
       {
-        text: 'This analysis incorporates Business Readiness factors from your organization assessment, including Sales Team Readiness, Technical Deployment Timeline, Advertiser Buy-In, and Organizational Ownership. These factors adjust projections from theoretical maximum to realistic expected outcomes based on your current state and deployment capacity.',
+        text: 'The projections in this model are adjusted based on assumptions about Vox Media\'s operational readiness and market conditions:',
         style: 'body',
+        margin: [0, 0, 0, 8]
+      },
+      {
+        ul: [
+          { text: [{ text: 'Advertiser Adoption: ', bold: true }, 'Interested (testing CAPI & outcome-based buying)'] },
+          { text: [{ text: 'Project Ownership: ', bold: true }, 'Shared Ownership (cross-functional alignment in place)'] },
+          { text: [{ text: 'Budget Environment: ', bold: true }, 'Stable (advertiser confidence at moderate levels)'] },
+          { text: [{ text: 'Deployment Timeline: ', bold: true }, '12 months to full deployment'] },
+        ],
+        style: 'body',
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: 'These factors reduce theoretical maximum projections to realistic expected outcomes.',
+        style: 'footnote',
         margin: [0, 0, 0, 20]
       },
       {
