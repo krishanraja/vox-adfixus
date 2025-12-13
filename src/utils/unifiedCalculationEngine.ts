@@ -9,6 +9,7 @@ import {
 } from '@/constants/industryBenchmarks';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
 import { RISK_SCENARIOS, type RiskScenario } from '@/constants/riskScenarios';
+import { CONTRACT_PRICING } from '@/constants/voxMediaDomains';
 
 export class UnifiedCalculationEngine {
   static calculate(
@@ -27,9 +28,11 @@ export class UnifiedCalculationEngine {
     );
     const { 
       totalMonthlyPageviews, 
+      totalMonthlyImpressions,
       displayCPM, 
       videoCPM, 
-      weightedDisplayVideoSplit 
+      weightedDisplayVideoSplit,
+      weightedAdsPerPage 
     } = aggregated;
     
     // Get risk multipliers
@@ -79,10 +82,10 @@ export class UnifiedCalculationEngine {
       }
     }
 
-    // Calculate base metrics
+    // Calculate base metrics using domain-specific adsPerPage
     const displayShare = weightedDisplayVideoSplit / 100;
     const videoShare = 1 - displayShare;
-    const totalImpressions = totalMonthlyPageviews * 2.5; // Avg 2.5 ad impressions per pageview
+    const totalImpressions = totalMonthlyImpressions; // Use domain-weighted impressions
     const displayImpressions = totalImpressions * displayShare;
     const videoImpressions = totalImpressions * videoShare;
 
@@ -191,7 +194,7 @@ export class UnifiedCalculationEngine {
       performancePercent: ((mediaPerformance?.monthlyUplift || 0) / baseMonthlyUplift) * 100,
     };
 
-    // Calculate ROI Analysis
+    // Calculate ROI Analysis with contract pricing
     const pricing = this.calculatePricing(inputs);
     const roiAnalysis = this.calculateROI(totalMonthlyUplift, pricing);
 
@@ -313,7 +316,7 @@ export class UnifiedCalculationEngine {
     const estimatedCapiCampaigns = inputs.capiCampaignsPerMonth;
     const avgCampaignSpend = inputs.avgCampaignSpend;
     const capiLineItemShare = inputs.capiLineItemShare; // % of campaign spend that is CAPI-enabled
-    const serviceFee = overrides?.capiServiceFee ?? CAPI_CAMPAIGN_VALUES.SERVICE_FEE_PERCENTAGE;
+    const serviceFee = overrides?.capiServiceFee ?? CONTRACT_PRICING.CAPI_SERVICE_FEE_RATE;
 
     // Total baseline CAPI campaign spend
     const baselineCapiSpend = estimatedCapiCampaigns * avgCampaignSpend;
@@ -432,10 +435,11 @@ export class UnifiedCalculationEngine {
   }
 
   private static calculatePricing(inputs: SimplifiedInputs): PricingModel {
-    const pocFlatFee = 15000; // $15K flat fee
-    const pocDurationMonths = 3;
-    const fullContractMonthly = 26000; // $26K/month for 16 domains / 600M pageviews
-    const capiServiceFeeRate = 0.125; // 12.5%
+    // Use contract pricing from voxMediaDomains.ts
+    const pocFlatFee = CONTRACT_PRICING.POC_FLAT_FEE; // $15K flat fee
+    const pocDurationMonths = CONTRACT_PRICING.POC_DURATION_MONTHS;
+    const fullContractMonthly = CONTRACT_PRICING.FULL_CONTRACT_MONTHLY; // $19,928/month (DOWN from $26K!)
+    const capiServiceFeeRate = CONTRACT_PRICING.CAPI_SERVICE_FEE_RATE; // 12.5%
     
     const totalMonthlyCapiSpend = inputs.capiCampaignsPerMonth * inputs.avgCampaignSpend;
     const monthlyCapiServiceFees = totalMonthlyCapiSpend * capiServiceFeeRate;
@@ -457,10 +461,10 @@ export class UnifiedCalculationEngine {
   ): ROIAnalysis {
     // Service fees are already subtracted from CAPI benefits in calculateCapiCapabilities()
     // Publisher costs = platform fees ONLY
-    const platformFeePOC = pricing.pocMonthlyEquivalent; // $5K/month
+    const platformFeePOC = pricing.pocMonthlyEquivalent; // $5K/month (50% off!)
     const pocPhaseTotalMonthlyCost = platformFeePOC;
     
-    const platformFeeFull = pricing.fullContractMonthly; // $26K/month
+    const platformFeeFull = pricing.fullContractMonthly; // $19,928/month (reduced from $26K!)
     const fullContractTotalMonthlyCost = platformFeeFull;
     
     // POC Phase Net ROI

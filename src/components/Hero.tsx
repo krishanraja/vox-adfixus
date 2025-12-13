@@ -18,12 +18,23 @@ export const Hero: React.FC<HeroProps> = ({ onStartQuiz }) => {
         <div className="mb-8">
           <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
           <h1 className="text-5xl font-black text-foreground mb-4">
-            AdFixus ROI Calculator
+            Vox Media × AdFixus
           </h1>
+          <h2 className="text-3xl font-bold text-primary mb-4">
+            ROI Simulator
+          </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Calculate your potential revenue uplift from improved addressability, CAPI capabilities, 
-            and premium media performance. Model your ROI with realistic risk scenarios.
+            Model your revenue uplift from improved addressability, CAPI capabilities, 
+            and premium media performance across your portfolio.
           </p>
+          <div className="mt-4 inline-flex gap-3">
+            <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+              ✓ POC: 50% discount
+            </span>
+            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
+              ✓ Contract: 23% reduced
+            </span>
+          </div>
         </div>
         
         <Button 
