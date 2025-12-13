@@ -223,29 +223,66 @@ export const SimplifiedResults = ({
         </div>
       </Card>
 
-      {/* Simplified ROI Card */}
-      <Card className="p-6 border-2 border-green-500/20 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-        <CardHeader>
+      {/* Contract Value Highlights */}
+      <Card className="p-6 border-2 border-green-500/30 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-green-600" />
-            Return on Investment
+            Contract Value & ROI
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Revenue benefit multiple vs AdFixus investment
+            Exceptional value with reduced pricing vs previous quotes
           </p>
         </CardHeader>
         <CardContent>
+          {/* Good News Highlights */}
+          <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-700 text-center">
+              <div className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-1">
+                POC Discount
+              </div>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">50% OFF</div>
+              <div className="text-xs text-green-700 dark:text-green-400 mt-1">
+                Full functionality at half price
+              </div>
+            </div>
+            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-700 text-center">
+              <div className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-1">
+                Contract Pricing
+              </div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">23% ↓</div>
+              <div className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                Now $19.9K/mo (was $26K)
+              </div>
+            </div>
+            <div className="p-4 bg-purple-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-700 text-center">
+              <div className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wide mb-1">
+                3-Year Savings
+              </div>
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">$219K+</div>
+              <div className="text-xs text-purple-700 dark:text-purple-400 mt-1">
+                vs previous quoted rates
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6">
             {/* POC Phase ROI */}
-            <div className="text-center p-6 bg-white dark:bg-gray-900 rounded-xl border-2 border-green-300 dark:border-green-700 shadow-sm">
+            <div className="text-center p-6 bg-white dark:bg-gray-900 rounded-xl border-2 border-green-400 dark:border-green-600 shadow-sm relative overflow-hidden">
+              <div className="absolute top-2 right-2">
+                <Badge className="bg-green-500 text-white text-xs">Best Value</Badge>
+              </div>
               <div className="text-sm font-medium text-muted-foreground mb-2">
                 POC Phase (Months 1-3)
               </div>
               <div className="text-6xl font-bold text-green-600 dark:text-green-400 mb-2">
                 {results.roiAnalysis.roiMultiple.pocPhase.toFixed(1)}x
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground mb-3">
                 ROI Multiple
+              </div>
+              <div className="text-sm font-semibold text-green-700 dark:text-green-400">
+                $5K/mo × 3 months = $15K total
               </div>
             </div>
 
@@ -257,14 +294,20 @@ export const SimplifiedResults = ({
               <div className="text-6xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
                 {results.roiAnalysis.roiMultiple.fullContract.toFixed(1)}x
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground mb-3">
                 ROI Multiple
+              </div>
+              <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                $19.9K/mo (reduced from $26K)
               </div>
             </div>
           </div>
 
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            Full functionality during POC at discounted rate, transitioning to standard contract pricing
+          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+            <div className="text-center text-sm">
+              <span className="font-semibold text-amber-800 dark:text-amber-400">✨ Full functionality during POC</span>
+              <span className="text-amber-700 dark:text-amber-300"> — test all features with no capability restrictions, then transition to reduced contract pricing</span>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (username: string, password: string): boolean => {
     // Simple hardcoded authentication - not for production use
-    if (username === 'vox' && password === 'vox2026!') {
+    if (username === 'vox' && password === 'voxROI2026!') {
       setIsAuthenticated(true);
       sessionStorage.setItem('authenticated', 'true');
       return true;

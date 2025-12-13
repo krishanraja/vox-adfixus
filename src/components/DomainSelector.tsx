@@ -85,23 +85,24 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
           <Button 
             variant="secondary" 
             size="sm" 
-            onClick={() => handlePreset('top3')}
+            onClick={() => handlePreset('pocDomains')}
+            className="border-2 border-green-500/30"
           >
-            Top 3
+            🎯 POC Scope (6)
           </Button>
           <Button 
             variant="secondary" 
             size="sm" 
-            onClick={() => handlePreset('newsNetwork')}
+            onClick={() => handlePreset('topDomains')}
           >
-            News Network
+            Top Traffic
           </Button>
           <Button 
             variant="secondary" 
             size="sm" 
             onClick={() => handlePreset('fullPortfolio')}
           >
-            Full Portfolio
+            Full Portfolio (14)
           </Button>
         </div>
         
