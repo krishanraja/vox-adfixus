@@ -24,43 +24,43 @@ export interface RiskMultipliers {
 
 export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
   conservative: {
-    rampUpMonths: 15, // Takes 15 months to full value (reduced from 18)
-    adoptionRate: 0.65, // 65% of properties/campaigns get full deployment (up from 60%)
-    addressabilityEfficiency: 0.75, // DNS delays, incomplete rollout (up from 70%)
-    capiDeploymentRate: 0.60, // Sales challenges, 60% of campaigns use CAPI (up from 50%)
+    rampUpMonths: 12, // 12 months to full value (aligned with sales ramp, not deployment)
+    adoptionRate: 0.70, // 70% of properties/campaigns get full deployment
+    addressabilityEfficiency: 0.75, // DNS delays, incomplete rollout
+    capiDeploymentRate: 0.65, // Sales challenges, 65% of campaigns use CAPI
     premiumInventoryShare: 0.20, // Sales doesn't position premium effectively
-    cpmUpliftRealization: 0.75, // 75% of expected uplift realized (up from 70%)
-    salesEffectiveness: 0.70, // Sales training partial (up from 60%)
-    cdpSavingsRealization: 0.80, // Some technical delays in ID reduction (up from 70%)
+    cpmUpliftRealization: 0.75, // 75% of expected uplift realized
+    salesEffectiveness: 0.75, // Sales training partial
+    cdpSavingsRealization: 0.80, // Some technical delays in ID reduction
   },
   
   moderate: {
-    rampUpMonths: 12, // 12 months to full value (base assumption)
-    adoptionRate: 0.80, // 80% deployment across portfolio
-    addressabilityEfficiency: 0.85,
-    capiDeploymentRate: 0.75, // 75% of expected campaigns
-    premiumInventoryShare: 0.25, // Slightly below optimal
-    cpmUpliftRealization: 0.85, // 85% of expected uplift
-    salesEffectiveness: 0.80,
-    cdpSavingsRealization: 0.85,
+    rampUpMonths: 9, // 9 months to full value (faster with good execution)
+    adoptionRate: 0.75, // 75% deployment across portfolio
+    addressabilityEfficiency: 0.80, // Slight friction expected
+    capiDeploymentRate: 0.70, // 70% of expected campaigns
+    premiumInventoryShare: 0.22, // Slightly below optimal
+    cpmUpliftRealization: 0.80, // 80% of expected uplift
+    salesEffectiveness: 0.78, // Good but not perfect sales execution
+    cdpSavingsRealization: 0.82, // Minor delays
   },
   
   optimistic: {
     rampUpMonths: 6, // Fast 6-month ramp
-    adoptionRate: 1.0, // Full deployment as planned
-    addressabilityEfficiency: 1.0,
-    capiDeploymentRate: 1.0,
-    premiumInventoryShare: 0.30, // Achieves target
-    cpmUpliftRealization: 1.0, // Full uplift realized
-    salesEffectiveness: 1.0,
-    cdpSavingsRealization: 1.0,
+    adoptionRate: 0.92, // 92% deployment (realistic ceiling)
+    addressabilityEfficiency: 0.95, // Near-full efficiency
+    capiDeploymentRate: 0.90, // Strong CAPI adoption
+    premiumInventoryShare: 0.28, // Near-achieves target
+    cpmUpliftRealization: 0.95, // 95% of expected uplift (not 100%)
+    salesEffectiveness: 0.95, // Excellent sales execution
+    cdpSavingsRealization: 0.95, // Minimal delays
   },
 };
 
 export const RISK_SCENARIO_DESCRIPTIONS: Record<RiskScenario, string> = {
-  conservative: 'Sales execution challenges, technical delays, 18-month ramp. Accounts for training gaps, integration friction, and cautious buyer adoption.',
-  moderate: 'Normal enterprise rollout with expected friction. 12-month ramp with partial sales adoption and some technical delays.',
-  optimistic: 'Smooth deployment, strong sales execution, 6-month ramp. Assumes dedicated project ownership and buyer readiness.',
+  conservative: 'Cautious execution with expected friction. 12-month sales ramp with training gaps and gradual advertiser adoption.',
+  moderate: 'Solid enterprise rollout. 9-month ramp with good sales adoption and manageable friction.',
+  optimistic: 'Strong execution, dedicated ownership. 6-month ramp with excellent sales training and advertiser buy-in.',
 };
 
 // Key risk factors that affect each scenario
