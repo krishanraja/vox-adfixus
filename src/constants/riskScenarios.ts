@@ -24,14 +24,14 @@ export interface RiskMultipliers {
 
 export const RISK_SCENARIOS: Record<RiskScenario, RiskMultipliers> = {
   conservative: {
-    rampUpMonths: 18, // Takes 18 months to full value
-    adoptionRate: 0.60, // Only 60% of properties/campaigns get full deployment
-    addressabilityEfficiency: 0.70, // DNS delays, incomplete rollout
-    capiDeploymentRate: 0.50, // Sales struggles, only 50% of campaigns use CAPI
+    rampUpMonths: 15, // Takes 15 months to full value (reduced from 18)
+    adoptionRate: 0.65, // 65% of properties/campaigns get full deployment (up from 60%)
+    addressabilityEfficiency: 0.75, // DNS delays, incomplete rollout (up from 70%)
+    capiDeploymentRate: 0.60, // Sales challenges, 60% of campaigns use CAPI (up from 50%)
     premiumInventoryShare: 0.20, // Sales doesn't position premium effectively
-    cpmUpliftRealization: 0.70, // Only 70% of expected uplift (= 17.5% actual)
-    salesEffectiveness: 0.60, // Sales training incomplete
-    cdpSavingsRealization: 0.70, // Some technical delays in ID reduction
+    cpmUpliftRealization: 0.75, // 75% of expected uplift realized (up from 70%)
+    salesEffectiveness: 0.70, // Sales training partial (up from 60%)
+    cdpSavingsRealization: 0.80, // Some technical delays in ID reduction (up from 70%)
   },
   
   moderate: {
