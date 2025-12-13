@@ -238,33 +238,40 @@ export class UnifiedCalculationEngine {
     weightedSafariShare: number, // Domain-weighted Safari share
     overrides?: AssumptionOverrides
   ) {
-    // Safari addressability: Binary improvement with durable ID
-    // Without AdFixus: Safari users lose identity after 7 days
-    // With AdFixus: Durable ID recognizes returning users beyond 7 days
+    // ============ SAFARI-SPECIFIC ADDRESSABILITY (POC KPI) ============
     // Use domain-weighted Safari share (typically 32-45% for Vox properties)
+    // Default ~35% based on Vox Dec 2024 data: Mobile 47% Safari, Desktop 20% Safari
     const safariShare = weightedSafariShare;
+    const nonSafariShare = 1 - safariShare; // Chrome + Other (assumed 100% addressable)
+    
+    // Safari-specific addressability rates (THE KEY METRIC FOR POC)
+    // Without AdFixus: Safari users lose identity after 7 days (~55% addressable)
+    // With AdFixus: Durable ID recognizes returning users beyond 7 days (~85% addressable)
     const currentSafariAddressability = overrides?.safariBaselineAddressability ?? ADDRESSABILITY_BENCHMARKS.WITHOUT_ADFIXUS;
     const improvedSafariAddressability = overrides?.safariWithDurableId ?? ADDRESSABILITY_BENCHMARKS.WITH_ADFIXUS;
+    const safariAddressabilityImprovement = improvedSafariAddressability - currentSafariAddressability; // +30 pts
 
-    const currentAddressability =
-      ADDRESSABILITY_BENCHMARKS.CHROME_SHARE +
-      safariShare * currentSafariAddressability +
-      ADDRESSABILITY_BENCHMARKS.FIREFOX_OTHER;
+    // ============ TOTAL INVENTORY ADDRESSABILITY ============
+    // Non-Safari (Chrome/Other) = 100% addressable (no ITP restrictions)
+    // Safari = 55% → 85% addressable
+    const chromeOtherAddressability = ADDRESSABILITY_BENCHMARKS.CHROME_ADDRESSABILITY ?? 1.0;
+    const currentTotalAddressability = 
+      nonSafariShare * chromeOtherAddressability + 
+      safariShare * currentSafariAddressability;
+    const improvedTotalAddressability = 
+      nonSafariShare * chromeOtherAddressability + 
+      safariShare * improvedSafariAddressability;
+    const totalAddressabilityImprovement = improvedTotalAddressability - currentTotalAddressability;
 
-    const improvedAddressability =
-      ADDRESSABILITY_BENCHMARKS.CHROME_SHARE +
-      safariShare * improvedSafariAddressability +
-      ADDRESSABILITY_BENCHMARKS.FIREFOX_OTHER;
-
-    const addressabilityImprovement = improvedAddressability - currentAddressability;
-
-    // Calculate newly addressable impressions
+    // ============ NEWLY ADDRESSABLE SAFARI IMPRESSIONS ============
     const totalImpressions = displayImpressions + videoImpressions;
-    const newlyAddressableImpressions = totalImpressions * addressabilityImprovement;
-    const newlyAddressableDisplay = displayImpressions * addressabilityImprovement;
-    const newlyAddressableVideo = videoImpressions * addressabilityImprovement;
+    const safariImpressions = totalImpressions * safariShare;
+    // Only Safari impressions gain addressability (Chrome/Other already at 100%)
+    const newlyAddressableSafariImpressions = safariImpressions * safariAddressabilityImprovement;
+    const newlyAddressableDisplay = displayImpressions * safariShare * safariAddressabilityImprovement;
+    const newlyAddressableVideo = videoImpressions * safariShare * safariAddressabilityImprovement;
 
-    // CPM improvement on newly addressable inventory
+    // CPM improvement on newly addressable Safari inventory
     const cpmUpliftFactor = overrides?.cpmUpliftFactor ?? ADDRESSABILITY_BENCHMARKS.CPM_IMPROVEMENT_FACTOR;
     const improvedDisplayCPM = displayCPM * (1 + cpmUpliftFactor);
     const improvedVideoCPM = videoCPM * (1 + cpmUpliftFactor);
@@ -287,15 +294,24 @@ export class UnifiedCalculationEngine {
     const annualUplift = monthlyUplift * 12;
 
     return {
-      addressabilityRecovery: addressabilityImprovement * 100,
+      addressabilityRecovery: totalAddressabilityImprovement * 100, // Total inventory improvement
       cpmImprovement,
       cdpSavings: monthlyCdpSavings,
       monthlyUplift,
       annualUplift,
       details: {
-        currentAddressability: currentAddressability * 100,
-        improvedAddressability: improvedAddressability * 100,
-        newlyAddressableImpressions,
+        // Safari-specific metrics (POC KPI focus)
+        safariShare: safariShare * 100,
+        currentSafariAddressability: currentSafariAddressability * 100, // 55%
+        improvedSafariAddressability: improvedSafariAddressability * 100, // 85%
+        safariAddressabilityImprovement: safariAddressabilityImprovement * 100, // +30 pts
+        
+        // Total inventory metrics
+        currentAddressability: currentTotalAddressability * 100, // ~84%
+        improvedAddressability: improvedTotalAddressability * 100, // ~95%
+        totalAddressabilityImprovement: totalAddressabilityImprovement * 100, // ~10.5 pts
+        
+        newlyAddressableImpressions: newlyAddressableSafariImpressions,
         addressabilityRevenue, // Separated for transparency
         cdpSavingsRevenue, // Separated for transparency
         idReductionPercentage: OPERATIONAL_BENCHMARKS.ID_REDUCTION_PERCENTAGE * 100,
