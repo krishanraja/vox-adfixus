@@ -50,8 +50,8 @@ const ScenarioModeler = () => {
     const numDomains = inputs.selectedDomains.length;
     const deployment = numDomains === 1 ? 'single' : numDomains <= 5 ? 'multi' : 'full';
     
-    // Auto-determine scope based on CAPI configuration
-    const scope = inputs.capiCampaignsPerMonth > 0 ? 'id-capi-performance' : 'id-only';
+    // Always use full scope with CAPI and performance (CAPI volume determined by readiness factors)
+    const scope = 'id-capi-performance';
     
     setScenario({ deployment, scope });
     calculateResults();

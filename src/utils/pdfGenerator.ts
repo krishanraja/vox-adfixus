@@ -590,6 +590,37 @@ export const buildAdfixusProposalPdf = async (
           margin: [0, 0, 0, 10]
         },
         {
+          text: 'CAPI Campaign Projection (Based on Business Readiness)',
+          style: 'h4',
+          margin: [0, 0, 0, 8]
+        },
+        {
+          table: {
+            widths: ['*', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: 'Year 1 Campaigns', style: 'tableLabel' },
+                { text: `${capi.capiConfiguration?.yearlyCampaigns || 8}`, style: 'tableValueHighlight', alignment: 'right' },
+                { text: 'POC Campaigns (M1-3)', style: 'tableLabel' },
+                { text: `${capi.capiConfiguration?.pocCampaigns || 2}`, style: 'tableValueHighlight', alignment: 'right' }
+              ],
+              [
+                { text: 'Avg Campaign Spend', style: 'tableLabel' },
+                { text: formatCurrency(capi.capiConfiguration?.avgCampaignSpend || 75000), style: 'tableValue', alignment: 'right' },
+                { text: 'Monthly CAPI Spend (Avg)', style: 'tableLabel' },
+                { text: formatCurrency(capi.baselineCapiSpend), style: 'tableValue', alignment: 'right' }
+              ]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 10]
+        },
+        {
+          text: 'Campaign volume and spend are calculated from Business Readiness factors (Sales Readiness, Training, Advertiser Buy-In, Budget Environment).',
+          style: 'footnote',
+          margin: [0, 0, 0, 10]
+        },
+        {
           table: {
             widths: ['*', 'auto'],
             body: [
@@ -659,32 +690,37 @@ export const buildAdfixusProposalPdf = async (
       {
         table: {
           headerRows: 1,
-          widths: ['*', 'auto', 'auto'],
+          widths: ['*', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Quarter', style: 'tableHeader', fillColor: '#F1F5F9' },
               { text: 'Est. Realization', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Modeled Monthly Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
+              { text: 'Modeled Monthly Uplift', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'Est. CAPI Campaigns', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
             ],
             [
               { text: 'Q1 (Months 1-3)', style: 'tableCell' },
               { text: riskScenario === 'conservative' ? '25%' : riskScenario === 'moderate' ? '40%' : '60%', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.25 : riskScenario === 'moderate' ? 0.40 : 0.60)), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.25 : riskScenario === 'moderate' ? 0.40 : 0.60)), style: 'tableCell', alignment: 'right' },
+              { text: `${capi?.capiConfiguration?.pocCampaigns || 2}`, style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Q2 (Months 4-6)', style: 'tableCell' },
               { text: riskScenario === 'conservative' ? '50%' : riskScenario === 'moderate' ? '70%' : '85%', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.50 : riskScenario === 'moderate' ? 0.70 : 0.85)), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.50 : riskScenario === 'moderate' ? 0.70 : 0.85)), style: 'tableCell', alignment: 'right' },
+              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 8) * 0.25)}`, style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Q3 (Months 7-9)', style: 'tableCell' },
               { text: riskScenario === 'conservative' ? '75%' : riskScenario === 'moderate' ? '90%' : '100%', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.75 : riskScenario === 'moderate' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.75 : riskScenario === 'moderate' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' },
+              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 8) * 0.25)}`, style: 'tableCell', alignment: 'right' }
             ],
             [
               { text: 'Q4 (Months 10-12)', style: 'tableCell' },
               { text: riskScenario === 'conservative' ? '90%' : '100%', style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' },
+              { text: `${Math.round((capi?.capiConfiguration?.yearlyCampaigns || 8) * 0.29)}`, style: 'tableCell', alignment: 'right' }
             ]
           ]
         },
@@ -692,7 +728,7 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 8]
       },
       {
-        text: '*Ramp-up schedule is illustrative. Actual timeline will depend on deployment pace, integration complexity, and organizational readiness.',
+        text: '*Ramp-up schedule is illustrative. CAPI campaigns ramp with sales readiness and advertiser adoption. Actual timeline depends on deployment pace and organizational readiness.',
         style: 'footnote',
         margin: [0, 0, 0, 0]
       },

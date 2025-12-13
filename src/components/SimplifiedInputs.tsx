@@ -140,67 +140,13 @@ export const SimplifiedInputsForm = ({
         </Card>
       )}
 
-      {/* CAPI Configuration */}
-      {showCapiInputs && (
-        <Card className="p-6">
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                CAPI Campaign Configuration
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Configure your Conversion API (CAPI) campaigns using AdFixus Stream
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="capi-campaigns" className="text-sm font-medium">
-                  CAPI Campaigns per Month
-                </Label>
-                <span className="text-sm font-semibold text-primary">
-                  {inputs.capiCampaignsPerMonth} campaigns
-                </span>
-              </div>
-              <Slider
-                id="capi-campaigns"
-                min={1}
-                max={50}
-                step={1}
-                value={[inputs.capiCampaignsPerMonth]}
-                onValueChange={(value) =>
-                  onInputChange('capiCampaignsPerMonth', value[0])
-                }
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="campaign-spend" className="text-sm font-medium">
-                  Average Campaign Spend
-                </Label>
-                <span className="text-sm font-semibold text-primary">
-                  {formatCurrency(inputs.avgCampaignSpend)}
-                </span>
-              </div>
-              <Slider
-                id="campaign-spend"
-                min={10000}
-                max={500000}
-                step={10000}
-                value={[inputs.avgCampaignSpend]}
-                onValueChange={(value) =>
-                  onInputChange('avgCampaignSpend', value[0])
-                }
-                className="w-full"
-              />
-            </div>
-
-          </div>
-        </Card>
-      )}
+      {/* CAPI Configuration REMOVED - now calculated from Business Readiness factors */}
+      {/* CAPI campaigns will be shown as OUTPUT in the results, based on:
+          - Sales Readiness
+          - Training Gaps  
+          - Advertiser Buy-In
+          - Market Conditions (Budget Environment)
+      */}
 
       {aggregated.totalMonthlyPageviews > 0 && (
         <button
