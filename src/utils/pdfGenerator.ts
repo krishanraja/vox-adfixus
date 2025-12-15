@@ -399,15 +399,17 @@ export const buildAdfixusProposalPdf = async (
       },
       {
         table: {
-          widths: ['*', '*'],
+          widths: ['*', '*', '*'],
           body: [
             [
-              { text: 'Modeled Monthly Uplift*', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Modeled Annual Opportunity*', style: 'metricHeader', fillColor: '#F1F5F9' }
+              { text: 'Monthly Incremental Revenue*', style: 'metricHeader', fillColor: '#F1F5F9' },
+              { text: 'Annual Incremental Revenue*', style: 'metricHeader', fillColor: '#F1F5F9' },
+              { text: 'Return on Investment Multiple*', style: 'metricHeader', fillColor: '#F1F5F9' }
             ],
             [
               { text: formatCurrency(monthlyUplift), style: 'metricValue', alignment: 'center' },
-              { text: formatCurrency(annualUplift), style: 'metricValue', alignment: 'center' }
+              { text: annualUplift >= 1000000 ? `$${(annualUplift / 1000000).toFixed(1)}M` : formatCurrency(annualUplift), style: 'metricValue', alignment: 'center' },
+              { text: `${roiMultiple.toFixed(1)}x`, style: 'metricValue', alignment: 'center' }
             ]
           ]
         },
@@ -628,10 +630,10 @@ export const buildAdfixusProposalPdf = async (
                 { text: 'Value', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
               ],
               [
-                { text: 'Year 1 Campaigns', style: 'tableCell' },
-                { text: `${capi.capiConfiguration?.yearlyCampaigns || 12}`, style: 'tableValueHighlight', alignment: 'right' },
                 { text: 'POC Campaigns (M1-3)', style: 'tableCell' },
-                { text: `${capi.capiConfiguration?.pocCampaigns || 2}`, style: 'tableValueHighlight', alignment: 'right' }
+                { text: `${capi.capiConfiguration?.pocCampaigns || 2}`, style: 'tableValueHighlight', alignment: 'right' },
+                { text: 'Year 1 Campaigns', style: 'tableCell' },
+                { text: `${capi.capiConfiguration?.yearlyCampaigns || 12}`, style: 'tableValueHighlight', alignment: 'right' }
               ],
               [
                 { text: 'Avg Campaign Spend', style: 'tableCell' },
@@ -795,29 +797,29 @@ export const buildAdfixusProposalPdf = async (
               [
                 { text: 'Q1 (Months 1-3)', style: 'tableCell' },
                 { text: 'POC', style: 'tableCell', alignment: 'center', color: '#0D9488' },
-                { text: riskScenario === 'conservative' ? '25%' : riskScenario === 'moderate' ? '40%' : '60%', style: 'tableCell', alignment: 'right' },
-                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.25 : riskScenario === 'moderate' ? 0.40 : 0.60)), style: 'tableCell', alignment: 'right' },
+                { text: riskScenario === 'conservative' ? '30%' : riskScenario === 'moderate' ? '40%' : '60%', style: 'tableCell', alignment: 'right' },
+                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.30 : riskScenario === 'moderate' ? 0.40 : 0.60)), style: 'tableCell', alignment: 'right' },
                 { text: `${pocCampaigns}`, style: 'tableCell', alignment: 'right' }
               ],
               [
                 { text: 'Q2 (Months 4-6)', style: 'tableCell' },
                 { text: 'Scaling', style: 'tableCell', alignment: 'center', color: '#2563EB' },
-                { text: riskScenario === 'conservative' ? '50%' : riskScenario === 'moderate' ? '70%' : '85%', style: 'tableCell', alignment: 'right' },
-                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.50 : riskScenario === 'moderate' ? 0.70 : 0.85)), style: 'tableCell', alignment: 'right' },
+                { text: riskScenario === 'conservative' ? '65%' : riskScenario === 'moderate' ? '80%' : '90%', style: 'tableCell', alignment: 'right' },
+                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.65 : riskScenario === 'moderate' ? 0.80 : 0.90)), style: 'tableCell', alignment: 'right' },
                 { text: `${q2Campaigns}`, style: 'tableCell', alignment: 'right' }
               ],
               [
                 { text: 'Q3 (Months 7-9)', style: 'tableCell' },
                 { text: 'Value', style: 'tableCell', alignment: 'center', color: '#7C3AED' },
-                { text: riskScenario === 'conservative' ? '75%' : riskScenario === 'moderate' ? '90%' : '100%', style: 'tableCell', alignment: 'right' },
-                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.75 : riskScenario === 'moderate' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' },
+                { text: riskScenario === 'conservative' ? '85%' : riskScenario === 'moderate' ? '95%' : '100%', style: 'tableCell', alignment: 'right' },
+                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.85 : riskScenario === 'moderate' ? 0.95 : 1.00)), style: 'tableCell', alignment: 'right' },
                 { text: `${q3Campaigns}`, style: 'tableCell', alignment: 'right' }
               ],
               [
                 { text: 'Q4 (Months 10-12)', style: 'tableCell' },
                 { text: 'Value', style: 'tableCell', alignment: 'center', color: '#7C3AED' },
-                { text: riskScenario === 'conservative' ? '90%' : '100%', style: 'tableCell', alignment: 'right' },
-                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.90 : 1.00)), style: 'tableCell', alignment: 'right' },
+                { text: riskScenario === 'conservative' ? '95%' : '100%', style: 'tableCell', alignment: 'right' },
+                { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.95 : 1.00)), style: 'tableCell', alignment: 'right' },
                 { text: `${q4Campaigns}`, style: 'tableCell', alignment: 'right' }
               ]
             ];

@@ -48,13 +48,14 @@ export const ADDRESSABILITY_BENCHMARKS = {
 };
 
 export const OPERATIONAL_BENCHMARKS = {
-  BASELINE_ID_MULTIPLIER: 3.0, // 1 user = 3.0 IDs without solution
-  IMPROVED_ID_MULTIPLIER: 1.1, // 1 user = 1.1 IDs with AdFixus
+  BASELINE_ID_MULTIPLIER: 3.5, // 1 user = 3.5 IDs without solution (increased for Vox properties)
+  IMPROVED_ID_MULTIPLIER: 1.08, // 1 user = 1.08 IDs with AdFixus (tighter)
   // CDP Savings: Fixed at $3,500/month per Vox guidance
   CDP_MONTHLY_SAVINGS: 3500, // $3,500/month - FIXED VALUE
   MANUAL_LABOR_HOURS_SAVED: 40, // hours per month
   HOURLY_RATE: 75, // $75/hour for ad ops labor
-  ID_REDUCTION_PERCENTAGE: 0.63, // 63% reduction in ID bloat
+  ID_REDUCTION_PERCENTAGE: 0.69, // 69% reduction in ID bloat (Vox properties have 15-18% overlap)
+  CROSS_DOMAIN_OVERLAP: 0.17, // 17% average cross-domain user overlap for Vox portfolio
 };
 
 export const SCENARIO_MULTIPLIERS = {
@@ -63,10 +64,11 @@ export const SCENARIO_MULTIPLIERS = {
     MULTI: 0.8, // 80% per additional domain (5-10 domains)
     FULL: 1.2, // 120% with network effects (15+ domains)
   },
+  // Updated ramp-up: Early adopters (3 months) then full team (9 months)
   RAMP_UP: {
-    MONTH_1_3: 0.15, // 15% in first 3 months
-    MONTH_4_6: 0.35, // 35% in months 4-6
-    MONTH_7_12: 1.0, // 100% from month 7 onwards
+    MONTH_1_3: 0.40, // 40% in POC (early adopter sellers, 3 months)
+    MONTH_4_6: 0.80, // 80% in Q2 (full sales team ramping, months 4-6)
+    MONTH_7_12: 1.0, // 100% from month 7 onwards (full capacity)
   },
 };
 

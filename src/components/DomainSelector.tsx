@@ -102,7 +102,7 @@ export const DomainSelector = ({ selectedDomains, onChange, pageviewOverrides, o
             size="sm" 
             onClick={() => handlePreset('fullPortfolio')}
           >
-            Full Portfolio (14)
+            Full Portfolio ({VOX_MEDIA_DOMAINS.length})
           </Button>
         </div>
         
