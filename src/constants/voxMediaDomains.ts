@@ -85,15 +85,15 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
   },
   {
     id: 'nymag',
-    name: 'NYMag',
-    monthlyPageviews: 4362773, // Briar's internal reporting
-    displayVideoSplit: 75,
+    name: 'NYMag (incl Strategist + Intelligencer)',
+    monthlyPageviews: 14926266, // Briar's internal reporting: NYMag 4,362,773 + Strategist 6,566,186 + Intelligencer 3,997,307
+    displayVideoSplit: 76, // Weighted average across the three properties
     category: 'entertainment',
     adsPerPage: 1.5,
     inPoc: true,
     audienceProfile: {
-      techSavvy: 0.70,
-      safariShare: 0.40,
+      techSavvy: 0.72, // Weighted average
+      safariShare: 0.40, // Weighted average
     }
   },
   // NEWS & TECH
@@ -122,31 +122,6 @@ export const VOX_MEDIA_DOMAINS: VoxDomain[] = [
     audienceProfile: {
       techSavvy: 0.72,
       safariShare: 0.41,
-    }
-  },
-  // LIFESTYLE
-  {
-    id: 'strategist',
-    name: 'Strategist',
-    monthlyPageviews: 6566186, // Briar's internal reporting
-    displayVideoSplit: 82,
-    category: 'lifestyle-food',
-    adsPerPage: 1.5,
-    audienceProfile: {
-      techSavvy: 0.68,
-      safariShare: 0.42,
-    }
-  },
-  {
-    id: 'intelligencer',
-    name: 'Intelligencer',
-    monthlyPageviews: 3997307, // Briar's internal reporting
-    displayVideoSplit: 70,
-    category: 'news-tech',
-    adsPerPage: 1.5,
-    audienceProfile: {
-      techSavvy: 0.78,
-      safariShare: 0.38,
     }
   },
   {
@@ -222,8 +197,8 @@ export const CATEGORY_LABELS: Record<VoxDomain['category'], string> = {
 
 // Contract-based presets
 export const DOMAIN_PRESETS = {
-  // POC: 6 domains (The Verge, Vox, NYMag cluster)
-  pocDomains: ['the-verge', 'vox', 'nymag', 'the-cut', 'vulture', 'grub-street'],
+  // POC: 5 domains (The Verge, Vox, NYMag cluster - NYMag now includes Strategist + Intelligencer)
+  pocDomains: ['the-verge', 'vox', 'nymag', 'the-cut', 'vulture', 'grub-street'], // 6 domains, nymag includes Strategist + Intelligencer
   // Full contract: all 14 domains
   fullPortfolio: VOX_MEDIA_DOMAINS.map(d => d.id),
   // High-traffic domains
