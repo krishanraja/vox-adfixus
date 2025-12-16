@@ -145,14 +145,19 @@ export class UnifiedCalculationEngine {
     );
 
     // Apply risk adjustments to ID infrastructure (before adoption rate)
+    // Adjust each component individually, then sum for monthlyUplift to ensure consistency
+    const adjustedAddressabilityRevenue = baseIdInfrastructure.details.addressabilityRevenue * risk.addressabilityEfficiency * risk.cpmUpliftRealization;
+    const adjustedCdpSavingsRevenue = baseIdInfrastructure.details.cdpSavingsRevenue * risk.cdpSavingsRealization;
+    const adjustedMonthlyUplift = adjustedAddressabilityRevenue + adjustedCdpSavingsRevenue;
+    
     const riskAdjustedIdInfrastructure = {
       ...baseIdInfrastructure,
-      monthlyUplift: baseIdInfrastructure.monthlyUplift * risk.addressabilityEfficiency * risk.cdpSavingsRealization,
-      annualUplift: baseIdInfrastructure.annualUplift * risk.addressabilityEfficiency * risk.cdpSavingsRealization,
+      monthlyUplift: adjustedMonthlyUplift,
+      annualUplift: adjustedMonthlyUplift * 12,
       details: {
         ...baseIdInfrastructure.details,
-        addressabilityRevenue: baseIdInfrastructure.details.addressabilityRevenue * risk.addressabilityEfficiency * risk.cpmUpliftRealization,
-        cdpSavingsRevenue: baseIdInfrastructure.details.cdpSavingsRevenue * risk.cdpSavingsRealization,
+        addressabilityRevenue: adjustedAddressabilityRevenue,
+        cdpSavingsRevenue: adjustedCdpSavingsRevenue,
       }
     };
 
@@ -161,6 +166,12 @@ export class UnifiedCalculationEngine {
       ...riskAdjustedIdInfrastructure,
       monthlyUplift: riskAdjustedIdInfrastructure.monthlyUplift * risk.adoptionRate,
       annualUplift: riskAdjustedIdInfrastructure.annualUplift * risk.adoptionRate,
+      details: {
+        ...riskAdjustedIdInfrastructure.details,
+        // Apply adoption rate to detail components so they sum to monthlyUplift
+        addressabilityRevenue: riskAdjustedIdInfrastructure.details.addressabilityRevenue * risk.adoptionRate,
+        cdpSavingsRevenue: riskAdjustedIdInfrastructure.details.cdpSavingsRevenue * risk.adoptionRate,
+      }
     };
 
     // Calculate CAPI Capabilities (if enabled) - BASE before risk adjustment
