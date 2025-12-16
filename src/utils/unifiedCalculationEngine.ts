@@ -144,8 +144,8 @@ export class UnifiedCalculationEngine {
       overrides
     );
 
-    // Apply risk adjustments to ID infrastructure
-    const idInfrastructure = {
+    // Apply risk adjustments to ID infrastructure (before adoption rate)
+    const riskAdjustedIdInfrastructure = {
       ...baseIdInfrastructure,
       monthlyUplift: baseIdInfrastructure.monthlyUplift * risk.addressabilityEfficiency * risk.cdpSavingsRealization,
       annualUplift: baseIdInfrastructure.annualUplift * risk.addressabilityEfficiency * risk.cdpSavingsRealization,
@@ -156,23 +156,37 @@ export class UnifiedCalculationEngine {
       }
     };
 
+    // Apply adoption rate to ID Infrastructure component
+    const adoptedIdInfrastructure = {
+      ...riskAdjustedIdInfrastructure,
+      monthlyUplift: riskAdjustedIdInfrastructure.monthlyUplift * risk.adoptionRate,
+      annualUplift: riskAdjustedIdInfrastructure.annualUplift * risk.adoptionRate,
+    };
+
     // Calculate CAPI Capabilities (if enabled) - BASE before risk adjustment
-    let capiCapabilities;
+    let adoptedCapiCapabilities;
     if (scenario.scope === 'id-capi' || scenario.scope === 'id-capi-performance') {
       const baseCapiCapabilities = this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, riskScenario, overrides);
       
-      // Apply risk adjustments to CAPI
-      capiCapabilities = {
+      // Apply risk adjustments to CAPI (before adoption rate)
+      const riskAdjustedCapiCapabilities = {
         ...baseCapiCapabilities,
         monthlyUplift: baseCapiCapabilities.monthlyUplift * risk.capiDeploymentRate * risk.salesEffectiveness,
         annualUplift: baseCapiCapabilities.annualUplift * risk.capiDeploymentRate * risk.salesEffectiveness,
         conversionTrackingRevenue: baseCapiCapabilities.conversionTrackingRevenue * risk.capiDeploymentRate,
         campaignServiceFees: baseCapiCapabilities.campaignServiceFees * risk.salesEffectiveness,
       };
+
+      // Apply adoption rate to CAPI component
+      adoptedCapiCapabilities = {
+        ...riskAdjustedCapiCapabilities,
+        monthlyUplift: riskAdjustedCapiCapabilities.monthlyUplift * risk.adoptionRate,
+        annualUplift: riskAdjustedCapiCapabilities.annualUplift * risk.adoptionRate,
+      };
     }
 
     // Calculate Media Performance (if enabled) - BASE before risk adjustment
-    let mediaPerformance;
+    let adoptedMediaPerformance;
     if (scenario.scope === 'id-capi-performance') {
       const baseMediaPerformance = this.calculateMediaPerformance(
         totalMonthlyPageviews,
@@ -186,22 +200,27 @@ export class UnifiedCalculationEngine {
         overrides
       );
       
-      // Apply risk adjustments to media performance
-      mediaPerformance = {
+      // Apply risk adjustments to media performance (before adoption rate)
+      const riskAdjustedMediaPerformance = {
         ...baseMediaPerformance,
         monthlyUplift: baseMediaPerformance.monthlyUplift * (risk.premiumInventoryShare / 0.30) * risk.cpmUpliftRealization,
         annualUplift: baseMediaPerformance.annualUplift * (risk.premiumInventoryShare / 0.30) * risk.cpmUpliftRealization,
         premiumPricingPower: baseMediaPerformance.premiumPricingPower * (risk.premiumInventoryShare / 0.30),
       };
+
+      // Apply adoption rate to Media Performance component
+      adoptedMediaPerformance = {
+        ...riskAdjustedMediaPerformance,
+        monthlyUplift: riskAdjustedMediaPerformance.monthlyUplift * risk.adoptionRate,
+        annualUplift: riskAdjustedMediaPerformance.annualUplift * risk.adoptionRate,
+      };
     }
 
-    // Calculate totals with adoption rate applied
-    const baseMonthlyUplift =
-      idInfrastructure.monthlyUplift +
-      (capiCapabilities?.monthlyUplift || 0) +
-      (mediaPerformance?.monthlyUplift || 0);
-    
-    const totalMonthlyUplift = baseMonthlyUplift * risk.adoptionRate;
+    // Calculate totals as sum of adopted components (mathematically consistent)
+    const totalMonthlyUplift =
+      adoptedIdInfrastructure.monthlyUplift +
+      (adoptedCapiCapabilities?.monthlyUplift || 0) +
+      (adoptedMediaPerformance?.monthlyUplift || 0);
     const totalAnnualUplift = totalMonthlyUplift * 12;
     const threeYearProjection = totalAnnualUplift * 3;
     const percentageImprovement = (totalMonthlyUplift / currentMonthlyRevenue) * 100;
@@ -226,11 +245,11 @@ export class UnifiedCalculationEngine {
     
     const adjustmentPercentage = ((unadjustedMonthlyUplift - totalMonthlyUplift) / unadjustedMonthlyUplift) * 100;
 
-    // Calculate breakdown percentages (use baseMonthlyUplift before adoption rate) with division-by-zero protection
+    // Calculate breakdown percentages using adopted values (after adoption rate) with division-by-zero protection
     const breakdown = {
-      idInfrastructurePercent: baseMonthlyUplift > 0 ? (idInfrastructure.monthlyUplift / baseMonthlyUplift) * 100 : 0,
-      capiPercent: baseMonthlyUplift > 0 ? ((capiCapabilities?.monthlyUplift || 0) / baseMonthlyUplift) * 100 : 0,
-      performancePercent: baseMonthlyUplift > 0 ? ((mediaPerformance?.monthlyUplift || 0) / baseMonthlyUplift) * 100 : 0,
+      idInfrastructurePercent: totalMonthlyUplift > 0 ? (adoptedIdInfrastructure.monthlyUplift / totalMonthlyUplift) * 100 : 0,
+      capiPercent: totalMonthlyUplift > 0 ? ((adoptedCapiCapabilities?.monthlyUplift || 0) / totalMonthlyUplift) * 100 : 0,
+      performancePercent: totalMonthlyUplift > 0 ? ((adoptedMediaPerformance?.monthlyUplift || 0) / totalMonthlyUplift) * 100 : 0,
     };
 
     // Calculate ROI Analysis with contract pricing
@@ -249,9 +268,9 @@ export class UnifiedCalculationEngine {
       },
       pricing,
       roiAnalysis,
-      idInfrastructure,
-      capiCapabilities,
-      mediaPerformance,
+      idInfrastructure: adoptedIdInfrastructure,
+      capiCapabilities: adoptedCapiCapabilities,
+      mediaPerformance: adoptedMediaPerformance,
       totals: {
         currentMonthlyRevenue,
         totalMonthlyUplift,
@@ -360,6 +379,30 @@ export class UnifiedCalculationEngine {
   ): CapiConfiguration {
     const base = CAPI_BASE_PARAMETERS;
     
+    // Check for manual overrides FIRST - if provided, use them directly
+    if (overrides?.capiYearlyCampaigns !== undefined || overrides?.capiAvgCampaignSpend !== undefined) {
+      const yearlyCampaigns = overrides.capiYearlyCampaigns ?? base.BASE_YEARLY_CAMPAIGNS;
+      const avgCampaignSpend = overrides.capiAvgCampaignSpend ?? base.BASE_AVG_CAMPAIGN_SPEND;
+      
+      // POC campaigns (first 3 months) - use ramp weights
+      const pocWeight = base.MONTHLY_RAMP_WEIGHTS.slice(0, 3).reduce((a, b) => a + b, 0);
+      const pocCampaigns = Math.max(1, Math.round(yearlyCampaigns * pocWeight));
+      
+      // Monthly distribution based on ramp weights
+      const monthlyDistribution = base.MONTHLY_RAMP_WEIGHTS.map(weight => 
+        Math.round(yearlyCampaigns * weight * 10) / 10 // Allow decimals for display
+      );
+      
+      return {
+        yearlyCampaigns,
+        avgCampaignSpend,
+        pocCampaigns,
+        fullYearCampaigns: yearlyCampaigns,
+        monthlyDistribution,
+      };
+    }
+    
+    // Fall back to auto-calculation if no manual overrides
     // Get scenario-specific readiness defaults (THIS IS THE KEY FIX)
     const scenarioDefaults = RISK_SCENARIOS[riskScenario].defaultReadiness;
     
@@ -438,7 +481,7 @@ export class UnifiedCalculationEngine {
     // Convert yearly campaigns to monthly average for calculations
     const avgMonthlyCapiCampaigns = capiConfig.yearlyCampaigns / 12;
     const avgCampaignSpend = capiConfig.avgCampaignSpend;
-    const capiLineItemShare = inputs.capiLineItemShare;
+    const capiLineItemShare = overrides?.capiLineItemShare ?? inputs.capiLineItemShare;
     const serviceFee = overrides?.capiServiceFee ?? CONTRACT_PRICING.CAPI_SERVICE_FEE_RATE;
 
     // Total baseline CAPI campaign spend (monthly average)
@@ -467,6 +510,10 @@ export class UnifiedCalculationEngine {
     const monthlyUplift = (conversionTrackingRevenue + capiLaborSavings - campaignServiceFees) * deploymentMultiplier;
     const annualUplift = monthlyUplift * 12;
 
+    // 80% of CAPI campaigns are NET NEW (wouldn't exist without CAPI capability)
+    const NET_NEW_CAMPAIGN_RATE = 0.80;
+    const netNewCampaignRevenue = baselineCapiSpend * NET_NEW_CAMPAIGN_RATE;
+
     return {
       matchRateImprovement,
       baselineCapiSpend,
@@ -484,6 +531,8 @@ export class UnifiedCalculationEngine {
         ctrImprovement: (CAPI_BENCHMARKS.CTR_MULTIPLIER - 1) * 100,
       },
       capiConfiguration: capiConfig,
+      netNewCampaignRevenue,
+      netNewCampaignRate: NET_NEW_CAMPAIGN_RATE,
     };
   }
 

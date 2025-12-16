@@ -210,6 +210,34 @@ export const buildAdfixusProposalPdf = async (
   const results = calculatorResults;
   const generatedDate = formatDate(new Date());
   
+  // Validation checkpoint: Ensure math consistency before PDF generation
+  const validateResults = (results: UnifiedResults): void => {
+    const idMonthly = results.idInfrastructure?.monthlyUplift || 0;
+    const capiMonthly = results.capiCapabilities?.monthlyUplift || 0;
+    const perfMonthly = results.mediaPerformance?.monthlyUplift || 0;
+    const calculatedTotal = idMonthly + capiMonthly + perfMonthly;
+    const statedTotal = results.totals.totalMonthlyUplift;
+    
+    // Allow 1 cent tolerance for floating point
+    if (Math.abs(calculatedTotal - statedTotal) > 0.01) {
+      console.error('PDF VALIDATION FAILED: Component sum does not match total');
+      console.error(`Components: $${idMonthly.toFixed(2)} + $${capiMonthly.toFixed(2)} + $${perfMonthly.toFixed(2)} = $${calculatedTotal.toFixed(2)}`);
+      console.error(`Stated total: $${statedTotal.toFixed(2)}`);
+      console.error(`Difference: $${Math.abs(calculatedTotal - statedTotal).toFixed(2)}`);
+      throw new Error(`Math validation failed: Components ($${calculatedTotal.toFixed(2)}) ≠ Total ($${statedTotal.toFixed(2)})`);
+    }
+    
+    // Validate annual = monthly * 12
+    const calculatedAnnual = statedTotal * 12;
+    const statedAnnual = results.totals.totalAnnualUplift;
+    if (Math.abs(calculatedAnnual - statedAnnual) > 0.01) {
+      throw new Error(`Annual validation failed: ${calculatedAnnual.toFixed(2)} ≠ ${statedAnnual.toFixed(2)}`);
+    }
+  };
+  
+  // Run validation
+  validateResults(results);
+  
   // Extract core data
   const monthlyUplift = results?.totals?.totalMonthlyUplift || 0;
   const annualUplift = results?.totals?.totalAnnualUplift || 0;
@@ -941,7 +969,7 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: 'CDP Monthly Savings', style: 'tableLabel' },
-              { text: '$3,500', style: 'tableValue', alignment: 'right' }
+              { text: formatCurrency(idInfra?.details?.cdpSavingsRevenue || idInfra?.cdpSavings || 3500), style: 'tableValue', alignment: 'right' }
             ]
           ]
         },

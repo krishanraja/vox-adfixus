@@ -37,6 +37,9 @@ export interface AssumptionOverrides {
   // CAPI
   capiServiceFee?: number; // 0.10 - 0.20, default 0.125
   capiMatchRate?: number; // 0.50 - 0.90, default 0.75
+  capiYearlyCampaigns?: number; // Override auto-calculated yearly campaigns
+  capiAvgCampaignSpend?: number; // Override auto-calculated avg spend
+  capiLineItemShare?: number; // 0.10 - 1.00, override from inputs
   
   // Media Performance
   premiumInventoryShare?: number; // 0.20 - 0.50, default 0.30
@@ -163,6 +166,9 @@ export interface UnifiedResults {
     };
     // New: CAPI Configuration derived from Business Readiness
     capiConfiguration: CapiConfiguration;
+    // Net-new campaign revenue (80% of campaigns wouldn't exist without CAPI)
+    netNewCampaignRevenue?: number;
+    netNewCampaignRate?: number;
   };
   
   // Media Performance (optional)

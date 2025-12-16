@@ -1101,6 +1101,56 @@ export const SimplifiedResults = ({
                             onChange={(v) => handleAssumptionChange('capiMatchRate', v / 100)}
                             tooltipContent="Match rate improvement from baseline 30% to 75%+ with AdFixus. Conservative estimate is 75%, though premium publishers with strong authentication can achieve 80-85%."
                           />
+
+                          {/* CAPI Manual Overrides */}
+                          <Separator />
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm flex items-center gap-2">
+                              <Target className="h-4 w-4" /> CAPI Campaign Configuration
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              Override auto-calculated values based on your expected CAPI campaign volume
+                            </p>
+
+                            <AssumptionSlider
+                              label="CAPI Campaigns per Year"
+                              description="Total number of campaigns using CAPI tracking"
+                              value={assumptionOverrides?.capiYearlyCampaigns ?? results.capiCapabilities.capiConfiguration.yearlyCampaigns}
+                              defaultValue={results.capiCapabilities.capiConfiguration.yearlyCampaigns}
+                              min={2}
+                              max={50}
+                              step={1}
+                              formatValue={(v) => `${Math.round(v)} campaigns`}
+                              onChange={(v) => handleAssumptionChange('capiYearlyCampaigns', v)}
+                              tooltipContent="Number of advertiser campaigns that will use Conversion API tracking. More campaigns = more revenue but requires sales effort to close. 80% of these campaigns would NOT have been sold without CAPI capability."
+                            />
+
+                            <AssumptionSlider
+                              label="Average Campaign Spend"
+                              description="Typical budget per CAPI-enabled campaign"
+                              value={assumptionOverrides?.capiAvgCampaignSpend ?? results.capiCapabilities.capiConfiguration.avgCampaignSpend}
+                              defaultValue={results.capiCapabilities.capiConfiguration.avgCampaignSpend}
+                              min={25000}
+                              max={250000}
+                              step={5000}
+                              formatValue={(v) => formatCurrency(v)}
+                              onChange={(v) => handleAssumptionChange('capiAvgCampaignSpend', v)}
+                              tooltipContent="Average total campaign budget. Larger campaigns benefit more from CAPI tracking. Enterprise advertisers typically spend $75K-150K per campaign."
+                            />
+
+                            <AssumptionSlider
+                              label="CAPI Line Item Share"
+                              description="% of campaign budget using CAPI measurement"
+                              value={(assumptionOverrides?.capiLineItemShare ?? results.inputs.capiLineItemShare) * 100}
+                              defaultValue={60}
+                              min={10}
+                              max={100}
+                              step={5}
+                              formatValue={(v) => `${Math.round(v)}%`}
+                              onChange={(v) => handleAssumptionChange('capiLineItemShare', v / 100)}
+                              tooltipContent="Not all line items in a campaign need CAPI tracking. Advertisers typically enable CAPI on 20-60% of spend (performance-focused line items). Service fees only apply to this portion."
+                            />
+                          </div>
                         </div>
                       </>
                     )}
