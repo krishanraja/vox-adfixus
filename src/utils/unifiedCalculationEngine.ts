@@ -227,10 +227,12 @@ export class UnifiedCalculationEngine {
 
     // Calculate unadjusted values for comparison (what it would be with optimistic)
     const optimisticRisk = RISK_SCENARIOS.optimistic;
+    const hasCapi = scenario.scope === 'id-capi' || scenario.scope === 'id-capi-performance';
+    const hasMediaPerformance = scenario.scope === 'id-capi-performance';
     const unadjustedMonthlyUplift = (
       baseIdInfrastructure.monthlyUplift +
-      (capiCapabilities ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, 'optimistic').monthlyUplift : 0) +
-      (mediaPerformance ? this.calculateMediaPerformance(
+      (hasCapi ? this.calculateCapiCapabilities(inputs, scenario, currentMonthlyRevenue, 'optimistic').monthlyUplift : 0) +
+      (hasMediaPerformance ? this.calculateMediaPerformance(
         totalMonthlyPageviews,
         displayCPM,
         videoCPM,
