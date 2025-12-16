@@ -397,14 +397,41 @@ export class UnifiedCalculationEngine {
       const yearlyCampaigns = overrides.capiYearlyCampaigns ?? base.BASE_YEARLY_CAMPAIGNS;
       const avgCampaignSpend = overrides.capiAvgCampaignSpend ?? base.BASE_AVG_CAMPAIGN_SPEND;
       
-      // POC campaigns (first 3 months) - use ramp weights
-      const pocWeight = base.MONTHLY_RAMP_WEIGHTS.slice(0, 3).reduce((a, b) => a + b, 0);
-      const pocCampaigns = Math.max(1, Math.round(yearlyCampaigns * pocWeight));
+      // POC campaigns (first 3 months) - ALWAYS capped at 2, regardless of yearly total
+      const pocCampaigns = Math.min(2, yearlyCampaigns);
+      const remainingCampaigns = Math.max(0, yearlyCampaigns - pocCampaigns);
       
-      // Monthly distribution based on ramp weights
-      const monthlyDistribution = base.MONTHLY_RAMP_WEIGHTS.map(weight => 
-        Math.round(yearlyCampaigns * weight * 10) / 10 // Allow decimals for display
-      );
+      // Distribute remaining campaigns across Q2-Q4 in accelerating pattern
+      // Q2 (months 4-6): 20%, Q3 (months 7-9): 30%, Q4 (months 10-12): 50%
+      const q2Campaigns = Math.round(remainingCampaigns * 0.20);
+      const q3Campaigns = Math.round(remainingCampaigns * 0.30);
+      const q4Campaigns = remainingCampaigns - q2Campaigns - q3Campaigns; // Exact sum
+      
+      // Distribute Q2 campaigns across months 4-6 (equal distribution)
+      const month4_6 = q2Campaigns / 3;
+      // Distribute Q3 campaigns across months 7-9 (equal distribution)
+      const month7_9 = q3Campaigns / 3;
+      // Distribute Q4 campaigns across months 10-12 (equal distribution)
+      const month10_12 = q4Campaigns / 3;
+      
+      // POC months 1-3: Distribute 2 campaigns (0.67, 0.67, 0.66 to sum to 2)
+      const month1_3 = pocCampaigns / 3;
+      
+      // Build monthly distribution
+      const monthlyDistribution = [
+        Math.round(month1_3 * 10) / 10, // Month 1
+        Math.round(month1_3 * 10) / 10, // Month 2
+        Math.round((pocCampaigns - month1_3 * 2) * 10) / 10, // Month 3 (ensure exact sum to pocCampaigns)
+        Math.round(month4_6 * 10) / 10, // Month 4
+        Math.round(month4_6 * 10) / 10, // Month 5
+        Math.round((q2Campaigns - month4_6 * 2) * 10) / 10, // Month 6
+        Math.round(month7_9 * 10) / 10, // Month 7
+        Math.round(month7_9 * 10) / 10, // Month 8
+        Math.round((q3Campaigns - month7_9 * 2) * 10) / 10, // Month 9
+        Math.round(month10_12 * 10) / 10, // Month 10
+        Math.round(month10_12 * 10) / 10, // Month 11
+        Math.round((q4Campaigns - month10_12 * 2) * 10) / 10, // Month 12
+      ];
       
       return {
         yearlyCampaigns,
@@ -457,14 +484,41 @@ export class UnifiedCalculationEngine {
     const yearlyCampaigns = Math.max(2, Math.round(base.BASE_YEARLY_CAMPAIGNS * volumeMultiplier));
     const avgCampaignSpend = Math.round(base.BASE_AVG_CAMPAIGN_SPEND * spendMultiplier);
     
-    // POC campaigns (first 3 months) - use ramp weights
-    const pocWeight = base.MONTHLY_RAMP_WEIGHTS.slice(0, 3).reduce((a, b) => a + b, 0);
-    const pocCampaigns = Math.max(1, Math.round(yearlyCampaigns * pocWeight));
+    // POC campaigns (first 3 months) - ALWAYS capped at 2, regardless of yearly total
+    const pocCampaigns = Math.min(2, yearlyCampaigns);
+    const remainingCampaigns = Math.max(0, yearlyCampaigns - pocCampaigns);
     
-    // Monthly distribution based on ramp weights
-    const monthlyDistribution = base.MONTHLY_RAMP_WEIGHTS.map(weight => 
-      Math.round(yearlyCampaigns * weight * 10) / 10 // Allow decimals for display
-    );
+    // Distribute remaining campaigns across Q2-Q4 in accelerating pattern
+    // Q2 (months 4-6): 20%, Q3 (months 7-9): 30%, Q4 (months 10-12): 50%
+    const q2Campaigns = Math.round(remainingCampaigns * 0.20);
+    const q3Campaigns = Math.round(remainingCampaigns * 0.30);
+    const q4Campaigns = remainingCampaigns - q2Campaigns - q3Campaigns; // Exact sum
+    
+    // Distribute Q2 campaigns across months 4-6 (equal distribution)
+    const month4_6 = q2Campaigns / 3;
+    // Distribute Q3 campaigns across months 7-9 (equal distribution)
+    const month7_9 = q3Campaigns / 3;
+    // Distribute Q4 campaigns across months 10-12 (equal distribution)
+    const month10_12 = q4Campaigns / 3;
+    
+    // POC months 1-3: Distribute 2 campaigns (0.67, 0.67, 0.66 to sum to 2)
+    const month1_3 = pocCampaigns / 3;
+    
+    // Build monthly distribution
+    const monthlyDistribution = [
+      Math.round(month1_3 * 10) / 10, // Month 1
+      Math.round(month1_3 * 10) / 10, // Month 2
+      Math.round((pocCampaigns - month1_3 * 2) * 10) / 10, // Month 3 (ensure exact sum to pocCampaigns)
+      Math.round(month4_6 * 10) / 10, // Month 4
+      Math.round(month4_6 * 10) / 10, // Month 5
+      Math.round((q2Campaigns - month4_6 * 2) * 10) / 10, // Month 6
+      Math.round(month7_9 * 10) / 10, // Month 7
+      Math.round(month7_9 * 10) / 10, // Month 8
+      Math.round((q3Campaigns - month7_9 * 2) * 10) / 10, // Month 9
+      Math.round(month10_12 * 10) / 10, // Month 10
+      Math.round(month10_12 * 10) / 10, // Month 11
+      Math.round((q4Campaigns - month10_12 * 2) * 10) / 10, // Month 12
+    ];
     
     return {
       yearlyCampaigns,
