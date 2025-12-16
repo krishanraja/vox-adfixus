@@ -16,7 +16,7 @@ export const formatCurrency = (amount: number | undefined | null): string => {
     return `$${Math.round(kValue)}K`;
   } else {
     const mValue = num / 1000000;
-    return `$${Math.round(mValue)}M`;
+    return `$${mValue.toFixed(1)}M`;
   }
 };
 

@@ -436,7 +436,7 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: formatCurrency(monthlyUplift), style: 'metricValue', alignment: 'center' },
-              { text: annualUplift >= 1000000 ? `$${(annualUplift / 1000000).toFixed(1)}M` : formatCurrency(annualUplift), style: 'metricValue', alignment: 'center' },
+              { text: formatCurrency(annualUplift), style: 'metricValue', alignment: 'center' },
               { text: `${roiMultiple.toFixed(1)}x`, style: 'metricValue', alignment: 'center' }
             ]
           ]
