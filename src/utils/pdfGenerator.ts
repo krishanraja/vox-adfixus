@@ -808,11 +808,17 @@ export const buildAdfixusProposalPdf = async (
           widths: ['*', 'auto', 'auto', 'auto', 'auto'],
           body: (() => {
             // Calculate cumulative CAPI campaigns per quarter
+            // Q1 is always capped at 2 campaigns (POC phase)
+            // Remaining campaigns distributed in accelerating pattern across Q2-Q4
             const yearlyCampaigns = capi?.capiConfiguration?.yearlyCampaigns || 12;
-            const pocCampaigns = capi?.capiConfiguration?.pocCampaigns || 2;
-            const q2Campaigns = Math.max(2, Math.round(yearlyCampaigns * 0.20)); // ~20% of year
-            const q3Campaigns = Math.max(3, Math.round(yearlyCampaigns * 0.30)); // ~30% of year
-            const q4Campaigns = Math.max(3, Math.round(yearlyCampaigns * 0.35)); // ~35% of year
+            const q1Campaigns = Math.min(2, yearlyCampaigns); // Q1 capped at 2
+            const remainingCampaigns = Math.max(0, yearlyCampaigns - q1Campaigns);
+            
+            // Accelerating distribution: Q2 gets less, Q3 gets more, Q4 gets most
+            // Distribution weights: Q2 = 20%, Q3 = 30%, Q4 = 50% of remaining
+            const q2Campaigns = Math.round(remainingCampaigns * 0.20);
+            const q3Campaigns = Math.round(remainingCampaigns * 0.30);
+            const q4Campaigns = remainingCampaigns - q2Campaigns - q3Campaigns; // Ensure exact sum
             
             return [
               [
@@ -827,7 +833,7 @@ export const buildAdfixusProposalPdf = async (
                 { text: 'POC', style: 'tableCell', alignment: 'center', color: '#0D9488' },
                 { text: riskScenario === 'conservative' ? '30%' : riskScenario === 'moderate' ? '40%' : '60%', style: 'tableCell', alignment: 'right' },
                 { text: formatCurrency(monthlyUplift * (riskScenario === 'conservative' ? 0.30 : riskScenario === 'moderate' ? 0.40 : 0.60)), style: 'tableCell', alignment: 'right' },
-                { text: `${pocCampaigns}`, style: 'tableCell', alignment: 'right' }
+                { text: `${q1Campaigns}`, style: 'tableCell', alignment: 'right' }
               ],
               [
                 { text: 'Q2 (Months 4-6)', style: 'tableCell' },
