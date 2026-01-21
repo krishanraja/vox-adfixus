@@ -98,3 +98,33 @@ export const CAPI_BASE_PARAMETERS = {
   // Weighted toward second half of year (realistic POC → scale pattern)
   MONTHLY_RAMP_WEIGHTS: [0.05, 0.08, 0.08, 0.08, 0.08, 0.10, 0.10, 0.10, 0.10, 0.08, 0.08, 0.07],
 };
+
+// CAPI Pricing Model Constants (for visualization and PDF)
+// Vox deal: 12.5% revenue share with $30K/campaign/month cap
+export const CAPI_PRICING_MODEL = {
+  // Revenue share percentage
+  REVENUE_SHARE_PERCENTAGE: 0.125, // 12.5%
+  
+  // Campaign cap - $30K per campaign per month (US market, 2x Australia's $24K cap)
+  CAMPAIGN_CAP_MONTHLY: 30000, // $30,000
+  
+  // Cap threshold - at what campaign spend does the cap kick in?
+  // $30K / 12.5% = $240K campaign spend
+  CAP_THRESHOLD_SPEND: 240000,
+  
+  // Conversion improvement for CAPI campaigns (40% improvement baseline)
+  ASSUMED_CONVERSION_MULTIPLIER: 1.40,
+  
+  // Illustrative campaign sizes for charts
+  ILLUSTRATIVE_CAMPAIGN_SIZES: [50000, 100000, 150000, 200000, 240000, 300000, 350000, 400000, 500000],
+  
+  // Value proposition discounts
+  VALUE_HIGHLIGHTS: {
+    CONTRACT_DISCOUNT_PERCENT: 23, // 23% below rate card
+    POC_DISCOUNT_PERCENT: 50, // 50% off during POC
+    WAIVED_ONBOARDING_FEE: 11250, // $11,250 waived
+    RATE_CARD_MONTHLY: 26000, // Original $26K/mo
+    DISCOUNTED_MONTHLY: 19900, // Now $19.9K/mo
+    POC_MONTHLY: 5000, // $5K/mo during POC
+  },
+};
