@@ -1,59 +1,97 @@
 # Audit Status
 
-## Calculation Accuracy Audit
+## Last Full Audit: January 2025
 
-### Last Audit: December 2024
+---
+
+## Calculation Accuracy
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| ID Infrastructure | ✅ Verified | Safari addressability math correct |
-| CAPI Capabilities | ✅ Verified | Service fee deduction working |
-| Media Performance | ✅ Verified | Premium share calculations correct |
-| Risk Adjustments | ✅ Verified | Multipliers applied correctly |
-| Business Readiness | ✅ Verified | Factors properly reduce estimates |
+| Domain Aggregation | ✅ Verified | Pageview × adsPerPage working correctly |
+| Weighted Safari Share | ✅ Verified | Impression-weighted averaging correct |
+| ID Infrastructure | ✅ Verified | Fixed 35% Safari, 65% baseline per Vox guidance |
+| CPM Improvement | ✅ Verified | 25% uplift on newly addressable impressions |
+| CDP Savings | ✅ Verified | Fixed $3,500/month per Vox guidance |
+| CAPI Configuration | ✅ Verified | Dynamic calculation from Business Readiness |
+| CAPI Service Fees | ✅ Verified | 12.5% of eligible spend |
+| Media Performance | ✅ Verified | Premium share + make-good calculations |
+| Risk Adjustments | ✅ Verified | Multipliers applied to all components |
+| Business Readiness | ✅ Verified | Affects CPM, adoption, CAPI, and media |
 | ROI Calculations | ✅ Verified | POC vs Full Contract split correct |
-| Monthly Projections | ✅ Verified | Ramp-up factors applied |
+| Monthly Projections | ✅ Verified | Ramp-up factors applied per scenario |
+| PDF Math Validation | ✅ Verified | Component sums validated before generation |
 
 ---
 
-## Data Accuracy Audit
+## Data Accuracy
 
-### Domain Data (Last Updated: December 2024)
+### Domain Data (January 2025)
 
 | Domain | Pageviews | Source | Status |
 |--------|-----------|--------|--------|
-| SB Nation | 129,055,407 | Vox Spreadsheet | ✅ Current |
-| The Verge | 19,368,729 | Vox Spreadsheet | ✅ Current |
-| The Dodo | 18,718,709 | Vox Spreadsheet | ✅ New |
-| Eater | 17,654,262 | Vox Spreadsheet | ✅ Current |
-| Vox | 10,233,920 | Vox Spreadsheet | ✅ Current |
-| Vulture | 9,504,944 | Vox Spreadsheet | ✅ Current |
-| NYMag | 7,322,104 | Vox Spreadsheet | ✅ New |
-| The Cut | 7,056,920 | Vox Spreadsheet | ✅ Current |
-| Strategist | 5,141,758 | Vox Spreadsheet | ✅ New |
-| PopSugar | 5,070,798 | Vox Spreadsheet | ✅ New |
-| Intelligencer | 3,556,632 | Vox Spreadsheet | ✅ New |
-| Thrillist | 2,277,026 | Vox Spreadsheet | ✅ Current |
-| Curbed | 1,063,626 | Vox Spreadsheet | ✅ Current |
-| NYMag App | 761,041 | Vox Spreadsheet | ✅ New |
-| Punch | 607,077 | Vox Spreadsheet | ✅ New |
-| Grub Street | 486,760 | Vox Spreadsheet | ✅ Current |
+| SB Nation | 102,866,201 | Briar's Report | ✅ Current |
+| The Verge | 22,808,519 | Briar's Report | ✅ Current |
+| The Dodo | 15,877,015 | Briar's Report | ✅ Current |
+| NYMag (incl Strategist + Intelligencer) | 14,926,266 | Briar's Report | ✅ Consolidated |
+| Vulture | 14,422,791 | Briar's Report | ✅ Current |
+| Eater | 10,518,128 | Briar's Report | ✅ Current |
+| The Cut | 9,110,699 | Briar's Report | ✅ Current |
+| Vox | 6,015,197 | Briar's Report | ✅ Current |
+| PopSugar | 3,269,639 | Briar's Report | ✅ Current |
+| Thrillist | 1,323,468 | Briar's Report | ✅ Current |
+| Punch | 926,506 | Briar's Report | ✅ Current |
+| Curbed | 833,480 | Briar's Report | ✅ Current |
+| Grub Street | 648,815 | Briar's Report | ✅ Current |
 
-**Total Portfolio**: 238,879,713 monthly pageviews
+**Portfolio Totals**:
+- 13 domains ✅
+- ~203.5M monthly pageviews ✅
+- 6 POC domains ✅
 
 ---
 
-## Industry Benchmarks Audit
+## Contract Pricing (January 2025)
+
+| Item | Value | Status |
+|------|-------|--------|
+| POC Flat Fee | $15,000 (50% discount) | ✅ Current |
+| POC Duration | 3 months | ✅ Current |
+| Annual License | $239,140 | ✅ Current |
+| Monthly Equivalent | $19,928 | ✅ Current |
+| CAPI Service Fee | 12.5% | ✅ Current |
+| Included Pageviews | 70M/month | ✅ Current |
+| Overage Rate | $0.048/1K | ✅ Current |
+
+---
+
+## Industry Benchmarks
 
 | Benchmark | Value | Source | Status |
 |-----------|-------|--------|--------|
-| Safari addressability (baseline) | 55% | IAB Reports | ⚠️ Review Q1 2025 |
-| Safari addressability (improved) | 85% | AdFixus Data | ⚠️ Review Q1 2025 |
-| CAPI baseline match rate | 30% | Meta Case Studies | ⚠️ Review Q1 2025 |
-| CAPI improved match rate | 75% | AdFixus Data | ⚠️ Review Q1 2025 |
-| CPM improvement factor | 25% | Industry Research | ⚠️ Review Q1 2025 |
-| CDP cost reduction | 14% | AdFixus Analysis | ⚠️ Review Q1 2025 |
-| CAPI service fee | 12.5% | AdFixus Pricing | ✅ Current |
+| Safari Traffic Share | 35% | Vox Guidance | ✅ Fixed |
+| Baseline Addressability | 65% | Vox Guidance | ✅ Fixed |
+| Safari Addressability Target | +20% | AdFixus POC KPI | ✅ Current |
+| CPM Improvement Factor | 25% | Industry Research | ⚠️ Review Q2 |
+| CAPI Baseline Match Rate | 30% | Meta Case Studies | ⚠️ Review Q2 |
+| CAPI Improved Match Rate | 75% | AdFixus Data | ✅ Current |
+| CDP Savings | $3,500/month | Vox Guidance | ✅ Fixed |
+| ID Baseline Multiplier | 3.5 | AdFixus Analysis | ✅ Updated Jan '25 |
+| ID Reduction | 69% | AdFixus Analysis | ✅ Updated Jan '25 |
+| Cross-Domain Overlap | 17% | AdFixus Analysis | ✅ New Jan '25 |
+
+---
+
+## Ramp-Up Schedule
+
+| Period | Factor | Status |
+|--------|--------|--------|
+| M1-3 (POC) | 40% | ✅ Updated Jan '25 |
+| M4-6 (Q2) | 65-90%* | ✅ Updated Jan '25 |
+| M7-9 (Q3) | 85-100%* | ✅ Current |
+| M10-12 (Q4) | 100% | ✅ Current |
+
+*Varies by risk scenario
 
 ---
 
@@ -61,42 +99,79 @@
 
 | Item | Status | Notes |
 |------|--------|-------|
-| No PII stored client-side | ✅ Pass | Lead data only sent to PDF/email |
+| No PII stored client-side | ✅ Pass | Lead data sent to email, not stored |
 | Password protection | ✅ Pass | Environment variable |
-| API keys in secrets | ✅ Pass | Not exposed in client |
+| API keys in secrets | ✅ Pass | Not exposed in client bundle |
 | XSS protection | ✅ Pass | React escaping |
-| HTTPS only | ✅ Pass | Lovable hosting |
+| HTTPS only | ✅ Pass | Lovable hosting enforces HTTPS |
+| Input validation | ⚠️ Minimal | Slider constraints only |
 
 ---
 
-## Code Quality Audit
+## Code Quality
 
 | Area | Status | Notes |
 |------|--------|-------|
 | TypeScript coverage | ✅ 100% | All files typed |
 | Component isolation | ✅ Good | Clear boundaries |
 | State management | ✅ Clean | Single hook pattern |
+| Calculation purity | ✅ Good | No side effects in engine |
 | Error handling | ⚠️ Minimal | Could add more try/catch |
 | Test coverage | ❌ None | Needs unit tests |
-| Documentation | ✅ Complete | This docs folder |
+| Documentation | ✅ Complete | Full docs folder |
+
+---
+
+## PDF Quality
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Math validation | ✅ Implemented | Validates before generation |
+| Logo rendering | ✅ Working | Dual logos (AdFixus + Vox) |
+| First page ROI | ✅ Added | 3-column layout with ROI multiple |
+| Annual formatting | ✅ Fixed | One decimal place for millions |
+| CAPI table order | ✅ Fixed | POC before Year 1 |
+| Disclaimer box | ✅ Present | Every page |
+| Page numbering | ✅ Working | Footer includes page X of Y |
+
+---
+
+## Known Issues
+
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| AUD-001 | Low | No unit test coverage | Open |
+| AUD-002 | Low | Error boundaries missing | Open |
+| AUD-003 | Info | Some benchmark sources need refresh | Scheduled Q2 |
 
 ---
 
 ## Scheduled Reviews
 
-| Item | Frequency | Next Review |
-|------|-----------|-------------|
-| Domain traffic data | Quarterly | March 2025 |
-| Industry benchmarks | Quarterly | March 2025 |
-| Risk scenario defaults | Semi-annual | June 2025 |
-| Security scan | Monthly | January 2025 |
+| Item | Frequency | Next Review | Owner |
+|------|-----------|-------------|-------|
+| Domain traffic data | Monthly | Feb 2025 | Sales |
+| Industry benchmarks | Quarterly | Apr 2025 | Product |
+| Contract pricing | On change | — | Sales |
+| Risk scenario defaults | Semi-annual | Jul 2025 | Product |
+| Security scan | Monthly | Feb 2025 | Engineering |
+| PDF output review | Quarterly | Apr 2025 | Sales |
 
 ---
 
-## Open Issues
+## Validation Checklist (Pre-Release)
 
-| ID | Severity | Description | Owner |
-|----|----------|-------------|-------|
-| AUD-001 | Low | No unit test coverage | Dev |
-| AUD-002 | Low | Error boundaries missing | Dev |
-| AUD-003 | Info | Benchmark sources need refresh | Product |
+Before any deployment:
+
+- [ ] All 13 domains appear in selector
+- [ ] Full Portfolio shows "13 domains selected"
+- [ ] POC preset selects 6 domains
+- [ ] Calculations complete without console errors
+- [ ] Risk scenario changes recalculate correctly
+- [ ] Business Readiness sliders affect results
+- [ ] PDF generates without errors
+- [ ] PDF first page shows 3 columns (Monthly, Annual, ROI)
+- [ ] CAPI table shows POC before Year 1
+- [ ] Email sends successfully (if Supabase connected)
+- [ ] Mobile view is usable
+- [ ] Dark mode renders correctly
