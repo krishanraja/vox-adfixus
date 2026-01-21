@@ -3,6 +3,7 @@ import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { formatCurrency, formatNumber, formatPercentage } from './formatting';
 import { supabase } from '@/integrations/supabase/client';
 import { VOX_MEDIA_DOMAINS, CONTRACT_PRICING, PORTFOLIO_TOTALS } from '@/constants/voxMediaDomains';
+import { CAPI_PRICING_MODEL } from '@/constants/industryBenchmarks';
 import type { UnifiedResults } from '@/types/scenarios';
 import type { CalculatorResults } from '@/types';
 
@@ -868,7 +869,249 @@ export const buildAdfixusProposalPdf = async (
         margin: [0, 0, 0, 0]
       },
 
-      // ==================== PAGE 6: POC SUCCESS CRITERIA ====================
+      // ==================== PAGE 5: COSTS AND VALUE ====================
+      {
+        pageBreak: 'before',
+        text: 'Costs and Value: CAPI Pricing Model',
+        style: 'h1',
+        margin: [0, 0, 0, 15]
+      },
+      {
+        text: 'This section details the value proposition and demonstrates why the 12.5% revenue share with $30K cap model is optimal for Vox Media.',
+        style: 'body',
+        margin: [0, 0, 0, 15]
+      },
+      // Value Highlights Box
+      {
+        table: {
+          widths: ['*', '*', '*', '*'],
+          body: [
+            [
+              { 
+                text: [{ text: `${CAPI_PRICING_MODEL.VALUE_HIGHLIGHTS.CONTRACT_DISCOUNT_PERCENT}%\n`, bold: true, fontSize: 16 }, 'Contract Discount'],
+                style: 'tableCell',
+                alignment: 'center',
+                fillColor: '#DCFCE7'
+              },
+              { 
+                text: [{ text: `${CAPI_PRICING_MODEL.VALUE_HIGHLIGHTS.POC_DISCOUNT_PERCENT}%\n`, bold: true, fontSize: 16 }, 'POC Discount'],
+                style: 'tableCell',
+                alignment: 'center',
+                fillColor: '#DBEAFE'
+              },
+              { 
+                text: [{ text: `$${(CAPI_PRICING_MODEL.VALUE_HIGHLIGHTS.WAIVED_ONBOARDING_FEE / 1000).toFixed(1)}K\n`, bold: true, fontSize: 16 }, 'Onboarding Waived'],
+                style: 'tableCell',
+                alignment: 'center',
+                fillColor: '#F3E8FF'
+              },
+              { 
+                text: [{ text: `$${(CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY / 1000).toFixed(0)}K\n`, bold: true, fontSize: 16 }, 'Campaign Cap'],
+                style: 'tableCell',
+                alignment: 'center',
+                fillColor: '#FEF3C7'
+              }
+            ]
+          ]
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#E2E8F0',
+          vLineColor: () => '#E2E8F0',
+          paddingTop: () => 10,
+          paddingBottom: () => 10,
+          paddingLeft: () => 8,
+          paddingRight: () => 8
+        },
+        margin: [0, 0, 0, 20]
+      },
+      // How the Cap Works
+      {
+        table: {
+          widths: ['*'],
+          body: [
+            [
+              {
+                text: [
+                  { text: 'HOW THE CAP WORKS: ', bold: true },
+                  { text: `AdFixus charges 12.5% of CAPI-enabled campaign spend, capped at $${(CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY / 1000).toFixed(0)}K per campaign per month. At ${formatCurrency(CAPI_PRICING_MODEL.CAP_THRESHOLD_SPEND)} campaign spend, the cap kicks in. Every dollar above that = 100% to Vox.` }
+                ],
+                style: 'disclaimerBox',
+                fillColor: '#DBEAFE',
+                margin: [10, 10, 10, 10]
+              }
+            ]
+          ]
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#3B82F6',
+          vLineColor: () => '#3B82F6',
+        },
+        margin: [0, 0, 0, 20]
+      },
+      {
+        text: 'Chart 1: Cost vs Incremental Revenue',
+        style: 'h3',
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '"Costs are capped. Revenue is not." — At $240K campaign spend, the fee caps at $30K. Every dollar above = 100% to Vox.',
+        style: 'footnote',
+        margin: [0, 0, 0, 10]
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
+          body: [
+            [
+              { text: 'Campaign Spend', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Incremental Revenue', style: 'tableHeader', fillColor: '#DCFCE7', alignment: 'right' },
+              { text: 'AdFixus Fee', style: 'tableHeader', fillColor: '#FEF3C7', alignment: 'right' },
+              { text: 'Net to Vox', style: 'tableHeader', fillColor: '#DBEAFE', alignment: 'right' },
+              { text: 'Status', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' }
+            ],
+            ...CAPI_PRICING_MODEL.ILLUSTRATIVE_CAMPAIGN_SIZES.slice(0, 7).map((spend) => {
+              const incrementalRevenue = spend * (CAPI_PRICING_MODEL.ASSUMED_CONVERSION_MULTIPLIER - 1);
+              const uncappedFee = spend * CAPI_PRICING_MODEL.REVENUE_SHARE_PERCENTAGE;
+              const fee = Math.min(uncappedFee, CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY);
+              const isCapped = uncappedFee >= CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY;
+              const netToVox = incrementalRevenue - fee;
+              
+              return [
+                { text: formatCurrency(spend), style: 'tableCell' },
+                { text: formatCurrency(incrementalRevenue), style: 'tableCell', fillColor: '#F0FDF4', alignment: 'right' },
+                { text: formatCurrency(fee), style: 'tableCell', fillColor: isCapped ? '#FEF3C7' : '#FFFBEB', alignment: 'right' },
+                { text: formatCurrency(netToVox), style: 'tableCell', fillColor: '#EFF6FF', alignment: 'right' },
+                { text: isCapped ? 'CAPPED ✓' : '', style: 'tableCell', fillColor: isCapped ? '#DCFCE7' : '#FFFFFF', alignment: 'center', color: isCapped ? '#15803D' : '#64748B' }
+              ];
+            })
+          ]
+        },
+        layout: tableLayout,
+        margin: [0, 0, 0, 20]
+      },
+      {
+        text: 'Chart 2: ROI Multiple vs Campaign Scale',
+        style: 'h3',
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '"The model rewards scale instead of penalising it." — Bigger campaigns deliver better economics, not worse.',
+        style: 'footnote',
+        margin: [0, 0, 0, 10]
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['auto', 'auto', 'auto', 'auto'],
+          body: [
+            [
+              { text: 'Campaign Size', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Revenue Generated', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'AdFixus Fee', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+              { text: 'ROI Multiple', style: 'tableHeader', fillColor: '#DCFCE7', alignment: 'center' }
+            ],
+            ...CAPI_PRICING_MODEL.ILLUSTRATIVE_CAMPAIGN_SIZES.slice(0, 7).map((spend) => {
+              const incrementalRevenue = spend * (CAPI_PRICING_MODEL.ASSUMED_CONVERSION_MULTIPLIER - 1);
+              const uncappedFee = spend * CAPI_PRICING_MODEL.REVENUE_SHARE_PERCENTAGE;
+              const fee = Math.min(uncappedFee, CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY);
+              const roiMultiple = fee > 0 ? incrementalRevenue / fee : 0;
+              const isCapped = uncappedFee >= CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY;
+              
+              return [
+                { text: formatCurrency(spend), style: 'tableCell' },
+                { text: formatCurrency(incrementalRevenue), style: 'tableCell', alignment: 'right' },
+                { text: formatCurrency(fee) + (isCapped ? ' (CAP)' : ''), style: 'tableCell', alignment: 'right' },
+                { text: `${roiMultiple.toFixed(1)}x`, style: 'tableValueHighlight', fillColor: '#F0FDF4', alignment: 'center', bold: true }
+              ];
+            })
+          ]
+        },
+        layout: tableLayout,
+        margin: [0, 0, 0, 20]
+      },
+      {
+        text: 'Chart 3: Risk Profile by Pricing Model',
+        style: 'h3',
+        margin: [0, 0, 0, 8]
+      },
+      {
+        text: '"This is the only model where Vox only pays when it wins." — Zero downside risk, aligned incentives, proven with enterprise publishers.',
+        style: 'footnote',
+        margin: [0, 0, 0, 10]
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto', '*'],
+          body: [
+            [
+              { text: 'Pricing Model', style: 'tableHeader', fillColor: '#F1F5F9' },
+              { text: 'Upfront Risk', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+              { text: 'Downside', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+              { text: 'Alignment', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+              { text: 'Friction', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+              { text: 'Assessment', style: 'tableHeader', fillColor: '#F1F5F9' }
+            ],
+            [
+              { text: 'Flat Fee', style: 'tableCell', bold: true },
+              { text: 'HIGH', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+              { text: 'HIGH', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+              { text: 'LOW', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+              { text: 'HIGH', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+              { text: 'High risk, pays even when nothing runs, discourages experimentation', style: 'tableCell', color: '#DC2626' }
+            ],
+            [
+              { text: 'Low Rev Share (5%)', style: 'tableCell', bold: true },
+              { text: 'LOW', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
+              { text: 'MED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
+              { text: 'LOW', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+              { text: 'MED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
+              { text: 'Punishes success, forces hidden fees, not sustainable at scale', style: 'tableCell', color: '#CA8A04' }
+            ],
+            [
+              { text: 'Rev Share + Cap ✓', style: 'tableCell', bold: true, color: '#15803D' },
+              { text: 'LOW', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+              { text: 'LOW', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+              { text: 'HIGH', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+              { text: 'LOW', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+              { text: 'Lowest risk, highest alignment, proven with publishers', style: 'tableCell', color: '#15803D', bold: true }
+            ]
+          ]
+        },
+        layout: tableLayout,
+        margin: [0, 0, 0, 15]
+      },
+      // Key Insight Box
+      {
+        table: {
+          widths: ['*'],
+          body: [
+            [
+              {
+                text: [
+                  { text: 'KEY INSIGHT: ', bold: true },
+                  { text: 'The 12.5% + $30K cap model ensures that costs flatten while revenue keeps growing. This creates a virtuous cycle where bigger campaigns deliver better economics — the exact opposite of flat fee or uncapped rev share models.' }
+                ],
+                style: 'disclaimerBox',
+                fillColor: '#DCFCE7',
+                margin: [10, 10, 10, 10]
+              }
+            ]
+          ]
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#22C55E',
+          vLineColor: () => '#22C55E',
+        },
+        margin: [0, 0, 0, 0]
+      },
       {
         pageBreak: 'before',
         text: 'POC Success Criteria',

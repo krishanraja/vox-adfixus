@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
-import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank, LineChart as LineChartIcon, Target, Briefcase, Code, Users, Building, TrendingUp as TrendingUpIcon, Settings } from 'lucide-react';
+import { Download, RefreshCw, DollarSign, TrendingUp, Calendar, Info, Calculator, AlertCircle, Sliders, PiggyBank, LineChart as LineChartIcon, Target, Briefcase, Code, Users, Building, TrendingUp as TrendingUpIcon, Settings, Shield } from 'lucide-react';
 import type { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
 import { formatCurrency, formatPercentage, formatNumberWithCommas } from '@/utils/formatting';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -11,6 +11,7 @@ import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { RISK_SCENARIO_DESCRIPTIONS, type RiskScenario } from '@/constants/riskScenarios';
 import { READINESS_PRESETS, READINESS_DESCRIPTIONS } from '@/constants/readinessFactors';
+import { CAPI_PRICING_MODEL } from '@/constants/industryBenchmarks';
 import { aggregateDomainInputs } from '@/utils/domainAggregation';
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -18,6 +19,7 @@ import { AssumptionSlider } from './calculator/AssumptionSlider';
 import { Badge } from './ui/badge';
 import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { UnifiedCalculationEngine } from '@/utils/unifiedCalculationEngine';
+import { PricingModelCharts } from './PricingModelCharts';
 
 interface SimplifiedResultsProps {
   results: UnifiedResults;
@@ -311,6 +313,95 @@ export const SimplifiedResults = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Costs and Value Section with Pricing Model Charts */}
+      <Collapsible open={expandedSections.includes('pricing')}>
+        <Card className="overflow-hidden border-2 border-blue-500/30">
+          <CollapsibleTrigger 
+            onClick={() => toggleSection('pricing')}
+            className="w-full p-6 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-blue-600/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">CAPI Pricing Model: Why It Works</h3>
+                  <Badge className="bg-blue-600 text-white text-xs">12.5% + $30K Cap</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">Revenue share with performance cap — Vox only pays when it wins</p>
+              </div>
+            </div>
+            <ChevronDown className={`h-5 w-5 transition-transform ${expandedSections.includes('pricing') ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <div className="p-6 pt-0 space-y-6 border-t border-border">
+              {/* Value Proposition Highlights */}
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-700 text-center">
+                  <div className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-1">
+                    Contract Discount
+                  </div>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {CAPI_PRICING_MODEL.VALUE_HIGHLIGHTS.CONTRACT_DISCOUNT_PERCENT}%
+                  </div>
+                  <div className="text-xs text-green-700 dark:text-green-400 mt-1">
+                    vs rate card
+                  </div>
+                </div>
+                <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-700 text-center">
+                  <div className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-1">
+                    POC Discount
+                  </div>
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {CAPI_PRICING_MODEL.VALUE_HIGHLIGHTS.POC_DISCOUNT_PERCENT}%
+                  </div>
+                  <div className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                    full service, half price
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-700 text-center">
+                  <div className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wide mb-1">
+                    Waived Fee
+                  </div>
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    ${(CAPI_PRICING_MODEL.VALUE_HIGHLIGHTS.WAIVED_ONBOARDING_FEE / 1000).toFixed(1)}K
+                  </div>
+                  <div className="text-xs text-purple-700 dark:text-purple-400 mt-1">
+                    onboarding waived
+                  </div>
+                </div>
+                <div className="p-4 bg-orange-100 dark:bg-orange-900/30 rounded-lg border border-orange-300 dark:border-orange-700 text-center">
+                  <div className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wide mb-1">
+                    Campaign Cap
+                  </div>
+                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    ${(CAPI_PRICING_MODEL.CAMPAIGN_CAP_MONTHLY / 1000).toFixed(0)}K
+                  </div>
+                  <div className="text-xs text-orange-700 dark:text-orange-400 mt-1">
+                    max fee per campaign
+                  </div>
+                </div>
+              </div>
+
+              {/* How the Cap Works */}
+              <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <AlertDescription className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>How the cap works:</strong> AdFixus charges 12.5% of CAPI-enabled campaign spend, capped at $30K per campaign per month. 
+                  At {formatCurrency(CAPI_PRICING_MODEL.CAP_THRESHOLD_SPEND)} campaign spend, the cap kicks in. 
+                  Every dollar above that = 100% to Vox. US campaigns average 2x larger than Australia, where we agreed to a $24K cap with Gumtree.
+                </AlertDescription>
+              </Alert>
+
+              {/* Pricing Model Charts */}
+              <PricingModelCharts />
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Monthly Projection Chart */}
       <Card className="p-6">
