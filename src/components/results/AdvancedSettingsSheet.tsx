@@ -12,12 +12,20 @@ interface AdvancedSettingsSheetProps {
   results: UnifiedResults;
   assumptionOverrides?: AssumptionOverrides;
   onAssumptionOverridesChange: (overrides: AssumptionOverrides | undefined) => void;
+  // Controlled mode props (optional)
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  // Hide trigger when used in controlled mode
+  hideTrigger?: boolean;
 }
 
 export const AdvancedSettingsSheet = ({ 
   results, 
   assumptionOverrides, 
-  onAssumptionOverridesChange 
+  onAssumptionOverridesChange,
+  open,
+  onOpenChange,
+  hideTrigger = false,
 }: AdvancedSettingsSheetProps) => {
   const readinessFactors = assumptionOverrides?.readinessFactors || {};
 
@@ -52,17 +60,19 @@ export const AdvancedSettingsSheet = ({
   const modifiedCount = assumptionOverrides ? Object.keys(assumptionOverrides).length : 0;
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
-          <Settings className="h-4 w-4" />
-          {modifiedCount > 0 && (
-            <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
-              {modifiedCount}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {!hideTrigger && (
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="sm" className="gap-2">
+            <Settings className="h-4 w-4" />
+            {modifiedCount > 0 && (
+              <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                {modifiedCount}
+              </span>
+            )}
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
