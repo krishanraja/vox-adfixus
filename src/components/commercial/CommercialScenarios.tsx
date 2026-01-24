@@ -1,0 +1,203 @@
+// Main Commercial Scenarios View
+// Three locked scenarios, always shown side-by-side
+// "If this slide were shown to a CFO for 30 seconds, they should immediately see why flat fees and caps are bad economics."
+
+import { useState, useMemo, useEffect } from 'react';
+import { Download, RefreshCw, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
+import { ScenarioComparison, COMMERCIAL_MODELS } from '@/types/commercialModel';
+import { 
+  generateAllScenarios, 
+  generateWaterfall,
+  formatCommercialCurrency 
+} from '@/utils/commercialCalculations';
+
+import { RevenueIsolation } from './RevenueIsolation';
+import { ScenarioCard } from './ScenarioCard';
+import { CumulativeRevenueChart } from './CumulativeRevenueChart';
+import { ValueWaterfall } from './ValueWaterfall';
+import { ValueLeakageIndicator } from './ValueLeakageIndicator';
+import { ProofPointCard } from './ProofPointCard';
+import { AdvancedSettingsSheet } from '@/components/results/AdvancedSettingsSheet';
+
+interface CommercialScenariosProps {
+  results: UnifiedResults;
+  assumptionOverrides?: AssumptionOverrides;
+  onAssumptionOverridesChange: (overrides: AssumptionOverrides | undefined) => void;
+  onReset: () => void;
+  onDownloadPDF: () => void;
+}
+
+export const CommercialScenarios = ({
+  results,
+  assumptionOverrides,
+  onAssumptionOverridesChange,
+  onReset,
+  onDownloadPDF,
+}: CommercialScenariosProps) => {
+  const [selectedScenarioIdx, setSelectedScenarioIdx] = useState(0);
+  const [showValueStory, setShowValueStory] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Generate all three scenarios
+  const scenarios = useMemo(() => generateAllScenarios(results), [results]);
+  const selectedScenario = scenarios[selectedScenarioIdx];
+  const recommendedScenario = scenarios.find(s => s.model.isRecommended) || scenarios[0];
+  
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  
+  // Get the best outcome for hero display
+  const heroNumber = recommendedScenario.publisherNetGain;
+  const heroSubtitle = `Net gain over 36 months with ${recommendedScenario.model.label} alignment`;
+  
+  return (
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Settings Button (top right) */}
+      <div className="flex justify-end">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setShowSettings(true)}
+          className="gap-2"
+        >
+          <Settings className="h-4 w-4" />
+          <span className="text-xs">Advanced Settings</span>
+        </Button>
+      </div>
+      
+      {/* TIER 1: Hero Section */}
+      <section className="text-center space-y-6">
+        {/* Giant Number */}
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground uppercase tracking-wide">
+            Publisher Net Gain (36 months)
+          </p>
+          <h1 className="text-5xl md:text-7xl font-bold text-emerald-600 dark:text-emerald-400">
+            {formatCommercialCurrency(heroNumber)}
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            {heroSubtitle}
+          </p>
+        </div>
+        
+        {/* Actions */}
+        <div className="flex items-center justify-center gap-4">
+          <Button onClick={onDownloadPDF} className="gap-2">
+            <Download className="h-4 w-4" />
+            Download Commercial Summary
+          </Button>
+          <Button onClick={onReset} variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Adjust Inputs
+          </Button>
+        </div>
+      </section>
+      
+      {/* Revenue Isolation */}
+      <RevenueIsolation 
+        baseRevenue={recommendedScenario.baseRevenue}
+        incrementalRevenue={recommendedScenario.incrementalRevenue}
+      />
+      
+      {/* Three Scenario Cards */}
+      <section>
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4 text-center">
+          Commercial Alignment Models
+        </h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {scenarios.map((scenario, idx) => (
+            <ScenarioCard 
+              key={scenario.model.type}
+              scenario={scenario}
+              isSelected={selectedScenarioIdx === idx}
+              onSelect={() => setSelectedScenarioIdx(idx)}
+            />
+          ))}
+        </div>
+      </section>
+      
+      {/* Value Leakage for non-recommended models */}
+      {selectedScenario.valueSuppressed > 0 && (
+        <ValueLeakageIndicator
+          valueSuppressed={selectedScenario.valueSuppressed}
+          reason={selectedScenario.suppressionReason}
+          modelType={selectedScenario.model.type as 'flat-fee' | 'annual-cap'}
+        />
+      )}
+      
+      {/* Proof Point (always visible) */}
+      <ProofPointCard />
+      
+      {/* TIER 2: Value Story (Collapsible) */}
+      <Collapsible open={showValueStory} onOpenChange={setShowValueStory}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full gap-2">
+            {showValueStory ? 'Hide' : 'Show'} 36-Month Projection
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-6 pt-6">
+          {/* Chart for selected scenario */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">
+                {selectedScenario.model.label}: 36-Month Cumulative Revenue
+              </h3>
+              <span className={`text-xs px-2 py-1 rounded ${
+                selectedScenario.model.isRecommended 
+                  ? 'bg-emerald-500/10 text-emerald-600' 
+                  : selectedScenario.model.type === 'flat-fee'
+                    ? 'bg-red-500/10 text-red-600'
+                    : 'bg-orange-500/10 text-orange-600'
+              }`}>
+                {selectedScenario.model.tagline}
+              </span>
+            </div>
+            <CumulativeRevenueChart 
+              data={selectedScenario.monthlyProjection}
+              modelType={selectedScenario.model.type}
+              showSuppressed={true}
+            />
+          </Card>
+          
+          {/* Waterfall comparison */}
+          <Card className="p-6 space-y-6">
+            <h3 className="font-semibold">Value Flow Comparison</h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              {scenarios.map(scenario => (
+                <ValueWaterfall
+                  key={scenario.model.type}
+                  steps={generateWaterfall(scenario)}
+                  modelLabel={scenario.model.label}
+                  isRecommended={scenario.model.isRecommended}
+                />
+              ))}
+            </div>
+          </Card>
+          
+          {/* Closing statement */}
+          <div className="text-center py-6 border-t border-b">
+            <p className="text-sm font-medium text-muted-foreground italic max-w-2xl mx-auto">
+              "Flat and capped models optimise for vendor risk. Revenue share optimises for publisher growth."
+            </p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+      
+      {/* Advanced Settings Sheet */}
+      <AdvancedSettingsSheet
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        hideTrigger={true}
+        results={results}
+        assumptionOverrides={assumptionOverrides}
+        onAssumptionOverridesChange={onAssumptionOverridesChange}
+      />
+    </div>
+  );
+};

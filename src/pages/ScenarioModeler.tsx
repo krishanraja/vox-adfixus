@@ -2,17 +2,15 @@ import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Hero } from '@/components/Hero';
 import { SimplifiedInputsForm } from '@/components/SimplifiedInputs';
-import { ScenarioToggle } from '@/components/ScenarioToggle';
-import { SimplifiedResults } from '@/components/SimplifiedResults';
+import { CommercialScenarios } from '@/components/commercial';
 import { Button } from '@/components/ui/button';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowRight } from 'lucide-react';
 import type { LeadData } from '@/types';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { buildAdfixusProposalPdf } from '@/utils/pdfGenerator';
+import { generateCommercialPDF } from '@/utils/commercialPdfGenerator';
 
 type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
 
@@ -74,22 +72,18 @@ const ScenarioModeler = () => {
 
   const handleLeadCapture = async (data: LeadData) => {
     try {
-      // Store lead data
       localStorage.setItem('leadData', JSON.stringify(data));
       
-      // Show generating toast
       toast({
         title: 'Generating PDF...',
-        description: 'Creating your AdFixus ROI report...',
+        description: 'Creating your commercial analysis...',
       });
       
-      // Generate and download the PDF
-      await buildAdfixusProposalPdf(results, results, data);
+      await generateCommercialPDF(results!, data);
       
-      // Show success toast
       toast({
         title: 'PDF Downloaded',
-        description: 'Your AdFixus - Vox Media ID ROI report has been downloaded.',
+        description: 'Your commercial analysis has been downloaded.',
       });
       
       setShowLeadCapture(false);
@@ -97,7 +91,7 @@ const ScenarioModeler = () => {
       console.error('PDF generation error:', error);
       toast({
         title: 'PDF Generation Failed',
-        description: error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to generate PDF.',
         variant: 'destructive',
       });
     }
@@ -141,21 +135,14 @@ const ScenarioModeler = () => {
         {currentStep === 'results' && results && (
           <div className="max-w-6xl mx-auto">
             <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-bold">Your ROI Projection</h1>
-              <p className="text-muted-foreground">Based on your inputs and selected scenario</p>
+              <h1 className="text-3xl font-bold">Commercial Scenarios</h1>
+              <p className="text-muted-foreground">Compare alignment models side-by-side</p>
             </div>
 
-            <SimplifiedResults 
+            <CommercialScenarios 
               results={results} 
-              riskScenario={riskScenario}
-              onRiskScenarioChange={setRiskScenario}
               assumptionOverrides={assumptionOverrides}
               onAssumptionOverridesChange={setAssumptionOverrides}
-              onInputChange={(field, value) => {
-                setInputs({ ...inputs, [field]: value });
-                // Recalculate with updated inputs
-                setTimeout(() => calculateResults(), 0);
-              }}
               onReset={() => setCurrentStep('inputs')}
               onDownloadPDF={handleDownloadPDF}
             />
