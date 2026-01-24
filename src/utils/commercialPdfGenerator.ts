@@ -4,7 +4,7 @@
 import pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { UnifiedResults } from '@/types/scenarios';
-import { ScenarioComparison, COMMERCIAL_MODELS } from '@/types/commercialModel';
+import { ScenarioComparison } from '@/types/commercialModel';
 import { 
   generateAllScenarios, 
   generateWaterfall,
@@ -29,7 +29,7 @@ const COLORS = {
 };
 
 // PDF Styles
-const styles: Record<string, Style> = {
+const styles: Record<string, any> = {
   headline: {
     fontSize: 20,
     bold: true,
@@ -54,12 +54,6 @@ const styles: Record<string, Style> = {
     bold: true,
     color: COLORS.dark,
     margin: [0, 0, 0, 4],
-  },
-  scenarioRecommended: {
-    fontSize: 7,
-    bold: true,
-    color: COLORS.white,
-    background: COLORS.success,
   },
   metricLabel: {
     fontSize: 7,
@@ -89,7 +83,7 @@ const styles: Record<string, Style> = {
     fontSize: 9,
     italics: true,
     color: COLORS.dark,
-    margin: [20, 0, 20, 4],
+    margin: [20, 8, 20, 4],
   },
   quoteAttribution: {
     fontSize: 8,
@@ -99,6 +93,7 @@ const styles: Record<string, Style> = {
   closingLine: {
     fontSize: 9,
     bold: true,
+    italics: true,
     color: COLORS.dark,
     alignment: 'center',
     margin: [0, 16, 0, 0],
@@ -146,9 +141,9 @@ export const generateCommercialPDF = async (
   const proofPoint = getProofPoint();
   
   // Build the document
-  const docDefinition: TDocumentDefinitions = {
+  const docDefinition: any = {
     pageSize: 'A4',
-    pageOrientation: 'landscape', // Landscape for side-by-side comparison
+    pageOrientation: 'landscape',
     pageMargins: [40, 40, 40, 40],
     
     content: [
@@ -188,12 +183,12 @@ export const generateCommercialPDF = async (
       
       // Closing Line
       {
-        text: '\"Flat and capped models optimise for vendor risk. Revenue share optimises for publisher growth.\"',
+        text: '"Flat and capped models optimise for vendor risk. Revenue share optimises for publisher growth."',
         style: 'closingLine',
       },
     ],
     
-    footer: (currentPage, pageCount) => ({
+    footer: () => ({
       columns: [
         {
           text: 'AdFixus × Vox Media • Commercial Scenario Analysis',
@@ -221,7 +216,7 @@ export const generateCommercialPDF = async (
 /**
  * Build the revenue isolation bar
  */
-function buildRevenueIsolationBar(scenario: ScenarioComparison): Content {
+function buildRevenueIsolationBar(scenario: ScenarioComparison): any {
   const total = scenario.baseRevenue + scenario.incrementalRevenue;
   const basePercent = Math.round((scenario.baseRevenue / total) * 100);
   const incrementalPercent = 100 - basePercent;
@@ -285,7 +280,7 @@ function buildRevenueIsolationBar(scenario: ScenarioComparison): Content {
 /**
  * Build the scenario comparison table
  */
-function buildScenarioComparisonTable(scenarios: ScenarioComparison[]): Content {
+function buildScenarioComparisonTable(scenarios: ScenarioComparison[]): any {
   const tableBody = [
     // Header row
     [
@@ -369,11 +364,11 @@ function buildScenarioComparisonTable(scenarios: ScenarioComparison[]): Content 
 /**
  * Build compact waterfall for a scenario
  */
-function buildCompactWaterfall(scenario: ScenarioComparison): Content[] {
+function buildCompactWaterfall(scenario: ScenarioComparison): any[] {
   const waterfall = generateWaterfall(scenario);
   const maxValue = Math.max(...waterfall.map(w => w.value));
   
-  const content: Content[] = [
+  const content: any[] = [
     {
       text: scenario.model.label,
       fontSize: 8,
@@ -421,7 +416,7 @@ function buildCompactWaterfall(scenario: ScenarioComparison): Content[] {
         },
       ],
       margin: [0, 2, 0, 0],
-    } as Content);
+    });
   });
   
   return content;
@@ -430,37 +425,36 @@ function buildCompactWaterfall(scenario: ScenarioComparison): Content[] {
 /**
  * Build proof point section
  */
-function buildProofPointSection(proofPoint: ReturnType<typeof getProofPoint>): Content {
+function buildProofPointSection(proofPoint: ReturnType<typeof getProofPoint>): any {
   return {
-    margin: [0, 16, 0, 0],
-    stack: [
-      {
-        canvas: [
+    margin: [0, 8, 0, 0],
+    table: {
+      widths: ['*'],
+      body: [
+        [
           {
-            type: 'rect',
-            x: 0,
-            y: 0,
-            w: 680,
-            h: 60,
-            color: '#f0fdf4', // Light green background
-            r: 4,
+            stack: [
+              {
+                text: `"${proofPoint.quote}"`,
+                style: 'quote',
+              },
+              {
+                text: `— ${proofPoint.author}, ${proofPoint.title}, ${proofPoint.company}`,
+                style: 'quoteAttribution',
+              },
+            ],
+            fillColor: '#f0fdf4',
+            margin: [12, 8, 12, 8],
           },
         ],
-      },
-      {
-        absolutePosition: { x: 60, y: 378 },
-        stack: [
-          {
-            text: `\"${proofPoint.quote}\"`,
-            style: 'quote',
-          },
-          {
-            text: `— ${proofPoint.author}, ${proofPoint.title}, ${proofPoint.company}`,
-            style: 'quoteAttribution',
-          },
-        ],
-      },
-    ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 1,
+      vLineWidth: () => 1,
+      hLineColor: () => COLORS.success,
+      vLineColor: () => COLORS.success,
+    },
   };
 }
 
