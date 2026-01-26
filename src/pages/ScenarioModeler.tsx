@@ -83,8 +83,8 @@ const ScenarioModeler = () => {
         description: 'Creating your executive report...',
       });
       
-      // Generate consolidated PDF
-      await generatePDF(null, results!, data);
+      // Generate consolidated PDF - CRITICAL: Pass timeframe for consistent numbers
+      await generatePDF(null, results!, data, timeframe);
       
       toast({
         title: 'PDF Downloaded',
