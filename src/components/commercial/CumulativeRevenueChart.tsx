@@ -1,5 +1,6 @@
 // 36-Month Cumulative Revenue Chart
 // One chart type, three versions (one per scenario)
+// UPDATED: Shows post-cap benefit instead of value suppression
 
 import {
   AreaChart,
@@ -18,14 +19,14 @@ import { formatCommercialCurrency } from '@/utils/commercialCalculations';
 interface CumulativeRevenueChartProps {
   data: MonthlyCommercialData[];
   modelType: 'revenue-share' | 'flat-fee' | 'annual-cap';
-  showSuppressed?: boolean;
+  showPostCapBenefit?: boolean;
   compact?: boolean;
 }
 
 export const CumulativeRevenueChart = ({ 
   data, 
   modelType, 
-  showSuppressed = true,
+  showPostCapBenefit = true,
   compact = false 
 }: CumulativeRevenueChartProps) => {
   // Prepare chart data
@@ -37,7 +38,7 @@ export const CumulativeRevenueChart = ({
       'Incremental Revenue': d.cumulativeIncremental,
       'Publisher Net Gain': d.cumulativePublisherGain,
       'Share of Upside': d.cumulativeAdfixusShare,
-      'Value Suppressed': d.cumulativeValueSuppressed,
+      'Post-Cap Benefit': d.cumulativePostCapBenefit,
     }));
   
   const height = compact ? 200 : 300;
@@ -81,9 +82,9 @@ export const CumulativeRevenueChart = ({
               <stop offset="5%" stopColor="hsl(215 16% 47%)" stopOpacity={0.3} />
               <stop offset="95%" stopColor="hsl(215 16% 47%)" stopOpacity={0} />
             </linearGradient>
-            <linearGradient id="colorSuppressed" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(0 84% 60%)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(0 84% 60%)" stopOpacity={0} />
+            <linearGradient id="colorPostCap" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(142 76% 50%)" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="hsl(142 76% 50%)" stopOpacity={0} />
             </linearGradient>
           </defs>
           
@@ -113,13 +114,13 @@ export const CumulativeRevenueChart = ({
           <ReferenceLine x="M12" stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" label={{ value: 'Y1', fontSize: 10, fill: 'currentColor' }} />
           <ReferenceLine x="M24" stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" label={{ value: 'Y2', fontSize: 10, fill: 'currentColor' }} />
           
-          {/* Value Suppressed (only for non-revenue-share) */}
-          {showSuppressed && modelType !== 'revenue-share' && (
+          {/* Post-Cap Benefit (only for annual-cap model) */}
+          {showPostCapBenefit && modelType === 'annual-cap' && (
             <Area
               type="monotone"
-              dataKey="Value Suppressed"
-              stroke="hsl(0 84% 60%)"
-              fill="url(#colorSuppressed)"
+              dataKey="Post-Cap Benefit"
+              stroke="hsl(142 76% 50%)"
+              fill="url(#colorPostCap)"
               strokeWidth={1.5}
               strokeDasharray="4 4"
             />

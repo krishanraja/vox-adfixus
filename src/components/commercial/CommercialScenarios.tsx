@@ -1,6 +1,6 @@
 // Main Commercial Scenarios View
 // Three locked scenarios, always shown side-by-side
-// "If this slide were shown to a CFO for 30 seconds, they should immediately see why flat fees and caps are bad economics."
+// UPDATED: Uses incentive alignment instead of value suppression
 
 import { useState, useMemo, useEffect } from 'react';
 import { Download, RefreshCw, Settings } from 'lucide-react';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
-import { ScenarioComparison, COMMERCIAL_MODELS } from '@/types/commercialModel';
 import { 
   generateAllScenarios, 
   generateWaterfall,
@@ -19,7 +18,8 @@ import { RevenueIsolation } from './RevenueIsolation';
 import { ScenarioCard } from './ScenarioCard';
 import { CumulativeRevenueChart } from './CumulativeRevenueChart';
 import { ValueWaterfall } from './ValueWaterfall';
-import { ValueLeakageIndicator } from './ValueLeakageIndicator';
+import { IncentiveAlignmentIndicator } from './IncentiveAlignmentIndicator';
+import { NegotiationHighlights } from './NegotiationHighlights';
 import { ProofPointCard } from './ProofPointCard';
 import { AdvancedSettingsSheet } from '@/components/results/AdvancedSettingsSheet';
 
@@ -54,7 +54,7 @@ export const CommercialScenarios = ({
   
   // Get the best outcome for hero display
   const heroNumber = recommendedScenario.publisherNetGain;
-  const heroSubtitle = `Net gain over 36 months with ${recommendedScenario.model.label} alignment`;
+  const heroSubtitle = `Net gain over 36 months with ${recommendedScenario.model.label}`;
   
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -70,6 +70,9 @@ export const CommercialScenarios = ({
           <span className="text-xs">Advanced Settings</span>
         </Button>
       </div>
+      
+      {/* Negotiation Highlights */}
+      <NegotiationHighlights context="capi" />
       
       {/* TIER 1: Hero Section */}
       <section className="text-center space-y-6">
@@ -90,7 +93,7 @@ export const CommercialScenarios = ({
         <div className="flex items-center justify-center gap-4">
           <Button onClick={onDownloadPDF} className="gap-2">
             <Download className="h-4 w-4" />
-            Download Commercial Summary
+            Download CAPI Analysis
           </Button>
           <Button onClick={onReset} variant="outline" className="gap-2">
             <RefreshCw className="h-4 w-4" />
@@ -108,7 +111,7 @@ export const CommercialScenarios = ({
       {/* Three Scenario Cards */}
       <section>
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4 text-center">
-          Commercial Alignment Models
+          CAPI Alignment Models
         </h2>
         <div className="grid md:grid-cols-3 gap-4">
           {scenarios.map((scenario, idx) => (
@@ -122,12 +125,12 @@ export const CommercialScenarios = ({
         </div>
       </section>
       
-      {/* Value Leakage for non-recommended models */}
-      {selectedScenario.valueSuppressed > 0 && (
-        <ValueLeakageIndicator
-          valueSuppressed={selectedScenario.valueSuppressed}
-          reason={selectedScenario.suppressionReason}
-          modelType={selectedScenario.model.type as 'flat-fee' | 'annual-cap'}
+      {/* Incentive Alignment for selected model */}
+      {!selectedScenario.model.isRecommended && (
+        <IncentiveAlignmentIndicator
+          alignment={selectedScenario.incentiveAlignment}
+          modelType={selectedScenario.model.type}
+          postCapBenefit={selectedScenario.postCapBenefit}
         />
       )}
       
@@ -152,8 +155,8 @@ export const CommercialScenarios = ({
                 selectedScenario.model.isRecommended 
                   ? 'bg-emerald-500/10 text-emerald-600' 
                   : selectedScenario.model.type === 'flat-fee'
-                    ? 'bg-red-500/10 text-red-600'
-                    : 'bg-orange-500/10 text-orange-600'
+                    ? 'bg-slate-500/10 text-slate-600'
+                    : 'bg-amber-500/10 text-amber-600'
               }`}>
                 {selectedScenario.model.tagline}
               </span>
@@ -161,7 +164,7 @@ export const CommercialScenarios = ({
             <CumulativeRevenueChart 
               data={selectedScenario.monthlyProjection}
               modelType={selectedScenario.model.type}
-              showSuppressed={true}
+              showPostCapBenefit={true}
             />
           </Card>
           
@@ -183,7 +186,7 @@ export const CommercialScenarios = ({
           {/* Closing statement */}
           <div className="text-center py-6 border-t border-b">
             <p className="text-sm font-medium text-muted-foreground italic max-w-2xl mx-auto">
-              "Flat and capped models optimise for vendor risk. Revenue share optimises for publisher growth."
+              "Revenue share creates a partnership. The other models create a vendor relationship."
             </p>
           </div>
         </CollapsibleContent>

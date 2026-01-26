@@ -1,7 +1,8 @@
 // Scenario Card
 // Individual card for each commercial model scenario
+// UPDATED: Uses incentive alignment instead of value suppression
 
-import { Check, AlertTriangle, TrendingDown } from 'lucide-react';
+import { Check, AlertTriangle, Users, TrendingUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ScenarioComparison } from '@/types/commercialModel';
 import { formatCommercialCurrency } from '@/utils/commercialCalculations';
@@ -15,24 +16,24 @@ interface ScenarioCardProps {
 }
 
 export const ScenarioCard = ({ scenario, isSelected, onSelect }: ScenarioCardProps) => {
-  const { model } = scenario;
+  const { model, incentiveAlignment } = scenario;
   const waterfall = generateWaterfall(scenario);
   
   const getBorderClass = () => {
     if (model.isRecommended) return 'border-emerald-500/50 bg-emerald-500/5';
-    if (model.type === 'flat-fee') return 'border-red-500/30 bg-red-500/5';
-    return 'border-orange-500/30 bg-orange-500/5';
+    if (model.type === 'flat-fee') return 'border-slate-400/30 bg-slate-500/5';
+    return 'border-amber-500/30 bg-amber-500/5';
   };
   
   const getIcon = () => {
     if (model.isRecommended) return <Check className="h-4 w-4 text-emerald-500" />;
-    if (model.type === 'flat-fee') return <AlertTriangle className="h-4 w-4 text-red-500" />;
-    return <TrendingDown className="h-4 w-4 text-orange-500" />;
+    if (model.type === 'flat-fee') return <Users className="h-4 w-4 text-slate-500" />;
+    return <AlertTriangle className="h-4 w-4 text-amber-500" />;
   };
   
   return (
     <Card 
-      className={`p-5 space-y-4 transition-all ${getBorderClass()} ${isSelected ? 'ring-2 ring-primary' : ''}`}
+      className={`p-5 space-y-4 transition-all cursor-pointer hover:shadow-md ${getBorderClass()} ${isSelected ? 'ring-2 ring-primary' : ''}`}
       onClick={onSelect}
     >
       {/* Header */}
@@ -54,7 +55,7 @@ export const ScenarioCard = ({ scenario, isSelected, onSelect }: ScenarioCardPro
       {/* Tagline */}
       <div className={`text-xs font-medium ${
         model.isRecommended ? 'text-emerald-600' : 
-        model.type === 'flat-fee' ? 'text-red-600' : 'text-orange-600'
+        model.type === 'flat-fee' ? 'text-slate-600' : 'text-amber-600'
       }`}>
         {model.tagline}
       </div>
@@ -81,17 +82,47 @@ export const ScenarioCard = ({ scenario, isSelected, onSelect }: ScenarioCardPro
         </div>
       </div>
       
-      {/* Value suppressed (for non-recommended) */}
-      {scenario.valueSuppressed > 0 && (
+      {/* Incentive Alignment Score */}
+      <div className="pt-2 border-t">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Partner Alignment
+          </span>
+          <span className={`text-xs font-semibold ${
+            incentiveAlignment.alignmentScore >= 80 ? 'text-emerald-600' :
+            incentiveAlignment.alignmentScore >= 50 ? 'text-amber-600' : 'text-slate-600'
+          }`}>
+            {incentiveAlignment.alignmentScore}%
+          </span>
+        </div>
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div 
+            className={`h-full transition-all duration-500 ${
+              incentiveAlignment.alignmentScore >= 80 ? 'bg-emerald-500' :
+              incentiveAlignment.alignmentScore >= 50 ? 'bg-amber-500' : 'bg-slate-400'
+            }`}
+            style={{ width: `${incentiveAlignment.alignmentScore}%` }}
+          />
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-1.5">
+          {incentiveAlignment.partnershipLevel}
+        </p>
+      </div>
+      
+      {/* Post-Cap Benefit (for annual cap model) */}
+      {model.type === 'annual-cap' && scenario.postCapBenefit > 0 && (
         <div className="pt-2 border-t">
-          <div className="text-[10px] uppercase tracking-wide text-red-600 mb-1">
-            Value Suppressed
+          <div className="flex items-center gap-1.5 text-emerald-600">
+            <TrendingUp className="h-3 w-3" />
+            <span className="text-[10px] uppercase tracking-wide font-medium">
+              Post-Cap Benefit
+            </span>
           </div>
-          <div className="text-lg font-bold text-red-600">
-            {formatCommercialCurrency(scenario.valueSuppressed)}
+          <div className="text-sm font-bold text-emerald-600 mt-1">
+            {formatCommercialCurrency(scenario.postCapBenefit)}
           </div>
-          <div className="text-xs text-muted-foreground">
-            Revenue that won't exist
+          <div className="text-[10px] text-muted-foreground">
+            100% to Vox after cap
           </div>
         </div>
       )}
