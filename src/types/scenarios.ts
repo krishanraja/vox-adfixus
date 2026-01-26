@@ -2,6 +2,7 @@
 
 export type DeploymentType = 'single' | 'multi' | 'full';
 export type ScopeType = 'id-only' | 'id-capi' | 'id-capi-performance';
+export type TimeframeType = '1-year' | '3-year';
 
 export interface ScenarioState {
   deployment: DeploymentType;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { SimplifiedInputs, UnifiedResults, ScenarioState, AssumptionOverrides } from '@/types/scenarios';
 import { UnifiedCalculationEngine } from '@/utils/unifiedCalculationEngine';
 
@@ -7,8 +7,7 @@ export const useScenarioCalculator = () => {
     selectedDomains: ['the-verge', 'vox', 'polygon'],
     displayCPM: 4.50,
     videoCPM: 15.00,
-    // REMOVED: capiCampaignsPerMonth, avgCampaignSpend - now calculated from Business Readiness
-    capiLineItemShare: 0.60, // Default 60% of campaign spend is CAPI-enabled
+    capiLineItemShare: 0.60,
   });
 
   const [scenario, setScenario] = useState<ScenarioState>({
@@ -20,34 +19,31 @@ export const useScenarioCalculator = () => {
   const [assumptionOverrides, setAssumptionOverrides] = useState<AssumptionOverrides | undefined>(undefined);
   const [results, setResults] = useState<UnifiedResults | null>(null);
 
-  const calculateResults = () => {
+  const calculateResults = useCallback(() => {
     const calculatedResults = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario, assumptionOverrides);
     setResults(calculatedResults);
     return calculatedResults;
-  };
+  }, [inputs, scenario, riskScenario, assumptionOverrides]);
   
-  const updateRiskScenario = (newRisk: 'conservative' | 'moderate' | 'optimistic') => {
+  const updateRiskScenario = useCallback((newRisk: 'conservative' | 'moderate' | 'optimistic') => {
     setRiskScenario(newRisk);
-    if (results) {
-      const updated = UnifiedCalculationEngine.calculate(inputs, scenario, newRisk, assumptionOverrides);
-      setResults(updated);
-    }
-  };
+    // Recalculate with new risk scenario
+    const updated = UnifiedCalculationEngine.calculate(inputs, scenario, newRisk, assumptionOverrides);
+    setResults(updated);
+  }, [inputs, scenario, assumptionOverrides]);
   
-  const updateAssumptionOverrides = (overrides: AssumptionOverrides | undefined) => {
+  const updateAssumptionOverrides = useCallback((overrides: AssumptionOverrides | undefined) => {
     setAssumptionOverrides(overrides);
-    if (results) {
-      const updated = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario, overrides);
-      setResults(updated);
-    }
-  };
+    // Recalculate with new overrides
+    const updated = UnifiedCalculationEngine.calculate(inputs, scenario, riskScenario, overrides);
+    setResults(updated);
+  }, [inputs, scenario, riskScenario]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setInputs({
       selectedDomains: ['the-verge', 'vox', 'polygon'],
       displayCPM: 4.50,
       videoCPM: 15.00,
-      // REMOVED: capiCampaignsPerMonth, avgCampaignSpend - now calculated from Business Readiness
       capiLineItemShare: 0.60,
     });
     setScenario({
@@ -57,7 +53,7 @@ export const useScenarioCalculator = () => {
     setRiskScenario('moderate');
     setAssumptionOverrides(undefined);
     setResults(null);
-  };
+  }, []);
 
   return {
     inputs,

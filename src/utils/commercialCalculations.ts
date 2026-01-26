@@ -100,8 +100,12 @@ export const calculateAdfixusShare = (
     }
     
     case 'flat-fee': {
+      // CRITICAL FIX: Flat fee is a STANDALONE cost
+      // Publisher keeps 100% of CAPI incremental but must pay the fee regardless
+      // We return 0 as "fee" in this context because it's not a share of upside
+      // The actual cost comparison happens in the UI
+      // The monthly fee is reported separately for display purposes
       const annualFee = modelParams.annualFlatFee || 1000000;
-      // Fixed monthly fee regardless of CAPI revenue
       return { fee: annualFee / 12, postCapBenefit: 0 };
     }
     

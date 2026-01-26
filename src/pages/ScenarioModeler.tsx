@@ -1,28 +1,33 @@
+// Scenario Modeler - Main Page
+// Three-tab architecture: Summary (controls + PDF), CAPI (sales-led), Addressability (structural)
+
 import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Hero } from '@/components/Hero';
 import { SimplifiedInputsForm } from '@/components/SimplifiedInputs';
-import { SimplifiedResults } from '@/components/SimplifiedResults';
-import { CommercialScenarios, TotalDealSummary } from '@/components/commercial';
+import { SummaryTab } from '@/components/SummaryTab';
+import { CapiTab } from '@/components/CapiTab';
+import { AddressabilityTab } from '@/components/AddressabilityTab';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LeadData } from '@/types';
+import type { TimeframeType } from '@/types/scenarios';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { generateCommercialPDF } from '@/utils/commercialPdfGenerator';
 import { generatePDF } from '@/utils/pdfGenerator';
 
 type StepType = 'hero' | 'inputs' | 'results';
-// Tab types for results view
-type ResultsTab = 'total-deal' | 'capi-alignment' | 'detailed-roi';
+type ResultsTab = 'summary' | 'capi' | 'addressability';
 
 const ScenarioModeler = () => {
   const [currentStep, setCurrentStep] = useState<StepType>('hero');
   const [showLeadCapture, setShowLeadCapture] = useState(false);
-  const [activeTab, setActiveTab] = useState<ResultsTab>('total-deal');
+  const [activeTab, setActiveTab] = useState<ResultsTab>('summary');
+  const [timeframe, setTimeframe] = useState<TimeframeType>('3-year');
+  
   const { 
     inputs, 
     setInputs, 
@@ -36,6 +41,7 @@ const ScenarioModeler = () => {
     calculateResults, 
     reset 
   } = useScenarioCalculator();
+  
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -74,19 +80,15 @@ const ScenarioModeler = () => {
       
       toast({
         title: 'Generating PDF...',
-        description: activeTab === 'capi-alignment' ? 'Creating your CAPI analysis...' : 'Creating your ROI report...',
+        description: 'Creating your executive report...',
       });
       
-      if (activeTab === 'capi-alignment') {
-        await generateCommercialPDF(results!, data);
-      } else {
-        // generatePDF expects (quizResults, calculatorResults, leadData)
-        await generatePDF(null, results!, data);
-      }
+      // Generate consolidated PDF
+      await generatePDF(null, results!, data);
       
       toast({
         title: 'PDF Downloaded',
-        description: 'Your analysis has been downloaded.',
+        description: 'Your executive report has been downloaded.',
       });
       
       setShowLeadCapture(false);
@@ -137,63 +139,56 @@ const ScenarioModeler = () => {
           <div className="max-w-6xl mx-auto">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ResultsTab)} className="w-full">
               <div className="flex justify-center mb-8">
-                <TabsList className="grid w-full max-w-2xl grid-cols-3">
-                  <TabsTrigger value="total-deal">Total Deal Value</TabsTrigger>
-                  <TabsTrigger value="capi-alignment">CAPI Alignment</TabsTrigger>
-                  <TabsTrigger value="detailed-roi">Detailed ROI</TabsTrigger>
+                <TabsList className="grid w-full max-w-xl grid-cols-3">
+                  <TabsTrigger value="summary">Summary</TabsTrigger>
+                  <TabsTrigger value="capi">CAPI</TabsTrigger>
+                  <TabsTrigger value="addressability">Addressability</TabsTrigger>
                 </TabsList>
               </div>
               
-              {/* Tab 1: Total Deal Value - 36 month unified view */}
-              <TabsContent value="total-deal">
-                <div className="text-center space-y-2 mb-8">
-                  <h1 className="text-3xl font-bold">Total 3-Year Deal Value</h1>
-                  <p className="text-muted-foreground">Complete breakdown: ID Infrastructure + CAPI + Media Performance</p>
-                </div>
-                <TotalDealSummary results={results} />
-                <div className="flex justify-center gap-4 mt-8">
-                  <Button onClick={handleDownloadPDF} className="gap-2">
-                    Download PDF Report
-                  </Button>
-                  <Button onClick={() => setCurrentStep('inputs')} variant="outline">
-                    Adjust Inputs
-                  </Button>
-                </div>
-              </TabsContent>
-              
-              {/* Tab 2: CAPI Alignment Models - Revenue share comparison */}
-              <TabsContent value="capi-alignment">
-                <div className="text-center space-y-2 mb-8">
-                  <h1 className="text-3xl font-bold">CAPI Alignment Models</h1>
-                  <p className="text-muted-foreground">Compare commercial alignment models for CAPI revenue share</p>
-                </div>
-                <CommercialScenarios 
-                  results={results} 
-                  assumptionOverrides={assumptionOverrides}
-                  onAssumptionOverridesChange={setAssumptionOverrides}
-                  onReset={() => setCurrentStep('inputs')}
-                  onDownloadPDF={handleDownloadPDF}
-                />
-              </TabsContent>
-              
-              {/* Tab 3: Detailed ROI - Full breakdown with charts */}
-              <TabsContent value="detailed-roi">
-                <div className="text-center space-y-2 mb-8">
-                  <h1 className="text-3xl font-bold">Detailed ROI Analysis</h1>
-                  <p className="text-muted-foreground">12-month projection with component breakdown and risk scenarios</p>
-                </div>
-                <SimplifiedResults
+              {/* Tab 1: Summary - Executive Dashboard with all controls */}
+              <TabsContent value="summary">
+                <SummaryTab
                   results={results}
+                  timeframe={timeframe}
+                  onTimeframeChange={setTimeframe}
                   riskScenario={riskScenario}
                   onRiskScenarioChange={setRiskScenario}
                   assumptionOverrides={assumptionOverrides}
                   onAssumptionOverridesChange={setAssumptionOverrides}
-                  onInputChange={(field, value) => setInputs({ ...inputs, [field]: value })}
-                  onReset={() => setCurrentStep('inputs')}
                   onDownloadPDF={handleDownloadPDF}
                 />
               </TabsContent>
+              
+              {/* Tab 2: CAPI - Sales-Led Revenue (Read-Only) */}
+              <TabsContent value="capi">
+                <div className="text-center space-y-2 mb-6">
+                  <h1 className="text-2xl font-bold">CAPI Commercial Models</h1>
+                  <p className="text-muted-foreground text-sm">
+                    Compare alignment models for CAPI revenue share
+                  </p>
+                </div>
+                <CapiTab results={results} timeframe={timeframe} />
+              </TabsContent>
+              
+              {/* Tab 3: Addressability - Structural Benefits (Read-Only) */}
+              <TabsContent value="addressability">
+                <div className="text-center space-y-2 mb-6">
+                  <h1 className="text-2xl font-bold">Addressability Benefits</h1>
+                  <p className="text-muted-foreground text-sm">
+                    ID Infrastructure and Media Performance — 100% retained
+                  </p>
+                </div>
+                <AddressabilityTab results={results} timeframe={timeframe} />
+              </TabsContent>
             </Tabs>
+            
+            {/* Back to Inputs button - visible on all tabs */}
+            <div className="flex justify-center mt-8">
+              <Button onClick={() => setCurrentStep('inputs')} variant="outline">
+                Adjust Inputs
+              </Button>
+            </div>
           </div>
         )}
       </div>
