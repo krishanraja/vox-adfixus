@@ -3,7 +3,7 @@ import { Navigation } from '@/components/Navigation';
 import { Hero } from '@/components/Hero';
 import { SimplifiedInputsForm } from '@/components/SimplifiedInputs';
 import { SimplifiedResults } from '@/components/SimplifiedResults';
-import { CommercialScenarios } from '@/components/commercial';
+import { CommercialScenarios, TotalDealSummary } from '@/components/commercial';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
@@ -16,11 +16,13 @@ import { generateCommercialPDF } from '@/utils/commercialPdfGenerator';
 import { generatePDF } from '@/utils/pdfGenerator';
 
 type StepType = 'hero' | 'inputs' | 'results';
+// Tab types for results view
+type ResultsTab = 'total-deal' | 'capi-alignment' | 'detailed-roi';
 
 const ScenarioModeler = () => {
   const [currentStep, setCurrentStep] = useState<StepType>('hero');
   const [showLeadCapture, setShowLeadCapture] = useState(false);
-  const [activeTab, setActiveTab] = useState<'capi' | 'addressability'>('capi');
+  const [activeTab, setActiveTab] = useState<ResultsTab>('total-deal');
   const { 
     inputs, 
     setInputs, 
@@ -72,10 +74,10 @@ const ScenarioModeler = () => {
       
       toast({
         title: 'Generating PDF...',
-        description: activeTab === 'capi' ? 'Creating your CAPI analysis...' : 'Creating your ROI report...',
+        description: activeTab === 'capi-alignment' ? 'Creating your CAPI analysis...' : 'Creating your ROI report...',
       });
       
-      if (activeTab === 'capi') {
+      if (activeTab === 'capi-alignment') {
         await generateCommercialPDF(results!, data);
       } else {
         // generatePDF expects (quizResults, calculatorResults, leadData)
@@ -133,18 +135,37 @@ const ScenarioModeler = () => {
 
         {currentStep === 'results' && results && (
           <div className="max-w-6xl mx-auto">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'capi' | 'addressability')} className="w-full">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ResultsTab)} className="w-full">
               <div className="flex justify-center mb-8">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
-                  <TabsTrigger value="capi">CAPI Commercials</TabsTrigger>
-                  <TabsTrigger value="addressability">Addressability ROI</TabsTrigger>
+                <TabsList className="grid w-full max-w-2xl grid-cols-3">
+                  <TabsTrigger value="total-deal">Total Deal Value</TabsTrigger>
+                  <TabsTrigger value="capi-alignment">CAPI Alignment</TabsTrigger>
+                  <TabsTrigger value="detailed-roi">Detailed ROI</TabsTrigger>
                 </TabsList>
               </div>
               
-              <TabsContent value="capi">
+              {/* Tab 1: Total Deal Value - 36 month unified view */}
+              <TabsContent value="total-deal">
+                <div className="text-center space-y-2 mb-8">
+                  <h1 className="text-3xl font-bold">Total 3-Year Deal Value</h1>
+                  <p className="text-muted-foreground">Complete breakdown: ID Infrastructure + CAPI + Media Performance</p>
+                </div>
+                <TotalDealSummary results={results} />
+                <div className="flex justify-center gap-4 mt-8">
+                  <Button onClick={handleDownloadPDF} className="gap-2">
+                    Download PDF Report
+                  </Button>
+                  <Button onClick={() => setCurrentStep('inputs')} variant="outline">
+                    Adjust Inputs
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Tab 2: CAPI Alignment Models - Revenue share comparison */}
+              <TabsContent value="capi-alignment">
                 <div className="text-center space-y-2 mb-8">
                   <h1 className="text-3xl font-bold">CAPI Alignment Models</h1>
-                  <p className="text-muted-foreground">Compare commercial alignment models side-by-side</p>
+                  <p className="text-muted-foreground">Compare commercial alignment models for CAPI revenue share</p>
                 </div>
                 <CommercialScenarios 
                   results={results} 
@@ -155,10 +176,11 @@ const ScenarioModeler = () => {
                 />
               </TabsContent>
               
-              <TabsContent value="addressability">
+              {/* Tab 3: Detailed ROI - Full breakdown with charts */}
+              <TabsContent value="detailed-roi">
                 <div className="text-center space-y-2 mb-8">
-                  <h1 className="text-3xl font-bold">Addressability ROI</h1>
-                  <p className="text-muted-foreground">Overall ID + CAPI + Media Performance impact</p>
+                  <h1 className="text-3xl font-bold">Detailed ROI Analysis</h1>
+                  <p className="text-muted-foreground">12-month projection with component breakdown and risk scenarios</p>
                 </div>
                 <SimplifiedResults
                   results={results}

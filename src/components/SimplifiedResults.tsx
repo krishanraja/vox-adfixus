@@ -51,6 +51,7 @@ export const SimplifiedResults = ({
   // Calculate net revenue (after AdFixus fees)
   const netAnnualRevenue = results.totals.totalAnnualUplift;
   const netMonthlyRevenue = results.totals.totalMonthlyUplift;
+  const net36MonthRevenue = results.totals.threeYearProjection || netAnnualRevenue * 3;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -68,17 +69,17 @@ export const SimplifiedResults = ({
             />
           </div>
 
-          {/* THE NUMBER */}
+          {/* THE NUMBER - Now showing 12-month as primary for this detailed view */}
           <div className="text-center space-y-2">
             <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Net Revenue to Vox
+              Annual Incremental Revenue
             </p>
             <div className="text-6xl md:text-7xl font-bold text-primary">
               {formatCurrency(netAnnualRevenue)}
               <span className="text-2xl md:text-3xl text-muted-foreground font-normal">/year</span>
             </div>
             <p className="text-lg text-muted-foreground">
-              {formatCurrency(netMonthlyRevenue)}/month after all fees
+              {formatCurrency(netMonthlyRevenue)}/month • {formatCurrency(net36MonthRevenue)} over 36 months
             </p>
           </div>
 

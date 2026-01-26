@@ -1,6 +1,6 @@
 // Commercial Model Calculations
-// Calculates incentive alignment and 36-month projections for each model
-// CORRECTED: Annual cap provides unlimited upside to Vox after cap, not "suppression"
+// Calculates incentive alignment and 36-month projections for CAPI revenue only
+// CRITICAL: Revenue share applies ONLY to CAPI incremental revenue, not the full deal
 
 import { 
   CommercialModel, 
@@ -8,13 +8,12 @@ import {
   ScenarioComparison, 
   MonthlyCommercialData,
   WaterfallStep,
-  IncentiveAlignment,
   COMMERCIAL_MODELS,
   INCENTIVE_ALIGNMENT 
 } from '@/types/commercialModel';
 import { UnifiedResults } from '@/types/scenarios';
 
-// 36-month ramp-up curve (realistic adoption)
+// 36-month ramp-up curve (realistic adoption for CAPI campaigns)
 const RAMP_UP_CURVE = [
   // Year 1: POC → Scale
   0.15, 0.25, 0.35, // Q1: POC phase
@@ -30,33 +29,79 @@ const RAMP_UP_CURVE = [
 ];
 
 /**
- * Calculate the base monthly incremental revenue from UnifiedResults
+ * Get CAPI-only monthly incremental revenue
+ * CRITICAL: Revenue share applies ONLY to CAPI, not ID Infrastructure or Media Performance
  */
-export const getBaseMonthlyIncremental = (results: UnifiedResults): number => {
-  return results.totals.totalMonthlyUplift;
+export const getCapiMonthlyIncremental = (results: UnifiedResults): number => {
+  // Only CAPI revenue is subject to revenue share
+  return results.capiCapabilities?.conversionTrackingRevenue || 0;
 };
 
 /**
- * Calculate AdFixus share for a given month's incremental revenue
- * CORRECTED: Proper cap math, no suppression
+ * Get the complete deal breakdown for 36 months
+ * This ensures all numbers reconcile across views
+ */
+export const getDealBreakdown = (results: UnifiedResults): {
+  idInfrastructure36mo: number;
+  capi36mo: number;
+  mediaPerformance36mo: number;
+  total36mo: number;
+  monthly: {
+    idInfrastructure: number;
+    capi: number;
+    mediaPerformance: number;
+    total: number;
+  };
+} => {
+  const idInfraMonthly = results.idInfrastructure.monthlyUplift;
+  const capiMonthly = results.capiCapabilities?.conversionTrackingRevenue || 0;
+  const mediaMonthly = results.mediaPerformance?.monthlyUplift || 0;
+  
+  // Apply ramp-up curve to get 36-month totals (not simple multiplication)
+  let id36 = 0, capi36 = 0, media36 = 0;
+  
+  for (let month = 0; month < 36; month++) {
+    const ramp = RAMP_UP_CURVE[month] || 1.30;
+    id36 += idInfraMonthly * ramp;
+    capi36 += capiMonthly * ramp;
+    media36 += mediaMonthly * ramp;
+  }
+  
+  return {
+    idInfrastructure36mo: id36,
+    capi36mo: capi36,
+    mediaPerformance36mo: media36,
+    total36mo: id36 + capi36 + media36,
+    monthly: {
+      idInfrastructure: idInfraMonthly,
+      capi: capiMonthly,
+      mediaPerformance: mediaMonthly,
+      total: idInfraMonthly + capiMonthly + mediaMonthly,
+    },
+  };
+};
+
+/**
+ * Calculate AdFixus share for a given month's CAPI incremental revenue
+ * Only applies to CAPI revenue - ID Infrastructure and Media Performance are covered by platform fee
  */
 export const calculateAdfixusShare = (
   modelType: CommercialModelType,
-  monthlyIncremental: number,
+  monthlyCapiIncremental: number,
   cumulativeYearFees: number,
   modelParams: CommercialModel['params']
 ): { fee: number; postCapBenefit: number } => {
   switch (modelType) {
     case 'revenue-share': {
       const shareRate = modelParams.sharePercentage || 0.125;
-      // Simple 12.5% uncapped
-      const fee = monthlyIncremental * shareRate;
+      // Simple 12.5% uncapped on CAPI revenue
+      const fee = monthlyCapiIncremental * shareRate;
       return { fee, postCapBenefit: 0 };
     }
     
     case 'flat-fee': {
       const annualFee = modelParams.annualFlatFee || 1000000;
-      // Fixed monthly fee regardless of revenue
+      // Fixed monthly fee regardless of CAPI revenue
       return { fee: annualFee / 12, postCapBenefit: 0 };
     }
     
@@ -65,19 +110,19 @@ export const calculateAdfixusShare = (
       const shareRate = modelParams.baseSharePercentage || 0.125;
       
       // Calculate raw fee at 12.5%
-      const rawFee = monthlyIncremental * shareRate;
+      const rawFee = monthlyCapiIncremental * shareRate;
       
       // Check if we've already hit the annual cap
       const remainingCap = Math.max(0, annualCap - cumulativeYearFees);
       
       if (remainingCap <= 0) {
-        // Cap already hit - Vox keeps 100% of this month's increment
-        return { fee: 0, postCapBenefit: monthlyIncremental };
+        // Cap already hit - Vox keeps 100% of this month's CAPI increment
+        return { fee: 0, postCapBenefit: monthlyCapiIncremental };
       }
       
       // Fee is capped at remaining annual cap
       const actualFee = Math.min(rawFee, remainingCap);
-      const postCapBenefit = actualFee < rawFee ? monthlyIncremental - (actualFee / shareRate) : 0;
+      const postCapBenefit = actualFee < rawFee ? monthlyCapiIncremental - (actualFee / shareRate) : 0;
       
       return { fee: actualFee, postCapBenefit };
     }
@@ -88,12 +133,12 @@ export const calculateAdfixusShare = (
 };
 
 /**
- * Generate 36-month projection for a commercial model
- * CORRECTED: No value suppression, proper cap handling
+ * Generate 36-month projection for CAPI commercial model
+ * CRITICAL: This applies only to CAPI revenue, not the full deal
  */
 export const generateMonthlyProjection = (
   model: CommercialModel,
-  baseMonthlyIncremental: number,
+  baseMonthlyCapiIncremental: number,
   baseMonthlyRevenue: number
 ): MonthlyCommercialData[] => {
   const projection: MonthlyCommercialData[] = [];
@@ -116,8 +161,8 @@ export const generateMonthlyProjection = (
       currentYear = thisYear;
     }
     
-    // Full incremental for this month (same for all models - no suppression)
-    const monthlyIncremental = baseMonthlyIncremental * rampUp;
+    // CAPI incremental for this month (with ramp-up)
+    const monthlyIncremental = baseMonthlyCapiIncremental * rampUp;
     cumulativeIncremental += monthlyIncremental;
     
     // Calculate AdFixus share based on model
@@ -132,7 +177,7 @@ export const generateMonthlyProjection = (
     cumulativeAdfixusShare += adfixusShare;
     cumulativePostCapBenefit += postCapBenefit;
     
-    // Publisher net gain = incremental - fees
+    // Publisher net gain from CAPI = incremental - fees
     const publisherGain = monthlyIncremental - adfixusShare;
     cumulativePublisherGain += publisherGain;
     
@@ -155,16 +200,18 @@ export const generateMonthlyProjection = (
 };
 
 /**
- * Generate full scenario comparison for a commercial model
+ * Generate full scenario comparison for a CAPI commercial model
+ * IMPORTANT: This shows CAPI-only economics, not the total deal
  */
 export const generateScenarioComparison = (
   model: CommercialModel,
   results: UnifiedResults
 ): ScenarioComparison => {
-  const baseMonthlyIncremental = getBaseMonthlyIncremental(results);
+  // CRITICAL: Use CAPI-only revenue, not total deal
+  const baseMonthlyCapiIncremental = getCapiMonthlyIncremental(results);
   const baseMonthlyRevenue = results.totals.currentMonthlyRevenue;
   
-  const projection = generateMonthlyProjection(model, baseMonthlyIncremental, baseMonthlyRevenue);
+  const projection = generateMonthlyProjection(model, baseMonthlyCapiIncremental, baseMonthlyRevenue);
   const final = projection[projection.length - 1];
   
   const netPublisherGainPercentage = final.cumulativeIncremental > 0
@@ -191,7 +238,7 @@ export const generateScenarioComparison = (
 };
 
 /**
- * Generate all three scenario comparisons
+ * Generate all three scenario comparisons for CAPI
  */
 export const generateAllScenarios = (
   results: UnifiedResults
@@ -203,12 +250,11 @@ export const generateAllScenarios = (
 
 /**
  * Generate waterfall steps for a scenario
- * CORRECTED: Shows post-cap benefit instead of suppression
  */
 export const generateWaterfall = (scenario: ScenarioComparison): WaterfallStep[] => {
   const steps: WaterfallStep[] = [
     {
-      label: 'Incremental Revenue',
+      label: 'CAPI Incremental',
       value: scenario.incrementalRevenue,
       type: 'total',
       color: 'hsl(var(--primary))',
