@@ -1,17 +1,20 @@
-// Main Commercial Scenarios View
-// Three locked scenarios, always shown side-by-side
-// UPDATED: Uses incentive alignment instead of value suppression
+// CAPI Alignment Models View
+// Shows three commercial models for CAPI revenue share only
+// CRITICAL: Revenue share applies ONLY to CAPI incremental, not the full deal
 
 import { useState, useMemo, useEffect } from 'react';
-import { Download, RefreshCw, Settings } from 'lucide-react';
+import { Download, RefreshCw, Settings, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UnifiedResults, AssumptionOverrides } from '@/types/scenarios';
 import { 
   generateAllScenarios, 
   generateWaterfall,
-  formatCommercialCurrency 
+  formatCommercialCurrency,
+  getCapiMonthlyIncremental,
+  getDealBreakdown
 } from '@/utils/commercialCalculations';
 
 import { RevenueIsolation } from './RevenueIsolation';
@@ -42,19 +45,23 @@ export const CommercialScenarios = ({
   const [showValueStory, setShowValueStory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   
-  // Generate all three scenarios
+  // Generate all three scenarios (now correctly using CAPI-only revenue)
   const scenarios = useMemo(() => generateAllScenarios(results), [results]);
   const selectedScenario = scenarios[selectedScenarioIdx];
   const recommendedScenario = scenarios.find(s => s.model.isRecommended) || scenarios[0];
+  
+  // Get deal breakdown for context
+  const dealBreakdown = useMemo(() => getDealBreakdown(results), [results]);
+  const capiMonthly = getCapiMonthlyIncremental(results);
   
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   
-  // Get the best outcome for hero display
+  // Get the CAPI net gain for hero display
   const heroNumber = recommendedScenario.publisherNetGain;
-  const heroSubtitle = `Net gain over 36 months with ${recommendedScenario.model.label}`;
+  const heroSubtitle = `CAPI net gain over 36 months with ${recommendedScenario.model.label}`;
   
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -74,12 +81,30 @@ export const CommercialScenarios = ({
       {/* Negotiation Highlights */}
       <NegotiationHighlights context="capi" />
       
+      {/* Plain English Context Card */}
+      <Card className="p-4 bg-muted/30 border-dashed">
+        <div className="flex items-start gap-2">
+          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-muted-foreground">
+            <p className="mb-2">
+              <strong>What this view shows:</strong> The 12.5% revenue share applies <em>only</em> to CAPI campaign incremental revenue 
+              (<strong>{formatCommercialCurrency(capiMonthly)}/mo</strong> at steady state).
+            </p>
+            <p>
+              Your ID Infrastructure ({formatCommercialCurrency(dealBreakdown.monthly.idInfrastructure)}/mo) and 
+              Media Performance ({formatCommercialCurrency(dealBreakdown.monthly.mediaPerformance)}/mo) benefits are 
+              covered by the platform subscription — no additional share is taken.
+            </p>
+          </div>
+        </div>
+      </Card>
+      
       {/* TIER 1: Hero Section */}
       <section className="text-center space-y-6">
         {/* Giant Number */}
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground uppercase tracking-wide">
-            Publisher Net Gain (36 months)
+            CAPI Publisher Net Gain (36 months)
           </p>
           <h1 className="text-5xl md:text-7xl font-bold text-emerald-600 dark:text-emerald-400">
             {formatCommercialCurrency(heroNumber)}

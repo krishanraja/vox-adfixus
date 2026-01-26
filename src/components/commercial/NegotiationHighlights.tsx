@@ -5,7 +5,7 @@ import { Gift, BadgePercent, Clock } from 'lucide-react';
 import { DEAL_CONCESSIONS, DealConcession } from '@/types/commercialModel';
 
 interface NegotiationHighlightsProps {
-  context: 'capi' | 'addressability'; // Which tab we're on
+  context: 'capi' | 'total-deal' | 'addressability'; // Which tab we're on
   compact?: boolean;
 }
 
@@ -40,7 +40,7 @@ const getCategoryColor = (category: DealConcession['category']) => {
 };
 
 export const NegotiationHighlights = ({ context, compact = false }: NegotiationHighlightsProps) => {
-  // Filter concessions based on context
+  // Filter concessions based on context - CAPI tab shows only CAPI concession, others show all
   const relevantConcessions = context === 'capi' 
     ? DEAL_CONCESSIONS.filter(c => c.category === 'capi')
     : DEAL_CONCESSIONS;

@@ -7,3 +7,5 @@ export { ValueWaterfall, CompactWaterfall } from './ValueWaterfall';
 export { IncentiveAlignmentIndicator } from './IncentiveAlignmentIndicator';
 export { NegotiationHighlights } from './NegotiationHighlights';
 export { ProofPointCard } from './ProofPointCard';
+export { TotalDealSummary } from './TotalDealSummary';
+export * from '@/types/commercialModel';
