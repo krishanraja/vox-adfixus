@@ -78,7 +78,8 @@ const ScenarioModeler = () => {
       if (activeTab === 'capi') {
         await generateCommercialPDF(results!, data);
       } else {
-        await generatePDF(results!, data);
+        // generatePDF expects (quizResults, calculatorResults, leadData)
+        await generatePDF(null, results!, data);
       }
       
       toast({
