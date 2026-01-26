@@ -1,5 +1,6 @@
 // Commercial PDF Generator
 // ONE stunning page: Headline, Side-by-side scenarios, Chart, Waterfall, Quote, Closing line
+// UPDATED: Uses incentive alignment instead of value suppression
 
 import pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
@@ -26,6 +27,7 @@ const COLORS = {
   dark: '#0F172A',
   light: '#f1f5f9',
   white: '#ffffff',
+  amber: '#f59e0b',
 };
 
 // PDF Styles
@@ -121,6 +123,12 @@ const styles: Record<string, any> = {
     color: COLORS.success,
     alignment: 'center',
   },
+  tableCellWarning: {
+    fontSize: 8,
+    bold: true,
+    color: COLORS.amber,
+    alignment: 'center',
+  },
   tableCellDanger: {
     fontSize: 8,
     bold: true,
@@ -149,7 +157,7 @@ export const generateCommercialPDF = async (
     content: [
       // Headline
       {
-        text: 'Incremental Revenue vs Commercial Alignment',
+        text: 'CAPI Alignment Model Comparison',
         style: 'headline',
       },
       {
@@ -183,7 +191,7 @@ export const generateCommercialPDF = async (
       
       // Closing Line
       {
-        text: '"Flat and capped models optimise for vendor risk. Revenue share optimises for publisher growth."',
+        text: '"Revenue share creates a partnership. The other models create a vendor relationship."',
         style: 'closingLine',
       },
     ],
@@ -191,7 +199,7 @@ export const generateCommercialPDF = async (
     footer: () => ({
       columns: [
         {
-          text: 'AdFixus × Vox Media • Commercial Scenario Analysis',
+          text: 'AdFixus × Vox Media • CAPI Commercial Analysis',
           style: 'footer',
           alignment: 'left',
           margin: [40, 0, 0, 0],
@@ -209,7 +217,7 @@ export const generateCommercialPDF = async (
   };
   
   // Generate and download
-  const fileName = `AdFixus-Commercial-Analysis-${leadData?.company || 'Vox'}-${new Date().toISOString().split('T')[0]}.pdf`;
+  const fileName = `AdFixus-CAPI-Analysis-${leadData?.company || 'Vox'}-${new Date().toISOString().split('T')[0]}.pdf`;
   pdfMake.createPdf(docDefinition).download(fileName);
 };
 
@@ -289,7 +297,7 @@ function buildScenarioComparisonTable(scenarios: ScenarioComparison[]): any {
         text: s.model.isRecommended ? `${s.model.label} ✓` : s.model.label,
         style: 'tableHeader',
         fillColor: s.model.isRecommended ? COLORS.success : 
-                   s.model.type === 'flat-fee' ? COLORS.destructive : COLORS.warning,
+                   s.model.type === 'flat-fee' ? COLORS.muted : COLORS.amber,
       })),
     ],
     // Incremental Revenue
@@ -316,12 +324,21 @@ function buildScenarioComparisonTable(scenarios: ScenarioComparison[]): any {
         style: 'tableCell',
       })),
     ],
-    // Value Suppressed
+    // Incentive Alignment
     [
-      { text: 'Value Suppressed', style: 'tableCell' },
+      { text: 'Incentive Alignment', style: 'tableCell' },
       ...scenarios.map(s => ({
-        text: s.valueSuppressed > 0 ? formatCommercialCurrency(s.valueSuppressed) : '—',
-        style: s.valueSuppressed > 0 ? 'tableCellDanger' : 'tableCell',
+        text: `${s.incentiveAlignment.alignmentScore}%`,
+        style: s.incentiveAlignment.alignmentScore >= 80 ? 'tableCellSuccess' : 
+               s.incentiveAlignment.alignmentScore >= 50 ? 'tableCellWarning' : 'tableCell',
+      })),
+    ],
+    // Partnership Level
+    [
+      { text: 'Partnership Level', style: 'tableCell' },
+      ...scenarios.map(s => ({
+        text: s.incentiveAlignment.partnershipLevel,
+        style: s.model.isRecommended ? 'tableCellSuccess' : 'tableCell',
       })),
     ],
     // Publisher % of Total
@@ -374,17 +391,17 @@ function buildCompactWaterfall(scenario: ScenarioComparison): any[] {
       fontSize: 8,
       bold: true,
       color: scenario.model.isRecommended ? COLORS.success : 
-             scenario.model.type === 'flat-fee' ? COLORS.destructive : COLORS.warning,
+             scenario.model.type === 'flat-fee' ? COLORS.muted : COLORS.amber,
       margin: [0, 0, 0, 4],
     },
   ];
   
   waterfall.forEach(step => {
-    const widthPercent = (step.value / maxValue) * 100;
+    const widthPercent = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
     content.push({
       columns: [
         {
-          width: 60,
+          width: 70,
           text: step.label,
           fontSize: 6,
           color: COLORS.muted,
@@ -398,7 +415,7 @@ function buildCompactWaterfall(scenario: ScenarioComparison): any[] {
                   type: 'rect',
                   x: 0,
                   y: 0,
-                  w: (widthPercent / 100) * 120,
+                  w: Math.max(1, (widthPercent / 100) * 110),
                   h: 10,
                   color: step.color,
                 },

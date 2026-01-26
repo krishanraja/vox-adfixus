@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Hero } from '@/components/Hero';
 import { SimplifiedInputsForm } from '@/components/SimplifiedInputs';
+import { SimplifiedResults } from '@/components/SimplifiedResults';
 import { CommercialScenarios } from '@/components/commercial';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LeadData } from '@/types';
@@ -11,12 +13,14 @@ import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { generateCommercialPDF } from '@/utils/commercialPdfGenerator';
+import { generatePDF } from '@/utils/pdfGenerator';
 
-type StepType = 'hero' | 'inputs' | 'scenarios' | 'results';
+type StepType = 'hero' | 'inputs' | 'results';
 
 const ScenarioModeler = () => {
   const [currentStep, setCurrentStep] = useState<StepType>('hero');
   const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const [activeTab, setActiveTab] = useState<'capi' | 'addressability'>('capi');
   const { 
     inputs, 
     setInputs, 
@@ -44,19 +48,11 @@ const ScenarioModeler = () => {
   };
 
   const handleInputsComplete = () => {
-    // Auto-determine deployment based on number of domains
     const numDomains = inputs.selectedDomains.length;
     const deployment = numDomains === 1 ? 'single' : numDomains <= 5 ? 'multi' : 'full';
-    
-    // Always use full scope with CAPI and performance (CAPI volume determined by readiness factors)
     const scope = 'id-capi-performance';
     
     setScenario({ deployment, scope });
-    calculateResults();
-    setCurrentStep('results');
-  };
-
-  const handleScenariosComplete = () => {
     calculateResults();
     setCurrentStep('results');
   };
@@ -76,14 +72,18 @@ const ScenarioModeler = () => {
       
       toast({
         title: 'Generating PDF...',
-        description: 'Creating your commercial analysis...',
+        description: activeTab === 'capi' ? 'Creating your CAPI analysis...' : 'Creating your ROI report...',
       });
       
-      await generateCommercialPDF(results!, data);
+      if (activeTab === 'capi') {
+        await generateCommercialPDF(results!, data);
+      } else {
+        await generatePDF(results!, data);
+      }
       
       toast({
         title: 'PDF Downloaded',
-        description: 'Your commercial analysis has been downloaded.',
+        description: 'Your analysis has been downloaded.',
       });
       
       setShowLeadCapture(false);
@@ -97,10 +97,8 @@ const ScenarioModeler = () => {
     }
   };
 
-  // Map to existing StepType for Navigation
   const navStep = currentStep === 'hero' ? 'hero' : 
-                  currentStep === 'inputs' || currentStep === 'scenarios' ? 'calculator' : 
-                  'results';
+                  currentStep === 'inputs' ? 'calculator' : 'results';
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,18 +132,45 @@ const ScenarioModeler = () => {
 
         {currentStep === 'results' && results && (
           <div className="max-w-6xl mx-auto">
-            <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-bold">Commercial Scenarios</h1>
-              <p className="text-muted-foreground">Compare alignment models side-by-side</p>
-            </div>
-
-            <CommercialScenarios 
-              results={results} 
-              assumptionOverrides={assumptionOverrides}
-              onAssumptionOverridesChange={setAssumptionOverrides}
-              onReset={() => setCurrentStep('inputs')}
-              onDownloadPDF={handleDownloadPDF}
-            />
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'capi' | 'addressability')} className="w-full">
+              <div className="flex justify-center mb-8">
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                  <TabsTrigger value="capi">CAPI Commercials</TabsTrigger>
+                  <TabsTrigger value="addressability">Addressability ROI</TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="capi">
+                <div className="text-center space-y-2 mb-8">
+                  <h1 className="text-3xl font-bold">CAPI Alignment Models</h1>
+                  <p className="text-muted-foreground">Compare commercial alignment models side-by-side</p>
+                </div>
+                <CommercialScenarios 
+                  results={results} 
+                  assumptionOverrides={assumptionOverrides}
+                  onAssumptionOverridesChange={setAssumptionOverrides}
+                  onReset={() => setCurrentStep('inputs')}
+                  onDownloadPDF={handleDownloadPDF}
+                />
+              </TabsContent>
+              
+              <TabsContent value="addressability">
+                <div className="text-center space-y-2 mb-8">
+                  <h1 className="text-3xl font-bold">Addressability ROI</h1>
+                  <p className="text-muted-foreground">Overall ID + CAPI + Media Performance impact</p>
+                </div>
+                <SimplifiedResults
+                  results={results}
+                  riskScenario={riskScenario}
+                  onRiskScenarioChange={setRiskScenario}
+                  assumptionOverrides={assumptionOverrides}
+                  onAssumptionOverridesChange={setAssumptionOverrides}
+                  onInputChange={(field, value) => setInputs({ ...inputs, [field]: value })}
+                  onReset={() => setCurrentStep('inputs')}
+                  onDownloadPDF={handleDownloadPDF}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </div>
