@@ -196,7 +196,8 @@ const RISK_SCENARIO_CONFIG = {
 export const buildAdfixusProposalPdf = async (
   quizResults: any,
   calculatorResults: UnifiedResults | CalculatorResults,
-  leadData?: any
+  leadData?: any,
+  timeframe: '1-year' | '3-year' = '3-year' // Added timeframe parameter
 ) => {
   // Load both logos
   const adfixusLogoDataUrl = await convertImageToBase64('/lovable-uploads/e51c9dd5-2c62-4f48-83ea-2b4cb61eed6c.png');
@@ -211,40 +212,27 @@ export const buildAdfixusProposalPdf = async (
   const results = calculatorResults;
   const generatedDate = formatDate(new Date());
   
-  // Validation checkpoint: Ensure math consistency before PDF generation
-  const validateResults = (results: UnifiedResults): void => {
-    const idMonthly = results.idInfrastructure?.monthlyUplift || 0;
-    const capiMonthly = results.capiCapabilities?.monthlyUplift || 0;
-    const perfMonthly = results.mediaPerformance?.monthlyUplift || 0;
-    const calculatedTotal = idMonthly + capiMonthly + perfMonthly;
-    const statedTotal = results.totals.totalMonthlyUplift;
-    
-    // Allow 1 cent tolerance for floating point
-    if (Math.abs(calculatedTotal - statedTotal) > 0.01) {
-      console.error('PDF VALIDATION FAILED: Component sum does not match total');
-      console.error(`Components: $${idMonthly.toFixed(2)} + $${capiMonthly.toFixed(2)} + $${perfMonthly.toFixed(2)} = $${calculatedTotal.toFixed(2)}`);
-      console.error(`Stated total: $${statedTotal.toFixed(2)}`);
-      console.error(`Difference: $${Math.abs(calculatedTotal - statedTotal).toFixed(2)}`);
-      throw new Error(`Math validation failed: Components ($${calculatedTotal.toFixed(2)}) ≠ Total ($${statedTotal.toFixed(2)})`);
-    }
-    
-    // Validate annual = monthly * 12
-    const calculatedAnnual = statedTotal * 12;
-    const statedAnnual = results.totals.totalAnnualUplift;
-    if (Math.abs(calculatedAnnual - statedAnnual) > 0.01) {
-      throw new Error(`Annual validation failed: ${calculatedAnnual.toFixed(2)} ≠ ${statedAnnual.toFixed(2)}`);
-    }
-  };
+  // Import getDealBreakdown for consistent numbers
+  const { getDealBreakdown } = await import('./commercialCalculations');
+  const breakdown = getDealBreakdown(results, timeframe);
   
-  // Run validation
-  validateResults(results);
+  // Validation: Check if breakdown is valid
+  if (!breakdown.isValid) {
+    console.error('PDF VALIDATION FAILED:', breakdown.validationErrors);
+    throw new Error(`Math validation failed: ${breakdown.validationErrors.join(', ')}`);
+  }
   
-  // Extract core data
-  const monthlyUplift = results?.totals?.totalMonthlyUplift || 0;
-  const annualUplift = results?.totals?.totalAnnualUplift || 0;
+  // Use breakdown for consistent numbers - SINGLE SOURCE OF TRUTH
+  const monthlyUplift = breakdown.monthly.total;
+  const displayUplift = breakdown.display.total;
+  const timeframeLabel = breakdown.display.label;
   const currentMonthlyRevenue = results?.totals?.currentMonthlyRevenue || 0;
   
-  // Component uplifts
+  // For annual (used in tables), use year1 for simple math
+  const annualUplift = breakdown.year1.total;
+  
+  // Component uplifts - use breakdown monthly values for consistency
+  // Component objects (for accessing details)
   const idInfra = results?.idInfrastructure;
   const capi = results?.capiCapabilities;
   const mediaPerf = results?.mediaPerformance;
@@ -256,8 +244,13 @@ export const buildAdfixusProposalPdf = async (
   const riskConfig = RISK_SCENARIO_CONFIG[riskScenario];
   const riskAdjustment = results?.riskAdjustmentSummary;
   
-  // Breakdown percentages
-  const breakdown = results?.breakdown || { idInfrastructurePercent: 0, capiPercent: 0, performancePercent: 0 };
+  // Breakdown percentages - calculate from monthly values
+  const monthlyTotal = breakdown.monthly.total;
+  const breakdownPercentages = {
+    idInfrastructurePercent: monthlyTotal > 0 ? (breakdown.monthly.idInfrastructure / monthlyTotal) * 100 : 0,
+    capiPercent: monthlyTotal > 0 ? (breakdown.monthly.capi / monthlyTotal) * 100 : 0,
+    performancePercent: monthlyTotal > 0 ? (breakdown.monthly.mediaPerformance / monthlyTotal) * 100 : 0,
+  };
   
   // Selected domains
   const selectedDomains = results?.inputs?.selectedDomains || [];
@@ -556,21 +549,21 @@ export const buildAdfixusProposalPdf = async (
             ],
             [
               { text: 'Net New Revenue: Safari/iOS Inventory Recovery', style: 'tableCell' },
-              { text: formatCurrency(idInfra?.monthlyUplift || 0), style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency((idInfra?.monthlyUplift || 0) * 12), style: 'tableCell', alignment: 'right' },
-              { text: formatPercentage(breakdown.idInfrastructurePercent), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(breakdown.monthly.idInfrastructure), style: 'tableCell', alignment: 'right' },
+              { text: formatCurrency(breakdown.monthly.idInfrastructure * 12), style: 'tableCell', alignment: 'right' },
+              { text: formatPercentage(breakdownPercentages.idInfrastructurePercent), style: 'tableCell', alignment: 'right' }
             ],
             ...(capi && capi.monthlyUplift > 0 ? [[
               { text: 'Yield Lift: Outcome-Based Campaign Revenue', style: 'tableCell' },
-              { text: formatCurrency(capi.monthlyUplift), style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(capi.monthlyUplift * 12), style: 'tableCell', alignment: 'right' },
-              { text: formatPercentage(breakdown.capiPercent), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(breakdown.monthly.capi), style: 'tableCell', alignment: 'right' },
+              { text: formatCurrency(breakdown.monthly.capi * 12), style: 'tableCell', alignment: 'right' },
+              { text: formatPercentage(breakdownPercentages.capiPercent), style: 'tableCell', alignment: 'right' }
             ]] : []),
             ...(mediaPerf && mediaPerf.monthlyUplift > 0 ? [[
               { text: 'Sales Efficiency: Reduced Make-Goods & Premium Yield', style: 'tableCell' },
-              { text: formatCurrency(mediaPerf.monthlyUplift), style: 'tableCell', alignment: 'right' },
-              { text: formatCurrency(mediaPerf.monthlyUplift * 12), style: 'tableCell', alignment: 'right' },
-              { text: formatPercentage(breakdown.performancePercent), style: 'tableCell', alignment: 'right' }
+              { text: formatCurrency(breakdown.monthly.mediaPerformance), style: 'tableCell', alignment: 'right' },
+              { text: formatCurrency(breakdown.monthly.mediaPerformance * 12), style: 'tableCell', alignment: 'right' },
+              { text: formatPercentage(breakdownPercentages.performancePercent), style: 'tableCell', alignment: 'right' }
             ]] : []),
             [
               { text: 'MODELED TOTAL', style: 'tableHeader', fillColor: '#F1F5F9' },

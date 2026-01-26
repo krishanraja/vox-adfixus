@@ -1,6 +1,7 @@
 // Total Deal Summary Component
-// Shows the complete 36-month deal breakdown with clear component isolation
+// Shows the complete deal breakdown with clear component isolation
 // Ensures all numbers reconcile and are bulletproof
+// NOTE: This component uses 3-Year view by default (legacy behavior)
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,13 +16,14 @@ interface TotalDealSummaryProps {
 }
 
 export const TotalDealSummary = ({ results }: TotalDealSummaryProps) => {
-  const breakdown = getDealBreakdown(results);
+  // Use 3-year view for this legacy component
+  const breakdown = getDealBreakdown(results, '3-year');
   
   // Calculate percentages for visual representation
-  const total = breakdown.total36mo;
-  const idPct = total > 0 ? (breakdown.idInfrastructure36mo / total) * 100 : 0;
-  const capiPct = total > 0 ? (breakdown.capi36mo / total) * 100 : 0;
-  const mediaPct = total > 0 ? (breakdown.mediaPerformance36mo / total) * 100 : 0;
+  const total = breakdown.threeYear.total;
+  const idPct = total > 0 ? (breakdown.threeYear.idInfrastructure / total) * 100 : 0;
+  const capiPct = total > 0 ? (breakdown.threeYear.capi / total) * 100 : 0;
+  const mediaPct = total > 0 ? (breakdown.threeYear.mediaPerformance / total) * 100 : 0;
   
   return (
     <div className="space-y-6">
@@ -56,7 +58,7 @@ export const TotalDealSummary = ({ results }: TotalDealSummaryProps) => {
           <div className="space-y-3">
             <div>
               <p className="text-2xl font-bold text-primary">
-                {formatCommercialCurrency(breakdown.idInfrastructure36mo)}
+                {formatCommercialCurrency(breakdown.threeYear.idInfrastructure)}
               </p>
               <p className="text-xs text-muted-foreground">over 36 months</p>
             </div>
@@ -111,7 +113,7 @@ export const TotalDealSummary = ({ results }: TotalDealSummaryProps) => {
           <div className="space-y-3">
             <div>
               <p className="text-2xl font-bold text-accent">
-                {formatCommercialCurrency(breakdown.capi36mo)}
+                {formatCommercialCurrency(breakdown.threeYear.capi)}
               </p>
               <p className="text-xs text-muted-foreground">over 36 months</p>
             </div>
@@ -166,7 +168,7 @@ export const TotalDealSummary = ({ results }: TotalDealSummaryProps) => {
           <div className="space-y-3">
             <div>
               <p className="text-2xl font-bold text-green-600">
-                {formatCommercialCurrency(breakdown.mediaPerformance36mo)}
+                {formatCommercialCurrency(breakdown.threeYear.mediaPerformance)}
               </p>
               <p className="text-xs text-muted-foreground">over 36 months</p>
             </div>
@@ -273,17 +275,17 @@ export const TotalDealSummary = ({ results }: TotalDealSummaryProps) => {
         </p>
         <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
           <li>
-            <strong>ID Infrastructure ({formatCommercialCurrency(breakdown.idInfrastructure36mo)})</strong>: 
+            <strong>ID Infrastructure ({formatCommercialCurrency(breakdown.threeYear.idInfrastructure)})</strong>: 
             Structural benefits from making your Safari inventory addressable again. This happens automatically once AdFixus is deployed - 
             it's the foundation that makes everything else possible.
           </li>
           <li>
-            <strong>CAPI Revenue ({formatCommercialCurrency(breakdown.capi36mo)})</strong>: 
+            <strong>CAPI Revenue ({formatCommercialCurrency(breakdown.threeYear.capi)})</strong>: 
             Incremental revenue from advertisers who pay a premium for conversion tracking. This is sales-led - 
             your team must actively sell CAPI-enabled campaigns. Higher risk, higher upside, subject to 12.5% revenue share.
           </li>
           <li>
-            <strong>Media Performance ({formatCommercialCurrency(breakdown.mediaPerformance36mo)})</strong>: 
+            <strong>Media Performance ({formatCommercialCurrency(breakdown.threeYear.mediaPerformance)})</strong>: 
             Operational improvements from better data - fewer make-goods, higher yield, happier advertisers. 
             Emerges naturally from better identity resolution.
           </li>

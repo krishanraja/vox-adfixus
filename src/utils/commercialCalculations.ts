@@ -38,28 +38,89 @@ export const getCapiMonthlyIncremental = (results: UnifiedResults): number => {
 };
 
 /**
- * Get the complete deal breakdown for 36 months
- * This ensures all numbers reconcile across views
+ * Timeframe-aware deal breakdown with validation
+ * SINGLE SOURCE OF TRUTH for all UI and PDF numbers
+ * 
+ * Critical: Uses monthlyUplift for all components (not conversionTrackingRevenue)
+ * CAPI revenue share calculations use conversionTrackingRevenue separately
  */
-export const getDealBreakdown = (results: UnifiedResults): {
-  idInfrastructure36mo: number;
-  capi36mo: number;
-  mediaPerformance36mo: number;
-  total36mo: number;
+export interface DealBreakdownResult {
+  // Simple annual values (monthly × 12) - for 1-Year view
+  year1: {
+    idInfrastructure: number;
+    capi: number;
+    mediaPerformance: number;
+    total: number;
+  };
+  // 36-month with ramp-up curve - for 3-Year view
+  threeYear: {
+    idInfrastructure: number;
+    capi: number;
+    mediaPerformance: number;
+    total: number;
+  };
+  // Display values based on selected timeframe
+  display: {
+    idInfrastructure: number;
+    capi: number;
+    mediaPerformance: number;
+    total: number;
+    label: string; // "12 months" or "36 months"
+  };
+  // Monthly values (source of truth)
   monthly: {
     idInfrastructure: number;
     capi: number;
     mediaPerformance: number;
     total: number;
   };
-} => {
-  const idInfraMonthly = results.idInfrastructure.monthlyUplift;
-  const capiMonthly = results.capiCapabilities?.conversionTrackingRevenue || 0;
+  // Validation status
+  isValid: boolean;
+  validationErrors: string[];
+}
+
+export const getDealBreakdown = (
+  results: UnifiedResults, 
+  timeframe: '1-year' | '3-year' = '3-year'
+): DealBreakdownResult => {
+  const validationErrors: string[] = [];
+  
+  // CRITICAL: Use monthlyUplift for ALL components consistently
+  // This matches what results.totals.totalMonthlyUplift sums
+  const idInfraMonthly = results.idInfrastructure?.monthlyUplift || 0;
+  const capiMonthly = results.capiCapabilities?.monthlyUplift || 0;
   const mediaMonthly = results.mediaPerformance?.monthlyUplift || 0;
   
-  // Apply ramp-up curve to get 36-month totals (not simple multiplication)
-  let id36 = 0, capi36 = 0, media36 = 0;
+  const calculatedMonthlyTotal = idInfraMonthly + capiMonthly + mediaMonthly;
+  const statedMonthlyTotal = results.totals.totalMonthlyUplift;
   
+  // Validation: Components must sum to stated total
+  if (Math.abs(calculatedMonthlyTotal - statedMonthlyTotal) > 0.01) {
+    validationErrors.push(
+      `Monthly sum mismatch: ${calculatedMonthlyTotal.toFixed(2)} ≠ ${statedMonthlyTotal.toFixed(2)}`
+    );
+    console.error('DEAL BREAKDOWN VALIDATION FAILED:', validationErrors[0]);
+  }
+  
+  // Year 1: Simple annual (monthly × 12) - NO ramp-up
+  const year1 = {
+    idInfrastructure: idInfraMonthly * 12,
+    capi: capiMonthly * 12,
+    mediaPerformance: mediaMonthly * 12,
+    total: calculatedMonthlyTotal * 12,
+  };
+  
+  // Validate Year 1 matches stated annual
+  const statedAnnual = results.totals.totalAnnualUplift;
+  if (Math.abs(year1.total - statedAnnual) > 0.01) {
+    validationErrors.push(
+      `Annual mismatch: ${year1.total.toFixed(2)} ≠ ${statedAnnual.toFixed(2)}`
+    );
+    console.error('DEAL BREAKDOWN ANNUAL VALIDATION FAILED:', validationErrors[validationErrors.length - 1]);
+  }
+  
+  // 3-Year: Apply ramp-up curve for realistic adoption projection
+  let id36 = 0, capi36 = 0, media36 = 0;
   for (let month = 0; month < 36; month++) {
     const ramp = RAMP_UP_CURVE[month] || 1.30;
     id36 += idInfraMonthly * ramp;
@@ -67,17 +128,40 @@ export const getDealBreakdown = (results: UnifiedResults): {
     media36 += mediaMonthly * ramp;
   }
   
+  const threeYear = {
+    idInfrastructure: id36,
+    capi: capi36,
+    mediaPerformance: media36,
+    total: id36 + capi36 + media36,
+  };
+  
+  // Display values based on timeframe selection
+  const display = timeframe === '1-year' ? {
+    idInfrastructure: year1.idInfrastructure,
+    capi: year1.capi,
+    mediaPerformance: year1.mediaPerformance,
+    total: year1.total,
+    label: '12 months',
+  } : {
+    idInfrastructure: threeYear.idInfrastructure,
+    capi: threeYear.capi,
+    mediaPerformance: threeYear.mediaPerformance,
+    total: threeYear.total,
+    label: '36 months',
+  };
+  
   return {
-    idInfrastructure36mo: id36,
-    capi36mo: capi36,
-    mediaPerformance36mo: media36,
-    total36mo: id36 + capi36 + media36,
+    year1,
+    threeYear,
+    display,
     monthly: {
       idInfrastructure: idInfraMonthly,
       capi: capiMonthly,
       mediaPerformance: mediaMonthly,
-      total: idInfraMonthly + capiMonthly + mediaMonthly,
+      total: calculatedMonthlyTotal,
     },
+    isValid: validationErrors.length === 0,
+    validationErrors,
   };
 };
 

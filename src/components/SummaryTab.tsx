@@ -36,22 +36,26 @@ export const SummaryTab = ({
   onAssumptionOverridesChange,
   onDownloadPDF,
 }: SummaryTabProps) => {
-  const breakdown = getDealBreakdown(results);
+  // Use timeframe-aware breakdown - SINGLE SOURCE OF TRUTH
+  const breakdown = getDealBreakdown(results, timeframe);
   
-  // Calculate values based on timeframe
-  const multiplier = timeframe === '3-year' ? 1 : 1 / 3;
-  const timeframeLabel = timeframe === '3-year' ? '36 months' : '12 months';
+  // Log validation status in development
+  if (!breakdown.isValid) {
+    console.warn('Deal breakdown validation failed:', breakdown.validationErrors);
+  }
   
-  const total = breakdown.total36mo * multiplier;
-  const idInfra = breakdown.idInfrastructure36mo * multiplier;
-  const capi = breakdown.capi36mo * multiplier;
-  const media = breakdown.mediaPerformance36mo * multiplier;
+  // Use the display object directly - already calculated for correct timeframe
+  const total = breakdown.display.total;
+  const idInfra = breakdown.display.idInfrastructure;
+  const capi = breakdown.display.capi;
+  const media = breakdown.display.mediaPerformance;
+  const timeframeLabel = breakdown.display.label;
   
-  // Calculate percentages
-  const totalFull = breakdown.total36mo;
-  const idPct = totalFull > 0 ? (breakdown.idInfrastructure36mo / totalFull) * 100 : 0;
-  const capiPct = totalFull > 0 ? (breakdown.capi36mo / totalFull) * 100 : 0;
-  const mediaPct = totalFull > 0 ? (breakdown.mediaPerformance36mo / totalFull) * 100 : 0;
+  // Calculate percentages from monthly values (consistent regardless of timeframe)
+  const monthlyTotal = breakdown.monthly.total;
+  const idPct = monthlyTotal > 0 ? (breakdown.monthly.idInfrastructure / monthlyTotal) * 100 : 0;
+  const capiPct = monthlyTotal > 0 ? (breakdown.monthly.capi / monthlyTotal) * 100 : 0;
+  const mediaPct = monthlyTotal > 0 ? (breakdown.monthly.mediaPerformance / monthlyTotal) * 100 : 0;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">

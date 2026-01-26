@@ -16,14 +16,12 @@ interface AddressabilityTabProps {
 }
 
 export const AddressabilityTab = ({ results, timeframe }: AddressabilityTabProps) => {
-  const breakdown = getDealBreakdown(results);
+  // Use timeframe-aware breakdown - SINGLE SOURCE OF TRUTH
+  const breakdown = getDealBreakdown(results, timeframe);
   
-  // Timeframe calculations
-  const multiplier = timeframe === '3-year' ? 1 : 1 / 3;
-  const timeframeLabel = timeframe === '3-year' ? '36 months' : '12 months';
-  
-  const idInfraTotal = breakdown.idInfrastructure36mo * multiplier;
-  const mediaTotal = breakdown.mediaPerformance36mo * multiplier;
+  const timeframeLabel = breakdown.display.label;
+  const idInfraTotal = breakdown.display.idInfrastructure;
+  const mediaTotal = breakdown.display.mediaPerformance;
   const combinedTotal = idInfraTotal + mediaTotal;
   
   const idDetails = results.idInfrastructure?.details;
