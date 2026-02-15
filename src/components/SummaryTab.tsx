@@ -9,11 +9,13 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Download, Shield, Target, TrendingUp, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { UnifiedResults, AssumptionOverrides, TimeframeType } from '@/types/scenarios';
+import type { UnifiedResults, AssumptionOverrides, TimeframeType, PdfExportConfig } from '@/types/scenarios';
 import type { RiskScenario } from '@/constants/riskScenarios';
 import { getDealBreakdown, formatCommercialCurrency } from '@/utils/commercialCalculations';
 import { NegotiationHighlights } from '@/components/commercial/NegotiationHighlights';
 import { AdvancedSettingsSheet } from '@/components/results/AdvancedSettingsSheet';
+import { PdfExportConfigSheet } from '@/components/PdfExportConfig';
+import { useState } from 'react';
 
 interface SummaryTabProps {
   results: UnifiedResults;
@@ -23,7 +25,7 @@ interface SummaryTabProps {
   onRiskScenarioChange: (scenario: RiskScenario) => void;
   assumptionOverrides?: AssumptionOverrides;
   onAssumptionOverridesChange: (overrides: AssumptionOverrides | undefined) => void;
-  onDownloadPDF: () => void;
+  onDownloadPDF: (config: PdfExportConfig) => void;
 }
 
 export const SummaryTab = ({
@@ -36,6 +38,7 @@ export const SummaryTab = ({
   onAssumptionOverridesChange,
   onDownloadPDF,
 }: SummaryTabProps) => {
+  const [showExportConfig, setShowExportConfig] = useState(false);
   // Use timeframe-aware breakdown - SINGLE SOURCE OF TRUTH
   const breakdown = getDealBreakdown(results, timeframe);
   
@@ -295,11 +298,23 @@ export const SummaryTab = ({
 
       {/* PDF Download Button - ONLY place for PDF */}
       <div className="flex justify-center pt-4">
-        <Button onClick={onDownloadPDF} size="lg" className="gap-2">
+        <Button onClick={() => setShowExportConfig(true)} size="lg" className="gap-2">
           <Download className="h-4 w-4" />
           Download Executive PDF Report
         </Button>
       </div>
+
+      {/* PDF Export Config Sheet */}
+      <PdfExportConfigSheet
+        open={showExportConfig}
+        onOpenChange={setShowExportConfig}
+        results={results}
+        timeframe={timeframe}
+        onExport={(config) => {
+          setShowExportConfig(false);
+          onDownloadPDF(config);
+        }}
+      />
     </div>
   );
 };

@@ -45,6 +45,7 @@ export const ADDRESSABILITY_BENCHMARKS = {
   OTHER_ADDRESSABILITY: 1.0,
   
   CPM_IMPROVEMENT_FACTOR: 0.25, // 25% CPM boost on newly addressable
+  CONTEXTUAL_CPM_RATIO: 0.72, // Contextual CPM is ~72% of addressable CPM (industry benchmark)
 };
 
 export const OPERATIONAL_BENCHMARKS = {

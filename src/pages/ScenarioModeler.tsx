@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScenarioCalculator } from '@/hooks/useScenarioCalculator';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LeadData } from '@/types';
-import type { TimeframeType } from '@/types/scenarios';
+import type { TimeframeType, PdfExportConfig } from '@/types/scenarios';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +27,7 @@ const ScenarioModeler = () => {
   const [showLeadCapture, setShowLeadCapture] = useState(false);
   const [activeTab, setActiveTab] = useState<ResultsTab>('summary');
   const [timeframe, setTimeframe] = useState<TimeframeType>('3-year');
+  const [pendingPdfConfig, setPendingPdfConfig] = useState<PdfExportConfig | null>(null);
   
   const { 
     inputs, 
@@ -70,7 +71,8 @@ const ScenarioModeler = () => {
     setCurrentStep('hero');
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (config: PdfExportConfig) => {
+    setPendingPdfConfig(config);
     setShowLeadCapture(true);
   };
 
@@ -83,8 +85,8 @@ const ScenarioModeler = () => {
         description: 'Creating your executive report...',
       });
       
-      // Generate consolidated PDF - CRITICAL: Pass timeframe for consistent numbers
-      await generatePDF(null, results!, data, timeframe);
+      // Generate consolidated PDF with export config
+      await generatePDF(null, results!, data, timeframe, pendingPdfConfig || undefined);
       
       toast({
         title: 'PDF Downloaded',

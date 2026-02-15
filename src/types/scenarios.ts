@@ -222,3 +222,11 @@ export interface ComparisonData {
   withAdFixus: string | number;
   improvement: string | number;
 }
+
+export interface PdfExportConfig {
+  includeIdInfrastructure: boolean;    // Default: true (always on - foundation)
+  includeCapiRevenue: boolean;         // Default: true (can toggle off)
+  includeMediaPerformance: boolean;    // Default: true (can toggle off)
+  includeCampaignEconomics: boolean;   // Default: true (follows CAPI toggle)
+  includeCarSalesProofPoint: boolean;  // Default: true (follows CAPI toggle)
+}
