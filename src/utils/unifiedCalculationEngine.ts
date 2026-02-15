@@ -335,12 +335,25 @@ export class UnifiedCalculationEngine {
     const newlyAddressableVideo = videoImpressions * safariShare * safariAddressabilityImprovement;
 
     // CPM improvement on newly addressable Safari inventory
+    // KEY FIX: Safari impressions currently earn contextual CPM, NOT $0
+    // The real uplift is only the DELTA between addressable CPM and contextual CPM
     const cpmUpliftFactor = overrides?.cpmUpliftFactor ?? ADDRESSABILITY_BENCHMARKS.CPM_IMPROVEMENT_FACTOR;
-    const improvedDisplayCPM = displayCPM * (1 + cpmUpliftFactor);
-    const improvedVideoCPM = videoCPM * (1 + cpmUpliftFactor);
+    const contextualRatio = ADDRESSABILITY_BENCHMARKS.CONTEXTUAL_CPM_RATIO; // 0.72
+    
+    // Addressable CPM (what these impressions will earn with AdFixus)
+    const addressableDisplayCPM = displayCPM * (1 + cpmUpliftFactor);
+    const addressableVideoCPM = videoCPM * (1 + cpmUpliftFactor);
+    
+    // Contextual CPM (what these impressions earn TODAY without identity)
+    const contextualDisplayCPM = displayCPM * contextualRatio;
+    const contextualVideoCPM = videoCPM * contextualRatio;
+    
+    // Delta = only the incremental CPM improvement (not full CPM)
+    const displayCpmDelta = addressableDisplayCPM - contextualDisplayCPM;
+    const videoCpmDelta = addressableVideoCPM - contextualVideoCPM;
 
-    const displayUplift = (newlyAddressableDisplay / 1000) * improvedDisplayCPM;
-    const videoUplift = (newlyAddressableVideo / 1000) * improvedVideoCPM;
+    const displayUplift = (newlyAddressableDisplay / 1000) * displayCpmDelta;
+    const videoUplift = (newlyAddressableVideo / 1000) * videoCpmDelta;
     const cpmImprovement = displayUplift + videoUplift;
 
     // CDP cost savings: FIXED at $3,500/month per Vox guidance

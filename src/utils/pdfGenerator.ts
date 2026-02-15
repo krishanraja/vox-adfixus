@@ -4,7 +4,7 @@ import { formatCurrency, formatNumber, formatPercentage } from './formatting';
 import { supabase } from '@/integrations/supabase/client';
 import { VOX_MEDIA_DOMAINS, CONTRACT_PRICING } from '@/constants/voxMediaDomains';
 import { CAPI_PRICING_MODEL } from '@/constants/industryBenchmarks';
-import type { UnifiedResults, TimeframeType } from '@/types/scenarios';
+import type { UnifiedResults, TimeframeType, PdfExportConfig } from '@/types/scenarios';
 import type { CalculatorResults } from '@/types';
 import { getDealBreakdown } from './commercialCalculations';
 import { calculateCampaignEconomics, calculateCampaignPortfolio, formatCampaignCurrency } from './campaignEconomicsCalculator';
@@ -73,7 +73,8 @@ export const buildAdfixusProposalPdf = async (
   quizResults: any,
   calculatorResults: UnifiedResults | CalculatorResults,
   leadData?: any,
-  timeframe: TimeframeType = '3-year'
+  timeframe: TimeframeType = '3-year',
+  exportConfig?: PdfExportConfig
 ) => {
   // Load logos
   const adfixusLogoDataUrl = await convertImageToBase64('/lovable-uploads/e51c9dd5-2c62-4f48-83ea-2b4cb61eed6c.png');
@@ -87,6 +88,15 @@ export const buildAdfixusProposalPdf = async (
   const results = calculatorResults;
   const generatedDate = formatDate(new Date());
   
+  // Export config defaults (all included if not specified)
+  const config: PdfExportConfig = exportConfig || {
+    includeIdInfrastructure: true,
+    includeCapiRevenue: true,
+    includeMediaPerformance: true,
+    includeCampaignEconomics: true,
+    includeCarSalesProofPoint: true,
+  };
+  
   // Get deal breakdown - SINGLE SOURCE OF TRUTH
   const breakdown = getDealBreakdown(results, timeframe);
   
@@ -94,16 +104,19 @@ export const buildAdfixusProposalPdf = async (
     console.error('PDF VALIDATION FAILED:', breakdown.validationErrors);
   }
   
-  // Core metrics from breakdown
-  const displayTotal = breakdown.display.total;
-  const displayIdInfra = breakdown.display.idInfrastructure;
-  const displayCapi = breakdown.display.capi;
-  const displayMedia = breakdown.display.mediaPerformance;
+  // Filtered display values based on config
+  const displayIdInfra = config.includeIdInfrastructure ? breakdown.display.idInfrastructure : 0;
+  const displayCapi = config.includeCapiRevenue ? breakdown.display.capi : 0;
+  const displayMedia = config.includeMediaPerformance ? breakdown.display.mediaPerformance : 0;
+  const displayTotal = displayIdInfra + displayCapi + displayMedia;
   const timeframeLabel = breakdown.display.label;
   
-  // Monthly values for context
-  const monthlyTotal = breakdown.monthly.total;
-  const annualTotal = breakdown.year1.total;
+  // Monthly values for context (filtered)
+  const monthlyIdInfra = config.includeIdInfrastructure ? breakdown.monthly.idInfrastructure : 0;
+  const monthlyCapi = config.includeCapiRevenue ? breakdown.monthly.capi : 0;
+  const monthlyMedia = config.includeMediaPerformance ? breakdown.monthly.mediaPerformance : 0;
+  const monthlyTotal = monthlyIdInfra + monthlyCapi + monthlyMedia;
+  const annualTotal = monthlyTotal * 12;
   
   // CAPI configuration and portfolio
   const capiConfig = results.capiCapabilities?.capiConfiguration;
@@ -152,429 +165,291 @@ export const buildAdfixusProposalPdf = async (
       ]
     }),
 
-    content: [
-      // ==================== PAGE 1: EXECUTIVE DECISION SUMMARY ====================
-      { text: 'Executive Decision Summary', style: 'h1', margin: [0, 0, 0, 15] },
-      { text: `Generated: ${generatedDate} | Timeframe: ${timeframeLabel} | Scenario: ${riskConfig.label}`, style: 'metadata', margin: [0, 0, 0, 20] },
+    content: (() => {
+      const content: any[] = [];
       
-      // THE DECISION
-      {
-        table: {
-          widths: ['*'],
-          body: [[{
-            text: [
-              { text: 'THE QUESTION: ', bold: true },
-              { text: 'Should Vox Media implement AdFixus identity infrastructure with a revenue share alignment model?' }
-            ],
-            style: 'decisionBox',
-            fillColor: '#F0F9FF',
-            margin: [15, 15, 15, 15]
-          }]]
-        },
-        layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#0EA5E9', vLineColor: () => '#0EA5E9' },
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Hero Metrics
-      { text: 'Projected Impact', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', '*', '*'],
-          body: [
-            [
-              { text: `Total Value (${timeframeLabel})`, style: 'metricHeader', fillColor: '#DCFCE7' },
-              { text: 'Monthly Incremental', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'ROI Multiple', style: 'metricHeader', fillColor: '#F1F5F9' }
-            ],
-            [
-              { text: formatCurrency(displayTotal), style: 'metricValueHero', alignment: 'center', fillColor: '#F0FDF4' },
-              { text: formatCurrency(monthlyTotal), style: 'metricValue', alignment: 'center' },
-              { text: `${roiMultiple.toFixed(1)}x`, style: 'metricValue', alignment: 'center' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 20]
-      },
-      
-      // Value Breakdown
-      { text: 'Value Breakdown', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Benefit Category', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: `${timeframeLabel} Value`, style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: '% of Total', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
-            ],
-            [
-              { text: 'ID Infrastructure (Safari Recovery + CDP Savings)', style: 'tableCell' },
-              { text: formatCurrency(displayIdInfra), style: 'tableCell', alignment: 'right' },
-              { text: formatPercentage((displayIdInfra / displayTotal) * 100), style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'CAPI Capabilities (Conversion Tracking)', style: 'tableCell' },
-              { text: formatCurrency(displayCapi), style: 'tableCell', alignment: 'right' },
-              { text: formatPercentage((displayCapi / displayTotal) * 100), style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Media Performance (Premium Yield)', style: 'tableCell' },
-              { text: formatCurrency(displayMedia), style: 'tableCell', alignment: 'right' },
-              { text: formatPercentage((displayMedia / displayTotal) * 100), style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'TOTAL', style: 'tableCell', bold: true, fillColor: '#F0FDF4' },
-              { text: formatCurrency(displayTotal), style: 'tableCell', bold: true, alignment: 'right', fillColor: '#F0FDF4' },
-              { text: '100%', style: 'tableCell', bold: true, alignment: 'right', fillColor: '#F0FDF4' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 20]
-      },
-      
-      // Recommendation Box
-      {
-        table: {
-          widths: ['*'],
-          body: [[{
-            text: [
-              { text: 'RECOMMENDATION: ', bold: true },
-              { text: 'Proceed with Revenue Share alignment model. Structural benefits alone (ID Infrastructure + Media Performance) cover platform investment. CAPI upside scales with deployment aggressiveness.' }
-            ],
-            style: 'recommendationBox',
-            fillColor: '#DCFCE7',
-            margin: [15, 12, 15, 12]
-          }]]
-        },
-        layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#22C55E', vLineColor: () => '#22C55E' },
-        margin: [0, 0, 0, 0]
-      },
-
-      // ==================== PAGE 2: STRUCTURAL BENEFITS ====================
-      { pageBreak: 'before', text: 'Structural Benefits: The Safe Bet', style: 'h1', margin: [0, 0, 0, 15] },
-      { text: 'These benefits are predictable, low-variance, and cover the platform investment alone.', style: 'subtitle', margin: [0, 0, 0, 20] },
-      
-      // ID Infrastructure
-      { text: 'ID Infrastructure', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', 'auto'],
-          body: [
-            [{ text: 'Safari Traffic Share', style: 'tableLabel' }, { text: formatPercentage(safariShare * 100), style: 'tableValue', alignment: 'right' }],
-            [{ text: 'Current Addressability', style: 'tableLabel' }, { text: formatPercentage(currentAddressability * 100), style: 'tableValue', alignment: 'right' }],
-            [{ text: 'Projected Addressability', style: 'tableLabel' }, { text: formatPercentage(improvedAddressability * 100), style: 'tableValue', alignment: 'right', color: '#15803D' }],
-            [{ text: 'Addressability Revenue Impact', style: 'tableLabel' }, { text: formatCurrency(idInfra?.addressabilityRecovery || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
-            [{ text: 'CDP Cost Savings', style: 'tableLabel' }, { text: formatCurrency(idInfra?.cdpSavings || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
-            [{ text: 'ID Infrastructure Total', style: 'tableLabel', bold: true, fillColor: '#F0FDF4' }, { text: formatCurrency(breakdown.monthly.idInfrastructure) + '/mo', style: 'tableValue', bold: true, alignment: 'right', fillColor: '#F0FDF4' }]
-          ]
-        },
-        layout: 'noBorders',
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Media Performance
-      { text: 'Media Performance', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', 'auto'],
-          body: [
-            [{ text: 'Premium Inventory Pricing Power', style: 'tableLabel' }, { text: formatCurrency(results.mediaPerformance?.premiumPricingPower || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
-            [{ text: 'Make-Good Reduction', style: 'tableLabel' }, { text: formatCurrency(results.mediaPerformance?.makeGoodReduction || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
-            [{ text: 'Media Performance Total', style: 'tableLabel', bold: true, fillColor: '#F0FDF4' }, { text: formatCurrency(breakdown.monthly.mediaPerformance) + '/mo', style: 'tableValue', bold: true, alignment: 'right', fillColor: '#F0FDF4' }]
-          ]
-        },
-        layout: 'noBorders',
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Structural Total
-      {
-        table: {
-          widths: ['*'],
-          body: [[{
-            stack: [
-              { text: 'Combined Structural Benefits', style: 'h3', margin: [0, 0, 0, 5] },
-              { text: formatCurrency(breakdown.monthly.idInfrastructure + breakdown.monthly.mediaPerformance) + '/month', style: 'heroValue' },
-              { text: `${formatCurrency((breakdown.monthly.idInfrastructure + breakdown.monthly.mediaPerformance) * 12)}/year — covers platform investment with margin`, style: 'footnote', margin: [0, 5, 0, 0] }
-            ],
-            fillColor: '#F0FDF4',
-            margin: [15, 15, 15, 15]
-          }]]
-        },
-        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#22C55E', vLineColor: () => '#22C55E' },
-        margin: [0, 0, 0, 20]
-      },
-      
-      { text: 'Portfolio Coverage', style: 'h3', margin: [0, 0, 0, 10] },
-      { text: `Selected ${selectedDomains.length} of ${VOX_MEDIA_DOMAINS.length} domains: ${selectedDomains.slice(0, 5).map(getDomainName).join(', ')}${selectedDomains.length > 5 ? ` +${selectedDomains.length - 5} more` : ''}`, style: 'body', margin: [0, 0, 0, 0] },
-
-      // ==================== PAGE 3: CAPI OPPORTUNITY ====================
-      { pageBreak: 'before', text: 'CAPI Opportunity: The Magic Upside', style: 'h1', margin: [0, 0, 0, 15] },
-      { text: 'The more aggressively you deploy CAPI on large advertisers, the better the economics get.', style: 'subtitle', margin: [0, 0, 0, 20] },
-      
-      // Your CAPI Configuration
-      { text: 'Your CAPI Configuration', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', '*', '*'],
-          body: [
-            [
-              { text: 'Yearly Campaigns', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Avg Campaign Spend', style: 'metricHeader', fillColor: '#F1F5F9' },
-              { text: 'Annual Net to Vox', style: 'metricHeader', fillColor: '#DCFCE7' }
-            ],
-            [
-              { text: `${yearlyCampaigns}`, style: 'metricValue', alignment: 'center' },
-              { text: formatCurrency(avgCampaignSpend), style: 'metricValue', alignment: 'center' },
-              { text: formatCurrency(portfolio.annualNet), style: 'metricValueHero', alignment: 'center', fillColor: '#F0FDF4' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 20]
-      },
-      
-      // The Magic of the Cap
-      {
-        table: {
-          widths: ['*'],
-          body: [[{
-            text: [
-              { text: 'THE MAGIC OF THE $30K CAP: ', bold: true },
-              { text: `At ${formatCurrency(CAPI_ECONOMICS_CONSTANTS.CAP_THRESHOLD)} campaign spend, the fee caps at $30K. Every dollar of incremental revenue above that goes 100% to Vox. Bigger campaigns = exponentially better ROI.` }
-            ],
-            style: 'disclaimerBox',
-            fillColor: '#DBEAFE',
-            margin: [12, 12, 12, 12]
-          }]]
-        },
-        layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#3B82F6', vLineColor: () => '#3B82F6' },
-        margin: [0, 0, 0, 20]
-      },
-      
-      // Campaign Economics Table
-      { text: 'Campaign Economics by Size', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Campaign Spend', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Incremental (40%)', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Fee', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
-              { text: 'Net to Vox', style: 'tableHeader', fillColor: '#DCFCE7', alignment: 'right' },
-              { text: 'ROI', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
-              { text: 'Status', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' }
-            ],
-            ...[79000, 150000, 300000, 500000, 1000000].map(spend => {
-              const econ = calculateCampaignEconomics(spend);
-              return [
-                { text: formatCurrency(spend), style: 'tableCell' },
-                { text: formatCurrency(econ.incrementalRevenue), style: 'tableCell', alignment: 'right' },
-                { text: formatCurrency(econ.cappedFee), style: 'tableCell', alignment: 'right' },
-                { text: formatCurrency(econ.netToPublisher), style: 'tableCell', alignment: 'right', fillColor: '#F0FDF4', bold: true },
-                { text: `${econ.roiMultiple.toFixed(1)}x`, style: 'tableCell', alignment: 'center', color: econ.isCapped ? '#15803D' : '#475569' },
-                { text: econ.isCapped ? 'CAP ✓' : '', style: 'tableCell', alignment: 'center', color: '#15803D' }
-              ];
-            })
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 20]
-      },
-      
-      // CarSales Proof Point
-      { text: 'Case Study: CarSales', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*'],
-          body: [[{
-            stack: [
-              { text: `"${CARSALES_PROOF_POINT.quote}"`, style: 'quoteText', italics: true, margin: [0, 0, 0, 10] },
-              { text: `— ${CARSALES_PROOF_POINT.author}, ${CARSALES_PROOF_POINT.title}, ${CARSALES_PROOF_POINT.company}`, style: 'quoteAttribution' },
-              { text: '\n' },
-              { 
-                columns: [
-                  { text: [{ text: '$1.8M\n', bold: true, fontSize: 14 }, 'New Revenue Won'], alignment: 'center' },
-                  { text: [{ text: '100+\n', bold: true, fontSize: 14 }, 'CAPI Campaigns'], alignment: 'center' },
-                  { text: [{ text: '$300K→$1M\n', bold: true, fontSize: 14 }, 'Largest Campaign'], alignment: 'center' }
-                ]
-              }
-            ],
-            fillColor: '#FFFBEB',
-            margin: [15, 15, 15, 15]
-          }]]
-        },
-        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#F59E0B', vLineColor: () => '#F59E0B' },
-        margin: [0, 0, 0, 0]
-      },
-
-      // ==================== PAGE 4: ALIGNMENT MODELS ====================
-      { pageBreak: 'before', text: 'Alignment Models: Why Revenue Share Wins', style: 'h1', margin: [0, 0, 0, 15] },
-      { text: 'The 12.5% revenue share with campaign cap is the only model with full incentive alignment.', style: 'subtitle', margin: [0, 0, 0, 20] },
-      
-      // Model Comparison Table
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', 'auto', 'auto', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Model', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Upfront Risk', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
-              { text: 'Alignment', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
-              { text: 'At Scale', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
-              { text: 'Verdict', style: 'tableHeader', fillColor: '#F1F5F9' }
-            ],
-            [
-              { text: 'Flat Fee ($1M/yr)', style: 'tableCell', bold: true },
-              { text: 'HIGH', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
-              { text: 'NONE', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
-              { text: 'WORSE', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
-              { text: 'Pay regardless of success', style: 'tableCell', color: '#DC2626' }
-            ],
-            [
-              { text: 'Annual Cap ($1.2M)', style: 'tableCell', bold: true },
-              { text: 'MED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
-              { text: 'LIMITED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
-              { text: 'CAPPED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
-              { text: 'Partner incentive ends at cap', style: 'tableCell', color: '#CA8A04' }
-            ],
-            [
-              { text: 'Revenue Share + Cap ✓', style: 'tableCell', bold: true, color: '#15803D' },
-              { text: 'LOW', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
-              { text: 'FULL', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
-              { text: 'BETTER', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
-              { text: 'We only win when you win', style: 'tableCell', color: '#15803D', bold: true }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Negotiation Highlights
-      { text: 'Negotiation Highlights (Extended to Mid-February)', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', '*', '*', '*'],
-          body: [[
-            { text: [{ text: '23%\n', bold: true, fontSize: 16 }, 'Contract Discount'], style: 'tableCell', alignment: 'center', fillColor: '#DCFCE7' },
-            { text: [{ text: '50%\n', bold: true, fontSize: 16 }, 'POC Discount'], style: 'tableCell', alignment: 'center', fillColor: '#DBEAFE' },
-            { text: [{ text: '$11.25K\n', bold: true, fontSize: 16 }, 'Onboarding Waived'], style: 'tableCell', alignment: 'center', fillColor: '#F3E8FF' },
-            { text: [{ text: '$30K\n', bold: true, fontSize: 16 }, 'Campaign Cap'], style: 'tableCell', alignment: 'center', fillColor: '#FEF3C7' }
-          ]]
-        },
-        layout: { ...tableLayout, paddingTop: () => 12, paddingBottom: () => 12 },
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Key Insight
-      {
-        table: {
-          widths: ['*'],
-          body: [[{
-            text: [
-              { text: 'KEY INSIGHT: ', bold: true },
-              { text: 'Revenue share creates a partnership where both parties are invested in growth. The other models create vendor relationships with misaligned incentives.' }
-            ],
-            style: 'disclaimerBox',
-            fillColor: '#DCFCE7',
-            margin: [12, 12, 12, 12]
-          }]]
-        },
-        layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#22C55E', vLineColor: () => '#22C55E' },
-        margin: [0, 0, 0, 0]
-      },
-
-      // ==================== PAGE 5: IMPLEMENTATION & NEXT STEPS ====================
-      { pageBreak: 'before', text: 'Implementation & Next Steps', style: 'h1', margin: [0, 0, 0, 15] },
-      
-      // Timeline
-      { text: 'Implementation Timeline', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['auto', '*', 'auto'],
-          body: [
-            [
-              { text: 'Phase', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Objective', style: 'tableHeader', fillColor: '#F1F5F9' },
-              { text: 'Duration', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
-            ],
-            [
-              { text: 'Technical Integration', style: 'tableCell', bold: true },
-              { text: 'ID deployment + stack integration (GAM, analytics, segments)', style: 'tableCell' },
-              { text: '3-6 weeks', style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'POC Phase', style: 'tableCell', bold: true },
-              { text: 'Validate addressability uplift on POC domains', style: 'tableCell' },
-              { text: 'Months 1-3', style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Scaling Phase', style: 'tableCell', bold: true },
-              { text: 'Expand to additional domains, begin CAPI campaigns', style: 'tableCell' },
-              { text: 'Months 4-6', style: 'tableCell', alignment: 'right' }
-            ],
-            [
-              { text: 'Value Phase', style: 'tableCell', bold: true },
-              { text: 'Full ROI realization, CAPI at scale, premium yield', style: 'tableCell' },
-              { text: 'Months 7-12', style: 'tableCell', alignment: 'right' }
-            ]
-          ]
-        },
-        layout: tableLayout,
-        margin: [0, 0, 0, 25]
-      },
-      
-      // POC Success Criteria
-      { text: 'POC Success Criteria', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        ol: [
-          { text: [{ text: 'ID Deployment: ', bold: true }, 'ClientID deployed across POC domains, passing into GAM as PPID'] },
-          { text: [{ text: 'Addressability: ', bold: true }, 'Measurable Safari impressions uplift within 30 days'] },
-          { text: [{ text: 'Identity Durability: ', bold: true }, 'ID consistency verified across NYMag cluster + Verge/Vox domains'] },
-          { text: [{ text: 'Strategic Foundation: ', bold: true }, 'Real conversion reporting demonstrated on Vox campaign reports'] }
-        ],
-        style: 'listItem',
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Assumptions
-      { text: 'Key Assumptions', style: 'h3', margin: [0, 0, 0, 10] },
-      {
-        table: {
-          widths: ['*', 'auto', '*', 'auto'],
-          body: [
-            [
-              { text: 'Safari Share', style: 'tableLabel' },
-              { text: '35%', style: 'tableValue', alignment: 'right' },
-              { text: 'CPM Uplift', style: 'tableLabel' },
-              { text: '25%', style: 'tableValue', alignment: 'right' }
-            ],
-            [
-              { text: 'Adoption Rate', style: 'tableLabel' },
-              { text: formatPercentage(riskConfig.adoptionRate * 100), style: 'tableValue', alignment: 'right' },
-              { text: 'CAPI Improvement', style: 'tableLabel' },
-              { text: '40%', style: 'tableValue', alignment: 'right' }
-            ]
-          ]
-        },
-        layout: 'noBorders',
-        margin: [0, 0, 0, 25]
-      },
-      
-      // Disclaimer
-      { text: 'SCENARIO MODEL DISCLAIMER', style: 'disclaimerHeader', margin: [0, 0, 0, 6] },
-      { 
-        text: 'This document presents scenario-based projections using industry benchmarks and stated assumptions. All figures are estimates only and do not constitute forecasts or guarantees. Actual results depend on deployment execution, advertiser demand, market conditions, and organizational readiness.',
-        style: 'disclaimer',
-        margin: [0, 0, 0, 0]
+      // Build value breakdown rows dynamically based on config
+      const breakdownRows: any[] = [
+        [
+          { text: 'Benefit Category', style: 'tableHeader', fillColor: '#F1F5F9' },
+          { text: `${timeframeLabel} Value`, style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+          { text: '% of Total', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }
+        ]
+      ];
+      if (config.includeIdInfrastructure) {
+        breakdownRows.push([
+          { text: 'ID Infrastructure (Safari Recovery + CDP Savings)', style: 'tableCell' },
+          { text: formatCurrency(displayIdInfra), style: 'tableCell', alignment: 'right' },
+          { text: displayTotal > 0 ? formatPercentage((displayIdInfra / displayTotal) * 100) : '0%', style: 'tableCell', alignment: 'right' }
+        ]);
       }
-    ],
+      if (config.includeCapiRevenue) {
+        breakdownRows.push([
+          { text: 'CAPI Capabilities (Conversion Tracking)', style: 'tableCell' },
+          { text: formatCurrency(displayCapi), style: 'tableCell', alignment: 'right' },
+          { text: displayTotal > 0 ? formatPercentage((displayCapi / displayTotal) * 100) : '0%', style: 'tableCell', alignment: 'right' }
+        ]);
+      }
+      if (config.includeMediaPerformance) {
+        breakdownRows.push([
+          { text: 'Media Performance (Premium Yield)', style: 'tableCell' },
+          { text: formatCurrency(displayMedia), style: 'tableCell', alignment: 'right' },
+          { text: displayTotal > 0 ? formatPercentage((displayMedia / displayTotal) * 100) : '0%', style: 'tableCell', alignment: 'right' }
+        ]);
+      }
+      breakdownRows.push([
+        { text: 'TOTAL', style: 'tableCell', bold: true, fillColor: '#F0FDF4' },
+        { text: formatCurrency(displayTotal), style: 'tableCell', bold: true, alignment: 'right', fillColor: '#F0FDF4' },
+        { text: '100%', style: 'tableCell', bold: true, alignment: 'right', fillColor: '#F0FDF4' }
+      ]);
+
+      // ==================== PAGE 1: EXECUTIVE DECISION SUMMARY (always included) ====================
+      content.push(
+        { text: 'Executive Decision Summary', style: 'h1', margin: [0, 0, 0, 15] },
+        { text: `Generated: ${generatedDate} | Timeframe: ${timeframeLabel} | Scenario: ${riskConfig.label}`, style: 'metadata', margin: [0, 0, 0, 20] },
+        {
+          table: { widths: ['*'], body: [[{ text: [{ text: 'THE QUESTION: ', bold: true }, { text: 'Should Vox Media implement AdFixus identity infrastructure with a revenue share alignment model?' }], style: 'decisionBox', fillColor: '#F0F9FF', margin: [15, 15, 15, 15] }]] },
+          layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#0EA5E9', vLineColor: () => '#0EA5E9' },
+          margin: [0, 0, 0, 25]
+        },
+        { text: 'Projected Impact', style: 'h3', margin: [0, 0, 0, 10] },
+        {
+          table: { widths: ['*', '*', '*'], body: [
+            [{ text: `Total Value (${timeframeLabel})`, style: 'metricHeader', fillColor: '#DCFCE7' }, { text: 'Monthly Incremental', style: 'metricHeader', fillColor: '#F1F5F9' }, { text: 'ROI Multiple', style: 'metricHeader', fillColor: '#F1F5F9' }],
+            [{ text: formatCurrency(displayTotal), style: 'metricValueHero', alignment: 'center', fillColor: '#F0FDF4' }, { text: formatCurrency(monthlyTotal), style: 'metricValue', alignment: 'center' }, { text: `${roiMultiple.toFixed(1)}x`, style: 'metricValue', alignment: 'center' }]
+          ] },
+          layout: tableLayout, margin: [0, 0, 0, 20]
+        },
+        { text: 'Value Breakdown', style: 'h3', margin: [0, 0, 0, 10] },
+        { table: { widths: ['*', 'auto', 'auto'], body: breakdownRows }, layout: tableLayout, margin: [0, 0, 0, 20] },
+        {
+          table: { widths: ['*'], body: [[{ text: [{ text: 'RECOMMENDATION: ', bold: true }, { text: config.includeCapiRevenue ? 'Proceed with Revenue Share alignment model. Structural benefits alone (ID Infrastructure + Media Performance) cover platform investment. CAPI upside scales with deployment aggressiveness.' : 'Proceed with platform investment. Structural benefits (ID Infrastructure + Media Performance) deliver positive ROI independent of CAPI deployment timing.' }], style: 'recommendationBox', fillColor: '#DCFCE7', margin: [15, 12, 15, 12] }]] },
+          layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#22C55E', vLineColor: () => '#22C55E' },
+          margin: [0, 0, 0, 0]
+        }
+      );
+
+      // ==================== PAGE 2: STRUCTURAL BENEFITS (if ID Infra or Media selected) ====================
+      if (config.includeIdInfrastructure || config.includeMediaPerformance) {
+        content.push(
+          { pageBreak: 'before', text: 'Structural Benefits: The Safe Bet', style: 'h1', margin: [0, 0, 0, 15] },
+          { text: 'These benefits are predictable, low-variance, and cover the platform investment alone.', style: 'subtitle', margin: [0, 0, 0, 20] }
+        );
+
+        if (config.includeIdInfrastructure) {
+          content.push(
+            { text: 'ID Infrastructure', style: 'h3', margin: [0, 0, 0, 10] },
+            {
+              table: { widths: ['*', 'auto'], body: [
+                [{ text: 'Safari Traffic Share', style: 'tableLabel' }, { text: formatPercentage(safariShare * 100), style: 'tableValue', alignment: 'right' }],
+                [{ text: 'Current Addressability', style: 'tableLabel' }, { text: formatPercentage(currentAddressability * 100), style: 'tableValue', alignment: 'right' }],
+                [{ text: 'Projected Addressability', style: 'tableLabel' }, { text: formatPercentage(improvedAddressability * 100), style: 'tableValue', alignment: 'right', color: '#15803D' }],
+                [{ text: 'Addressability Revenue Impact (CPM Delta)', style: 'tableLabel' }, { text: formatCurrency(idInfra?.addressabilityRecovery || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
+                [{ text: 'CDP Cost Savings', style: 'tableLabel' }, { text: formatCurrency(idInfra?.cdpSavings || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
+                [{ text: 'ID Infrastructure Total', style: 'tableLabel', bold: true, fillColor: '#F0FDF4' }, { text: formatCurrency(breakdown.monthly.idInfrastructure) + '/mo', style: 'tableValue', bold: true, alignment: 'right', fillColor: '#F0FDF4' }]
+              ] },
+              layout: 'noBorders', margin: [0, 0, 0, 25]
+            }
+          );
+        }
+
+        if (config.includeMediaPerformance) {
+          content.push(
+            { text: 'Media Performance', style: 'h3', margin: [0, 0, 0, 10] },
+            {
+              table: { widths: ['*', 'auto'], body: [
+                [{ text: 'Premium Inventory Pricing Power', style: 'tableLabel' }, { text: formatCurrency(results.mediaPerformance?.premiumPricingPower || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
+                [{ text: 'Make-Good Reduction', style: 'tableLabel' }, { text: formatCurrency(results.mediaPerformance?.makeGoodReduction || 0) + '/mo', style: 'tableValue', alignment: 'right' }],
+                [{ text: 'Media Performance Total', style: 'tableLabel', bold: true, fillColor: '#F0FDF4' }, { text: formatCurrency(breakdown.monthly.mediaPerformance) + '/mo', style: 'tableValue', bold: true, alignment: 'right', fillColor: '#F0FDF4' }]
+              ] },
+              layout: 'noBorders', margin: [0, 0, 0, 25]
+            }
+          );
+        }
+
+        // Structural Total
+        const structuralMonthly = (config.includeIdInfrastructure ? breakdown.monthly.idInfrastructure : 0) + (config.includeMediaPerformance ? breakdown.monthly.mediaPerformance : 0);
+        content.push(
+          {
+            table: { widths: ['*'], body: [[{
+              stack: [
+                { text: 'Combined Structural Benefits', style: 'h3', margin: [0, 0, 0, 5] },
+                { text: formatCurrency(structuralMonthly) + '/month', style: 'heroValue' },
+                { text: `${formatCurrency(structuralMonthly * 12)}/year — covers platform investment with margin`, style: 'footnote', margin: [0, 5, 0, 0] }
+              ],
+              fillColor: '#F0FDF4', margin: [15, 15, 15, 15]
+            }]] },
+            layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#22C55E', vLineColor: () => '#22C55E' },
+            margin: [0, 0, 0, 20]
+          },
+          { text: 'Portfolio Coverage', style: 'h3', margin: [0, 0, 0, 10] },
+          { text: `Selected ${selectedDomains.length} of ${VOX_MEDIA_DOMAINS.length} domains: ${selectedDomains.slice(0, 5).map(getDomainName).join(', ')}${selectedDomains.length > 5 ? ` +${selectedDomains.length - 5} more` : ''}`, style: 'body', margin: [0, 0, 0, 0] }
+        );
+      }
+
+      // ==================== PAGE 3: CAPI OPPORTUNITY (only if CAPI selected) ====================
+      if (config.includeCapiRevenue) {
+        content.push(
+          { pageBreak: 'before', text: 'CAPI Opportunity: The Magic Upside', style: 'h1', margin: [0, 0, 0, 15] },
+          { text: 'The more aggressively you deploy CAPI on large advertisers, the better the economics get.', style: 'subtitle', margin: [0, 0, 0, 20] },
+          { text: 'Your CAPI Configuration', style: 'h3', margin: [0, 0, 0, 10] },
+          {
+            table: { widths: ['*', '*', '*'], body: [
+              [{ text: 'Yearly Campaigns', style: 'metricHeader', fillColor: '#F1F5F9' }, { text: 'Avg Campaign Spend', style: 'metricHeader', fillColor: '#F1F5F9' }, { text: 'Annual Net to Vox', style: 'metricHeader', fillColor: '#DCFCE7' }],
+              [{ text: `${yearlyCampaigns}`, style: 'metricValue', alignment: 'center' }, { text: formatCurrency(avgCampaignSpend), style: 'metricValue', alignment: 'center' }, { text: formatCurrency(portfolio.annualNet), style: 'metricValueHero', alignment: 'center', fillColor: '#F0FDF4' }]
+            ] },
+            layout: tableLayout, margin: [0, 0, 0, 20]
+          },
+          {
+            table: { widths: ['*'], body: [[{ text: [{ text: 'THE MAGIC OF THE $30K CAP: ', bold: true }, { text: `At ${formatCurrency(CAPI_ECONOMICS_CONSTANTS.CAP_THRESHOLD)} campaign spend, the fee caps at $30K. Every dollar of incremental revenue above that goes 100% to Vox. Bigger campaigns = exponentially better ROI.` }], style: 'disclaimerBox', fillColor: '#DBEAFE', margin: [12, 12, 12, 12] }]] },
+            layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#3B82F6', vLineColor: () => '#3B82F6' },
+            margin: [0, 0, 0, 20]
+          },
+          { text: 'Campaign Economics by Size', style: 'h3', margin: [0, 0, 0, 10] },
+          {
+            table: { headerRows: 1, widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'], body: [
+              [
+                { text: 'Campaign Spend', style: 'tableHeader', fillColor: '#F1F5F9' },
+                { text: 'Incremental (40%)', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+                { text: 'Fee', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' },
+                { text: 'Net to Vox', style: 'tableHeader', fillColor: '#DCFCE7', alignment: 'right' },
+                { text: 'ROI', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+                { text: 'Status', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' }
+              ],
+              ...[79000, 150000, 300000, 500000, 1000000].map(spend => {
+                const econ = calculateCampaignEconomics(spend);
+                return [
+                  { text: formatCurrency(spend), style: 'tableCell' },
+                  { text: formatCurrency(econ.incrementalRevenue), style: 'tableCell', alignment: 'right' },
+                  { text: formatCurrency(econ.cappedFee), style: 'tableCell', alignment: 'right' },
+                  { text: formatCurrency(econ.netToPublisher), style: 'tableCell', alignment: 'right', fillColor: '#F0FDF4', bold: true },
+                  { text: `${econ.roiMultiple.toFixed(1)}x`, style: 'tableCell', alignment: 'center', color: econ.isCapped ? '#15803D' : '#475569' },
+                  { text: econ.isCapped ? 'CAP ✓' : '', style: 'tableCell', alignment: 'center', color: '#15803D' }
+                ];
+              })
+            ] },
+            layout: tableLayout, margin: [0, 0, 0, 20]
+          }
+        );
+
+        // CarSales Proof Point
+        if (config.includeCarSalesProofPoint) {
+          content.push(
+            { text: 'Case Study: CarSales', style: 'h3', margin: [0, 0, 0, 10] },
+            {
+              table: { widths: ['*'], body: [[{
+                stack: [
+                  { text: `"${CARSALES_PROOF_POINT.quote}"`, style: 'quoteText', italics: true, margin: [0, 0, 0, 10] },
+                  { text: `— ${CARSALES_PROOF_POINT.author}, ${CARSALES_PROOF_POINT.title}, ${CARSALES_PROOF_POINT.company}`, style: 'quoteAttribution' },
+                  { text: '\n' },
+                  { columns: [
+                    { text: [{ text: '$1.8M\n', bold: true, fontSize: 14 }, 'New Revenue Won'], alignment: 'center' },
+                    { text: [{ text: '100+\n', bold: true, fontSize: 14 }, 'CAPI Campaigns'], alignment: 'center' },
+                    { text: [{ text: '$300K→$1M\n', bold: true, fontSize: 14 }, 'Largest Campaign'], alignment: 'center' }
+                  ] }
+                ],
+                fillColor: '#FFFBEB', margin: [15, 15, 15, 15]
+              }]] },
+              layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#F59E0B', vLineColor: () => '#F59E0B' },
+              margin: [0, 0, 0, 0]
+            }
+          );
+        }
+
+        // ==================== PAGE 4: ALIGNMENT MODELS (only if CAPI selected) ====================
+        content.push(
+          { pageBreak: 'before', text: 'Alignment Models: Why Revenue Share Wins', style: 'h1', margin: [0, 0, 0, 15] },
+          { text: 'The 12.5% revenue share with campaign cap is the only model with full incentive alignment.', style: 'subtitle', margin: [0, 0, 0, 20] },
+          {
+            table: { headerRows: 1, widths: ['*', 'auto', 'auto', 'auto', 'auto'], body: [
+              [
+                { text: 'Model', style: 'tableHeader', fillColor: '#F1F5F9' },
+                { text: 'Upfront Risk', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+                { text: 'Alignment', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+                { text: 'At Scale', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'center' },
+                { text: 'Verdict', style: 'tableHeader', fillColor: '#F1F5F9' }
+              ],
+              [
+                { text: 'Flat Fee ($1M/yr)', style: 'tableCell', bold: true },
+                { text: 'HIGH', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+                { text: 'NONE', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+                { text: 'WORSE', style: 'tableCell', fillColor: '#FEE2E2', alignment: 'center', color: '#DC2626' },
+                { text: 'Pay regardless of success', style: 'tableCell', color: '#DC2626' }
+              ],
+              [
+                { text: 'Annual Cap ($1.2M)', style: 'tableCell', bold: true },
+                { text: 'MED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
+                { text: 'LIMITED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
+                { text: 'CAPPED', style: 'tableCell', fillColor: '#FEF9C3', alignment: 'center', color: '#CA8A04' },
+                { text: 'Partner incentive ends at cap', style: 'tableCell', color: '#CA8A04' }
+              ],
+              [
+                { text: 'Revenue Share + Cap ✓', style: 'tableCell', bold: true, color: '#15803D' },
+                { text: 'LOW', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+                { text: 'FULL', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+                { text: 'BETTER', style: 'tableCell', fillColor: '#DCFCE7', alignment: 'center', color: '#15803D' },
+                { text: 'We only win when you win', style: 'tableCell', color: '#15803D', bold: true }
+              ]
+            ] },
+            layout: tableLayout, margin: [0, 0, 0, 25]
+          },
+          { text: 'Negotiation Highlights (Extended to Mid-February)', style: 'h3', margin: [0, 0, 0, 10] },
+          {
+            table: { widths: ['*', '*', '*', '*'], body: [[
+              { text: [{ text: '23%\n', bold: true, fontSize: 16 }, 'Contract Discount'], style: 'tableCell', alignment: 'center', fillColor: '#DCFCE7' },
+              { text: [{ text: '50%\n', bold: true, fontSize: 16 }, 'POC Discount'], style: 'tableCell', alignment: 'center', fillColor: '#DBEAFE' },
+              { text: [{ text: '$11.25K\n', bold: true, fontSize: 16 }, 'Onboarding Waived'], style: 'tableCell', alignment: 'center', fillColor: '#F3E8FF' },
+              { text: [{ text: '$30K\n', bold: true, fontSize: 16 }, 'Campaign Cap'], style: 'tableCell', alignment: 'center', fillColor: '#FEF3C7' }
+            ]] },
+            layout: { ...tableLayout, paddingTop: () => 12, paddingBottom: () => 12 },
+            margin: [0, 0, 0, 25]
+          },
+          {
+            table: { widths: ['*'], body: [[{ text: [{ text: 'KEY INSIGHT: ', bold: true }, { text: 'Revenue share creates a partnership where both parties are invested in growth. The other models create vendor relationships with misaligned incentives.' }], style: 'disclaimerBox', fillColor: '#DCFCE7', margin: [12, 12, 12, 12] }]] },
+            layout: { hLineWidth: () => 2, vLineWidth: () => 2, hLineColor: () => '#22C55E', vLineColor: () => '#22C55E' },
+            margin: [0, 0, 0, 0]
+          }
+        );
+      }
+
+      // ==================== FINAL PAGE: IMPLEMENTATION & NEXT STEPS (always included) ====================
+      content.push(
+        { pageBreak: 'before', text: 'Implementation & Next Steps', style: 'h1', margin: [0, 0, 0, 15] },
+        { text: 'Implementation Timeline', style: 'h3', margin: [0, 0, 0, 10] },
+        {
+          table: { widths: ['auto', '*', 'auto'], body: [
+            [{ text: 'Phase', style: 'tableHeader', fillColor: '#F1F5F9' }, { text: 'Objective', style: 'tableHeader', fillColor: '#F1F5F9' }, { text: 'Duration', style: 'tableHeader', fillColor: '#F1F5F9', alignment: 'right' }],
+            [{ text: 'Technical Integration', style: 'tableCell', bold: true }, { text: 'ID deployment + stack integration (GAM, analytics, segments)', style: 'tableCell' }, { text: '3-6 weeks', style: 'tableCell', alignment: 'right' }],
+            [{ text: 'POC Phase', style: 'tableCell', bold: true }, { text: 'Validate addressability uplift on POC domains', style: 'tableCell' }, { text: 'Months 1-3', style: 'tableCell', alignment: 'right' }],
+            [{ text: 'Scaling Phase', style: 'tableCell', bold: true }, { text: 'Expand to additional domains, begin CAPI campaigns', style: 'tableCell' }, { text: 'Months 4-6', style: 'tableCell', alignment: 'right' }],
+            [{ text: 'Value Phase', style: 'tableCell', bold: true }, { text: 'Full ROI realization, CAPI at scale, premium yield', style: 'tableCell' }, { text: 'Months 7-12', style: 'tableCell', alignment: 'right' }]
+          ] },
+          layout: tableLayout, margin: [0, 0, 0, 25]
+        },
+        { text: 'POC Success Criteria', style: 'h3', margin: [0, 0, 0, 10] },
+        {
+          ol: [
+            { text: [{ text: 'ID Deployment: ', bold: true }, 'ClientID deployed across POC domains, passing into GAM as PPID'] },
+            { text: [{ text: 'Addressability: ', bold: true }, 'Measurable Safari impressions uplift within 30 days'] },
+            { text: [{ text: 'Identity Durability: ', bold: true }, 'ID consistency verified across NYMag cluster + Verge/Vox domains'] },
+            { text: [{ text: 'Strategic Foundation: ', bold: true }, 'Real conversion reporting demonstrated on Vox campaign reports'] }
+          ],
+          style: 'listItem', margin: [0, 0, 0, 25]
+        },
+        { text: 'Key Assumptions', style: 'h3', margin: [0, 0, 0, 10] },
+        {
+          table: { widths: ['*', 'auto', '*', 'auto'], body: [
+            [{ text: 'Safari Share', style: 'tableLabel' }, { text: '35%', style: 'tableValue', alignment: 'right' }, { text: 'CPM Uplift', style: 'tableLabel' }, { text: '25%', style: 'tableValue', alignment: 'right' }],
+            [{ text: 'Adoption Rate', style: 'tableLabel' }, { text: formatPercentage(riskConfig.adoptionRate * 100), style: 'tableValue', alignment: 'right' }, { text: 'CAPI Improvement', style: 'tableLabel' }, { text: '40%', style: 'tableValue', alignment: 'right' }]
+          ] },
+          layout: 'noBorders', margin: [0, 0, 0, 25]
+        },
+        { text: 'SCENARIO MODEL DISCLAIMER', style: 'disclaimerHeader', margin: [0, 0, 0, 6] },
+        { text: 'This document presents scenario-based projections using industry benchmarks and stated assumptions. All figures are estimates only and do not constitute forecasts or guarantees. Actual results depend on deployment execution, advertiser demand, market conditions, and organizational readiness.', style: 'disclaimer', margin: [0, 0, 0, 0] }
+      );
+
+      return content;
+    })(),
 
     styles: {
       headerTitle: { fontSize: 10, bold: true, color: '#1E293B' },
