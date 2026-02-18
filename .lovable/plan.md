@@ -1,127 +1,124 @@
 
+# Plan: Safari Addressability Slider + Bug Fix + Underlying Logic Clarification
 
-# Fix Safari Math + Add Composable Revenue Stream Selection for PDF
+## Confirming the Underlying Logic (You Are Correct)
 
-## Problem 1: Safari Revenue is Overstated
+The engine is correctly structured. Here is the exact chain:
 
-**Current logic (WRONG):**
-```
-newlyAddressableDisplay impressions x (displayCPM x 1.25) = FULL revenue as "uplift"
-```
+- **Safari = 35% of all Vox visitors** (browser share — this is a traffic composition number, not an addressability number). Chrome = 48%, Other = 17%.
+- **Today**: Chrome + Other users are 100% addressable. Safari users are 0% addressable (ITP blocks all identity).
+- **Today's total addressability**: (48% Chrome × 100%) + (17% Other × 100%) + (35% Safari × 0%) = **65%** baseline. This is correct.
+- **With AdFixus**: If we unlock X% of Safari traffic to be addressable, total addressability = 65% + (35% Safari × X%).
+  - At X = 20%: total = 65% + 7% = **72%**
+  - At X = 60%: total = 65% + 21% = **86%**
+  - At X = 86%: total = 65% + 30% = **95%** (the target maximum)
 
-This assumes Safari impressions earn $0 today. They don't -- Vox runs contextual ads on Safari. The real uplift is only the CPM delta from contextual to addressable.
+So to go from 65% to 95% overall addressability, you need to unlock 86% of Safari traffic. The slider should express this as **"Target overall addressability: 65% → 95%"** but internally drive `targetSafariAddressability` (i.e., what fraction of Safari users we can resolve). This is the most honest framing — it shows total portfolio addressability, not a Safari-specific %, which avoids confusion.
 
-**Correct logic:**
-```
-Safari impressions currently earn: contextualCPM (roughly 70-80% of addressable CPM)
-After AdFixus: addressableCPM (displayCPM x 1.25)
-Real uplift = addressableCPM - contextualCPM (only the delta)
-```
-
-Using industry benchmarks: contextual CPM is roughly 65-75% of addressable CPM. So if display CPM is $4.50 (addressable), contextual is roughly $3.15-$3.38. The delta is $1.12-$1.35 per CPM, not $5.63.
-
-**This means the current ID Infrastructure number is inflated by roughly 3-4x on the addressability component.**
-
-### Changes to `src/constants/industryBenchmarks.ts`:
-- Add `CONTEXTUAL_CPM_RATIO: 0.72` to `ADDRESSABILITY_BENCHMARKS` (contextual CPM is ~72% of addressable CPM -- conservative, defensible)
-
-### Changes to `src/utils/unifiedCalculationEngine.ts`:
-- In `calculateIdInfrastructure()`, change the uplift calculation from:
-  - `(impressions / 1000) x improvedCPM` (treats as net new)
-  - To: `(impressions / 1000) x (improvedCPM - contextualCPM)` (only the delta)
-- Where `contextualCPM = displayCPM x CONTEXTUAL_CPM_RATIO`
-- The `cpmUpliftFactor` (25%) still applies on top of the base addressable CPM
-
-This means:
-- Addressable display CPM = $4.50 x 1.25 = $5.63
-- Contextual display CPM = $4.50 x 0.72 = $3.24
-- Delta = $2.39 per CPM (vs current $5.63 -- a 58% reduction in this component)
+The **revenue math is already correct** (CPM delta model, not net-new). The slider purely changes how many Safari impressions shift from contextual → addressable CPM, and the incremental revenue updates accordingly.
 
 ---
 
-## Problem 2: Composable Revenue Streams for PDF Export
+## Bug Fix: Double-Multiplied Percentages in AddressabilityTab.tsx
 
-The user needs to select/deselect which revenue streams appear in the PDF before export because:
-- CAPI may not be part of the POC (Vox sales restructuring)
-- The structural story (ID Infra + Media Performance) should stand on its own
-- Different presentations need different configurations
+The display component calls `formatPercentage(value * 100, 0)` but `details` values from the engine are **already stored as whole-number percentages** (e.g., `35` not `0.35`). This causes:
 
-### New Type: `src/types/scenarios.ts`
-Add a new interface:
-```typescript
-export interface PdfExportConfig {
-  includeIdInfrastructure: boolean;    // Default: true (always on)
-  includeCapiRevenue: boolean;         // Default: true (can toggle off)
-  includeMediaPerformance: boolean;    // Default: true (can toggle off)
-  includeCampaignEconomics: boolean;   // Default: true (follows CAPI toggle)
-  includeCarSalesProofPoint: boolean;  // Default: true (follows CAPI toggle)
-}
+- `35 × 100 = 3500%` for Safari traffic share
+- `35 × 100 = 3500%` for addressability improvement
+- `8 × 100 = 800%` for make-good rate
+
+Four lines to fix in `AddressabilityTab.tsx`:
+
+| Line | Before | After |
+|------|--------|-------|
+| Safari Traffic | `(idDetails?.safariShare \|\| 0.35) * 100` | `idDetails?.safariShare ?? 35` |
+| Safari Improvement | `(idDetails?.safariAddressabilityImprovement \|\| 0.30) * 100` | `idDetails?.safariAddressabilityImprovement ?? 35` |
+| Make-Good Current | `(mediaDetails?.baselineMakeGoodRate \|\| 0.08) * 100` | `mediaDetails?.baselineMakeGoodRate ?? 8` |
+| Make-Good Improved | `(mediaDetails?.improvedMakeGoodRate \|\| 0.03) * 100` | `mediaDetails?.improvedMakeGoodRate ?? 3` |
+
+---
+
+## New Feature: Safari Addressability Target Slider
+
+### What it controls
+A slider on the **Addressability tab** that lets the user set the target overall addressability (65% → 95%). The slider label should read clearly:
+
+> **"Overall Addressability Target"**
+> Currently 65% of inventory is addressable. Drag to model what happens as AdFixus unlocks Safari traffic.
+
+Underneath the slider, show two stats that update live:
+- `Safari traffic unlocked: X%` (what % of Safari visitors are now resolved)
+- `Total addressable inventory: Y%` (the resulting portfolio-level number)
+
+### Data flow
+
+The slider value (expressed as target overall addressability, e.g. `0.86`) gets stored in `AssumptionOverrides` as a new field — the cleanest approach given the existing override pattern. We use `overrides?.targetSafariAddressability` in the engine (already a named field in the type just not yet wired to the slider).
+
+The engine already has the structure to accept this — `calculateIdInfrastructure` reads from `overrides`. We just need to:
+1. Wire up the new slider field to override `targetSafariAddressability`
+2. Have the engine use `overrides?.targetSafariAddressability ?? ADDRESSABILITY_BENCHMARKS.TARGET_SAFARI_ADDRESSABILITY` instead of the fixed constant
+3. Pass `setAssumptionOverrides` up to the Addressability tab (currently read-only)
+
+### Slider design
+- Range: 35% to 95% (overall addressability — the slider moves in the total addressability space)
+- Default: 72% (current default — 35% Safari share × 35% of Safari unlocked + 65% baseline = 77%; need to check actual default target)
+- Actually, default target = 77% (35% Safari × 35% target + 65% baseline)
+- Step: 1%
+- Labels: "65% (baseline)" at left, "95% (full)" at right
+- Visual annotation at ~72% = "POC Target" and ~95% = "Full deployment"
+
+Internally: when user drags to overall target `T`, engine computes `safariTargetFraction = (T - 0.65) / 0.35`. This is what drives impression count and revenue.
+
+### ROI breakeven indicator
+Below the slider, add a breakeven callout: "Positive ROI from addressability alone starts at X% overall addressability" — calculated by finding where incremental revenue covers the platform fee. This is what the user is asking for: "I want to know where we start to show positive ROI."
+
+---
+
+## Files to Change
+
+| File | What Changes |
+|------|-------------|
+| `src/components/AddressabilityTab.tsx` | 1) Fix 4 double-multiply bugs; 2) Add Safari slider with live revenue preview; 3) Add ROI breakeven callout; 4) Accept `onAssumptionOverridesChange` prop |
+| `src/utils/unifiedCalculationEngine.ts` | Wire `overrides?.targetSafariAddressability` into `calculateIdInfrastructure()` instead of fixed constant |
+| `src/types/scenarios.ts` | Add `targetSafariAddressability?: number` to `AssumptionOverrides` (it already exists in the interface as a comment; just needs to be added as a live field) |
+| `src/pages/ScenarioModeler.tsx` | Pass `setAssumptionOverrides` and `assumptionOverrides` to `AddressabilityTab` |
+
+---
+
+## What the Slider Looks Like in Context
+
+The Addressability tab currently says "READ-ONLY — all controls on Summary tab." We will add a **single, focused control** — the addressability target slider — directly on this tab because it is a core modelling decision specific to this view. The Summary tab controls (risk scenario, timeframe, domain selection) remain there. This one slider lives here because it is about "what addressability outcome are we targeting" — a question that belongs to this analysis view.
+
+The layout will be:
+
+```text
+┌────────────────────────────────────────────────────────────────┐
+│  OVERALL ADDRESSABILITY TARGET                           [?]   │
+│                                                                │
+│  65% ─────────────────●────────────────────── 95%             │
+│       Baseline      72% POC       86%        Full             │
+│                     Target     Optimistic                      │
+│                                                                │
+│  Safari traffic unlocked:  20% of Safari users                │
+│  Total addressable inventory:  72%  (+7pp from baseline)      │
+│  Incremental revenue impact:  +$X,XXX/month                   │
+└────────────────────────────────────────────────────────────────┘
+
+┌─ ROI Breakeven ───────────────────────────────────────────────┐
+│  Addressability alone covers platform fee at: 71% target      │
+│  ██████████████░░░░░░░░░░ You are at 72% — above breakeven ✓  │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-### New Component: Revenue Stream Selector
-Create a component that appears between the "Download" button click and actual PDF generation. This will be a modal/sheet with checkboxes:
-
-- **ID Infrastructure** (Safari Recovery + CDP Savings) -- always checked, cannot uncheck (it's the foundation)
-- **CAPI Revenue** -- toggleable (when off, also hides campaign economics and CarSales)
-- **Media Performance** -- toggleable
-- Preview of total deal value updates live as streams are toggled
-- "Generate PDF" button that passes the config to pdfGenerator
-
-### Changes to `src/components/SummaryTab.tsx`:
-- Replace direct `onDownloadPDF` call with opening the revenue stream selector
-- Pass current results and timeframe to the selector
-
-### New Component: `src/components/PdfExportConfig.tsx`
-- Sheet/Dialog with checkboxes for each revenue stream
-- Live preview of total value (recalculated based on selections)
-- Shows which pages will be included in PDF
-- "Generate PDF" button
-
-### Changes to `src/pages/ScenarioModeler.tsx`:
-- Add state for `pdfExportConfig`
-- Pass config through to PDF generator
-
-### Changes to `src/utils/pdfGenerator.ts`:
-- Accept `PdfExportConfig` parameter
-- Conditionally include/exclude pages based on config
-- Recalculate totals based on selected streams only
-- Page 1 (Executive Summary) always included, but totals reflect only selected streams
-- Page 2 (Structural Benefits) included if ID Infra or Media selected
-- Page 3 (CAPI Opportunity) only if CAPI selected
-- Page 4 (Alignment Models) only if CAPI selected
-- Page 5 (Next Steps) always included
-
-### Changes to `src/utils/commercialCalculations.ts`:
-- Add helper: `getFilteredDealBreakdown(results, timeframe, config)` that returns breakdown with zeroed-out excluded streams
-
 ---
 
-## File Changes Summary
+## Scope Summary
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/constants/industryBenchmarks.ts` | MODIFY | Add `CONTEXTUAL_CPM_RATIO` to ADDRESSABILITY_BENCHMARKS |
-| `src/utils/unifiedCalculationEngine.ts` | MODIFY | Fix Safari uplift to use CPM delta, not full CPM |
-| `src/types/scenarios.ts` | MODIFY | Add `PdfExportConfig` interface |
-| `src/components/PdfExportConfig.tsx` | CREATE | Revenue stream selector modal with live preview |
-| `src/components/SummaryTab.tsx` | MODIFY | Wire up export config flow instead of direct download |
-| `src/pages/ScenarioModeler.tsx` | MODIFY | Add export config state, pass to PDF generator |
-| `src/utils/pdfGenerator.ts` | MODIFY | Accept config, conditionally include pages/recalculate totals |
-| `src/utils/commercialCalculations.ts` | MODIFY | Add `getFilteredDealBreakdown()` helper |
+This is a tightly scoped change:
+- **4 bug fixes** (display only, no calculation impact)
+- **1 new slider** + live revenue update on Addressability tab
+- **1 engine line change** to read override instead of constant
+- **1 type addition** in `AssumptionOverrides`
+- **1 prop addition** in ScenarioModeler to thread overrides to Addressability tab
 
----
-
-## Expected Impact
-
-After the Safari math fix:
-- ID Infrastructure numbers will drop significantly (roughly 50-60% on the addressability component)
-- CDP savings ($3,500/mo) remain unchanged
-- The total deal value becomes more defensible and harder for a CFO to poke holes in
-- The "contextual vs addressable CPM delta" narrative is explicitly stated in the PDF
-
-After the composable export:
-- User can generate a "structural only" PDF showing positive ROI without CAPI
-- User can include CAPI when the audience is ready for it
-- Total deal value in PDF dynamically adjusts to reflect only selected streams
-- No more worrying about CAPI being a distraction when it might not be in the POC
-
+No changes to PDF, Summary tab math, CAPI tab, or any other calculations.
