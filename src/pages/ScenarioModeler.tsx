@@ -173,7 +173,7 @@ const ScenarioModeler = () => {
                 <CapiTab results={results} timeframe={timeframe} />
               </TabsContent>
               
-              {/* Tab 3: Addressability - Structural Benefits (Read-Only) */}
+              {/* Tab 3: Addressability - Structural Benefits */}
               <TabsContent value="addressability">
                 <div className="text-center space-y-2 mb-6">
                   <h1 className="text-2xl font-bold">Addressability Benefits</h1>
@@ -181,7 +181,12 @@ const ScenarioModeler = () => {
                     ID Infrastructure and Media Performance — 100% retained
                   </p>
                 </div>
-                <AddressabilityTab results={results} timeframe={timeframe} />
+                <AddressabilityTab 
+                  results={results} 
+                  timeframe={timeframe}
+                  assumptionOverrides={assumptionOverrides}
+                  onAssumptionOverridesChange={setAssumptionOverrides}
+                />
               </TabsContent>
             </Tabs>
             

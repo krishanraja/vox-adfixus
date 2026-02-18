@@ -32,6 +32,7 @@ export interface AssumptionOverrides {
   // ID Infrastructure
   safariBaselineAddressability?: number; // 0.40 - 0.70, default 0.55
   safariWithDurableId?: number; // 0.75 - 0.95, default 0.85
+  targetSafariAddressability?: number; // 0.0 - 0.95, fraction of Safari users to unlock (slider-controlled)
   cpmUpliftFactor?: number; // 0.10 - 0.40, default 0.25
   cdpCostReduction?: number; // 0.10 - 0.18, default 0.14
   
