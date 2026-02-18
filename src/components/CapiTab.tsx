@@ -1,12 +1,12 @@
 // CAPI Tab - Sales-Led Revenue Deep Dive
-// READ-ONLY - Shows CAPI commercial model comparison only
-// No controls here - all configuration happens on Summary tab
+// Shows CAPI commercial model comparison with live campaign sliders
 
 import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Info, CheckCircle2, AlertTriangle, MinusCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import type { UnifiedResults, TimeframeType } from '@/types/scenarios';
+import { Slider } from '@/components/ui/slider';
+import { Info, CheckCircle2, AlertTriangle, MinusCircle, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import type { UnifiedResults, TimeframeType, AssumptionOverrides } from '@/types/scenarios';
 import { 
   generateAllScenarios, 
   formatCommercialCurrency,
@@ -23,37 +23,78 @@ import { Button } from '@/components/ui/button';
 interface CapiTabProps {
   results: UnifiedResults;
   timeframe: TimeframeType;
+  assumptionOverrides?: AssumptionOverrides;
+  onAssumptionOverridesChange?: (overrides: AssumptionOverrides) => void;
 }
 
-export const CapiTab = ({ results, timeframe }: CapiTabProps) => {
+export const CapiTab = ({ results, timeframe, assumptionOverrides, onAssumptionOverridesChange }: CapiTabProps) => {
   const [showProjection, setShowProjection] = useState(false);
   const [showAlignmentModels, setShowAlignmentModels] = useState(false);
   
-  // Get CAPI configuration from results
+  // Engine-calculated defaults
   const capiConfig = results.capiCapabilities?.capiConfiguration;
-  const yearlyCampaigns = capiConfig?.yearlyCampaigns || 0;
-  const avgCampaignSpend = capiConfig?.avgCampaignSpend || 79000;
-  
-  // Calculate campaign portfolio economics
+  const engineCampaigns = capiConfig?.yearlyCampaigns || 16;
+  const engineAvgSpend = capiConfig?.avgCampaignSpend || 79000;
+
+  // Slider state — initialise from overrides if already set, else engine defaults
+  const [localCampaigns, setLocalCampaigns] = useState<number>(
+    assumptionOverrides?.capiYearlyCampaigns ?? engineCampaigns
+  );
+  const [localAvgSpend, setLocalAvgSpend] = useState<number>(
+    assumptionOverrides?.capiAvgCampaignSpend ?? engineAvgSpend
+  );
+
+  const campaignsModified = Math.abs(localCampaigns - engineCampaigns) > 0.001;
+  const spendModified = Math.abs(localAvgSpend - engineAvgSpend) > 1;
+  const isModified = campaignsModified || spendModified;
+
+  const handleCampaignsChange = (value: number) => {
+    setLocalCampaigns(value);
+    onAssumptionOverridesChange?.({
+      ...(assumptionOverrides || {}),
+      capiYearlyCampaigns: value,
+    });
+  };
+
+  const handleAvgSpendChange = (value: number) => {
+    setLocalAvgSpend(value);
+    onAssumptionOverridesChange?.({
+      ...(assumptionOverrides || {}),
+      capiAvgCampaignSpend: value,
+    });
+  };
+
+  const handleReset = () => {
+    setLocalCampaigns(engineCampaigns);
+    setLocalAvgSpend(engineAvgSpend);
+    onAssumptionOverridesChange?.({
+      ...(assumptionOverrides || {}),
+      capiYearlyCampaigns: undefined,
+      capiAvgCampaignSpend: undefined,
+    });
+  };
+
+  // Live portfolio calculation from slider values
   const portfolio = useMemo(() => 
-    calculateCampaignPortfolio(yearlyCampaigns, avgCampaignSpend),
-    [yearlyCampaigns, avgCampaignSpend]
+    calculateCampaignPortfolio(localCampaigns, localAvgSpend),
+    [localCampaigns, localAvgSpend]
   );
   
-  // Generate all three scenarios using CAPI-only revenue
+  // Scenarios use results from engine (updated via assumptionOverrides prop change)
   const scenarios = useMemo(() => generateAllScenarios(results), [results]);
   const recommendedScenario = scenarios.find(s => s.model.isRecommended) || scenarios[0];
   
-  // Get deal breakdown for context
   const dealBreakdown = useMemo(() => getDealBreakdown(results, timeframe), [results, timeframe]);
   const capiMonthly = getCapiMonthlyIncremental(results);
   
-  // Timeframe multiplier
   const periodMonths = timeframe === '3-year' ? 36 : 12;
 
-  // CRITICAL: Correct calculations for each model
+  // Cap threshold annotations
+  const CAP_THRESHOLD = 240000; // spend at which cap kicks in fully ($30K / 12.5%)
+  const spendPctOfCap = Math.min(localAvgSpend / CAP_THRESHOLD, 1);
+  const isBeyondCap = localAvgSpend >= CAP_THRESHOLD;
+
   const getModelMetrics = (scenario: typeof scenarios[0]) => {
-    // For timeframe-aware calculations, use the dealBreakdown
     const capiIncremental = timeframe === '3-year' 
       ? scenario.incrementalRevenue 
       : dealBreakdown.year1.capi;
@@ -62,7 +103,6 @@ export const CapiTab = ({ results, timeframe }: CapiTabProps) => {
       const annualFee = scenario.model.params.annualFlatFee || 1000000;
       const totalFee = timeframe === '3-year' ? annualFee * 3 : annualFee;
       const netPosition = capiIncremental - totalFee;
-      
       return {
         incrementalRevenue: capiIncremental,
         feePaid: totalFee,
@@ -73,7 +113,6 @@ export const CapiTab = ({ results, timeframe }: CapiTabProps) => {
       };
     }
     
-    // Revenue Share and Annual Cap: Fee is based on CAPI revenue
     const multiplier = timeframe === '3-year' ? 1 : 1/3;
     return {
       incrementalRevenue: capiIncremental,
@@ -85,30 +124,101 @@ export const CapiTab = ({ results, timeframe }: CapiTabProps) => {
     };
   };
 
+  const formatSpend = (v: number) => {
+    if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
+    return `$${Math.round(v / 1000)}K`;
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Hero: Your CAPI Configuration */}
+      {/* Hero: Your CAPI Configuration — with live sliders */}
       <Card className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="font-semibold text-lg">Your CAPI Configuration</h2>
             <p className="text-sm text-muted-foreground">
-              Based on your Business Readiness Assessment
+              Based on your Business Readiness Assessment — adjust to model scenarios
             </p>
           </div>
-          <Badge variant="outline" className="bg-background">
-            {yearlyCampaigns} campaigns/year
-          </Badge>
+          {isModified && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Reset to defaults
+            </Button>
+          )}
         </div>
-        
-        <div className="grid grid-cols-3 gap-4">
+
+        {/* Slider 1 — Campaigns per year */}
+        <div className="space-y-2 mb-5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">CAPI Campaigns / Year</span>
+            <span className={`text-sm font-semibold tabular-nums ${campaignsModified ? 'text-accent' : 'text-foreground'}`}>
+              {localCampaigns}
+            </span>
+          </div>
+          <Slider
+            value={[localCampaigns]}
+            onValueChange={([v]) => handleCampaignsChange(v)}
+            min={2}
+            max={50}
+            step={1}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>2 campaigns (~0.2/mo)</span>
+            <span className="text-center">~{(localCampaigns / 12).toFixed(1)}/month</span>
+            <span>50 campaigns (~4.2/mo)</span>
+          </div>
+        </div>
+
+        {/* Slider 2 — Avg campaign spend */}
+        <div className="space-y-2 mb-5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Avg Campaign Spend</span>
+            <div className="flex items-center gap-2">
+              {isBeyondCap && (
+                <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+                  Cap exceeded — full ROI
+                </Badge>
+              )}
+              <span className={`text-sm font-semibold tabular-nums ${spendModified ? 'text-accent' : 'text-foreground'}`}>
+                {formatSpend(localAvgSpend)}
+              </span>
+            </div>
+          </div>
+          <Slider
+            value={[localAvgSpend]}
+            onValueChange={([v]) => handleAvgSpendChange(v)}
+            min={25000}
+            max={500000}
+            step={5000}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>$25K</span>
+            <span className="text-center">
+              {localAvgSpend < CAP_THRESHOLD 
+                ? `${Math.round(spendPctOfCap * 100)}% toward cap ($240K = full ROI)` 
+                : 'Every dollar of uplift goes to Vox'}
+            </span>
+            <span>$500K</span>
+          </div>
+        </div>
+
+        {/* Summary stats */}
+        <div className="grid grid-cols-3 gap-4 pt-2 border-t border-primary/10">
           <div className="text-center p-3 bg-background/60 rounded-lg">
-            <p className="text-2xl font-bold text-primary">{yearlyCampaigns}</p>
-            <p className="text-xs text-muted-foreground">Yearly Campaigns</p>
+            <p className={`text-2xl font-bold ${campaignsModified ? 'text-accent' : 'text-primary'}`}>
+              {localCampaigns}
+            </p>
+            <p className="text-xs text-muted-foreground">Campaigns / Year</p>
           </div>
           <div className="text-center p-3 bg-background/60 rounded-lg">
-            <p className="text-2xl font-bold text-primary">
-              {formatCommercialCurrency(avgCampaignSpend)}
+            <p className={`text-2xl font-bold ${spendModified ? 'text-accent' : 'text-primary'}`}>
+              {formatSpend(localAvgSpend)}
             </p>
             <p className="text-xs text-muted-foreground">Avg Campaign Spend</p>
           </div>
@@ -119,10 +229,21 @@ export const CapiTab = ({ results, timeframe }: CapiTabProps) => {
             <p className="text-xs text-muted-foreground">Annual Net to Vox</p>
           </div>
         </div>
+
+        {/* Divergence note */}
+        {isModified && (
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-accent/5 border border-accent/20 rounded-md px-3 py-2">
+            <Info className="h-3.5 w-3.5 flex-shrink-0 text-accent" />
+            <span>
+              Modelling <strong>{localCampaigns} campaigns</strong> at <strong>{formatSpend(localAvgSpend)}</strong> avg spend.
+              Engine default: {engineCampaigns} campaigns at {formatSpend(engineAvgSpend)}.
+            </span>
+          </div>
+        )}
       </Card>
 
       {/* Campaign Economics Table - THE KEY INSIGHT */}
-      <CampaignEconomicsTable avgCampaignSpend={avgCampaignSpend} />
+      <CampaignEconomicsTable avgCampaignSpend={localAvgSpend} />
 
       {/* CarSales Case Study */}
       <CarSalesCaseStudy />

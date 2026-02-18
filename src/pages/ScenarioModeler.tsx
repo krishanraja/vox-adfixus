@@ -162,7 +162,7 @@ const ScenarioModeler = () => {
                 />
               </TabsContent>
               
-              {/* Tab 2: CAPI - Sales-Led Revenue (Read-Only) */}
+               {/* Tab 2: CAPI - Sales-Led Revenue */}
               <TabsContent value="capi">
                 <div className="text-center space-y-2 mb-6">
                   <h1 className="text-2xl font-bold">CAPI Commercial Models</h1>
@@ -170,7 +170,12 @@ const ScenarioModeler = () => {
                     Compare alignment models for CAPI revenue share
                   </p>
                 </div>
-                <CapiTab results={results} timeframe={timeframe} />
+                <CapiTab
+                  results={results}
+                  timeframe={timeframe}
+                  assumptionOverrides={assumptionOverrides}
+                  onAssumptionOverridesChange={setAssumptionOverrides}
+                />
               </TabsContent>
               
               {/* Tab 3: Addressability - Structural Benefits */}
