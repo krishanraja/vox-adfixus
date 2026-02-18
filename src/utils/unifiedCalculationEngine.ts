@@ -639,9 +639,12 @@ export class UnifiedCalculationEngine {
     const videoPremiumUplift = (premiumVideoImpressions / 1000) * videoCPM * yieldUplift;
     const premiumPricingPower = displayPremiumUplift + videoPremiumUplift;
 
-    // Make-good reduction savings (applies to all inventory)
-    const baselineMakeGoods = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_MAKEGOOD_RATE;
-    const improvedMakeGoods = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_MAKEGOOD_RATE;
+    // Make-good reduction savings — scoped to direct-sold guaranteed inventory only
+    // Programmatic/open-market inventory carries no make-good obligations
+    // Direct-sold share: 40% of revenue (industry standard for premium publishers)
+    const directSoldRevenue = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.DIRECT_SOLD_INVENTORY_SHARE;
+    const baselineMakeGoods = directSoldRevenue * MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_MAKEGOOD_RATE;
+    const improvedMakeGoods = directSoldRevenue * MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_MAKEGOOD_RATE;
     const makeGoodSavings = baselineMakeGoods - improvedMakeGoods;
 
     // Advertiser ROAS improvement (for reference/reporting)
@@ -667,6 +670,9 @@ export class UnifiedCalculationEngine {
         baselineMakeGoodRate: MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_MAKEGOOD_RATE * 100,
         improvedMakeGoodRate: MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_MAKEGOOD_RATE * 100,
         makeGoodSavings,
+        directSoldRevenue,
+        directSoldShare: MEDIA_PERFORMANCE_BENCHMARKS.DIRECT_SOLD_INVENTORY_SHARE,
+        premiumYieldMonthly: premiumPricingPower,
       },
     };
   }

@@ -186,6 +186,9 @@ export interface UnifiedResults {
       baselineMakeGoodRate: number;
       improvedMakeGoodRate: number;
       makeGoodSavings: number;
+      directSoldRevenue: number;
+      directSoldShare: number;
+      premiumYieldMonthly: number;
     };
   };
   

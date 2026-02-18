@@ -18,6 +18,9 @@ export const MEDIA_PERFORMANCE_BENCHMARKS = {
   IMPROVED_MAKEGOOD_RATE: 0.02, // 2%
   PREMIUM_INVENTORY_SHARE: 0.20, // 20% of inventory sold as premium (reduced from 30%)
   YIELD_UPLIFT_PERCENTAGE: 0.15, // 15% yield uplift on premium inventory (reduced from 25%)
+  // Make-goods only apply to direct-sold guaranteed inventory, not programmatic
+  // 40% is the industry standard for a premium publisher like Vox
+  DIRECT_SOLD_INVENTORY_SHARE: 0.40,
 };
 
 // Vox Media browser traffic shares (blended mobile/desktop from Dec 2024 data)
