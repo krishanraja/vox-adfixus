@@ -280,18 +280,26 @@ export const SummaryTab = ({
         <p className="text-sm text-muted-foreground leading-relaxed">
           The total deal value of <strong>{formatCommercialCurrency(total)}</strong> over {timeframeLabel} comes from three sources:
         </p>
-        <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+        <ul className="mt-2 space-y-3 text-sm text-muted-foreground">
           <li>
             <strong>ID Infrastructure ({formatCommercialCurrency(idInfra)})</strong>: 
-            Structural benefits from making your Safari inventory addressable again.
+            Structural benefits from making Safari inventory addressable again — recovering CPM revenue from the 35% of Vox's visitors who are currently invisible to advertisers due to Apple's ITP restrictions.
           </li>
           <li>
             <strong>CAPI Revenue ({formatCommercialCurrency(capi)})</strong>: 
-            Incremental revenue from advertisers who pay a premium for conversion tracking. Subject to 12.5% revenue share.
+            Incremental revenue from advertisers who pay a premium for server-side conversion tracking. Subject to a 12.5% revenue share, capped at $30K per campaign/month.
           </li>
           <li>
             <strong>Media Performance ({formatCommercialCurrency(media)})</strong>: 
-            Operational improvements from better data - fewer make-goods, higher yield.
+            Two distinct revenue mechanisms — each independently auditable:
+            <ul className="mt-1.5 ml-3 space-y-1.5">
+              <li>
+                <strong>① Premium Yield Uplift</strong>: Better audience data enables 20% of impressions to qualify for premium/PMP deals at a 15% CPM uplift. Value: ~{formatCommercialCurrency(Math.round((results.mediaPerformance?.details?.premiumYieldMonthly ?? 0) * (timeframe === '3-year' ? 36 : 12)))}.
+              </li>
+              <li>
+                <strong>② Make-Good Reduction</strong>: Make-goods apply only to direct-sold guaranteed inventory (~40% of revenue). Better conversion tracking reduces the compensatory impression rate from 5% to 2% — a 3pp improvement on that base. Value: ~{formatCommercialCurrency(Math.round((results.mediaPerformance?.details?.makeGoodSavings ?? 0) * (timeframe === '3-year' ? 36 : 12)))}.
+              </li>
+            </ul>
           </li>
         </ul>
       </Card>

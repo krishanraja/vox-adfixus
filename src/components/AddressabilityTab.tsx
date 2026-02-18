@@ -381,69 +381,81 @@ export const AddressabilityTab = ({ results, timeframe, assumptionOverrides, onA
               <TrendingUp className="h-5 w-5 text-green-600" />
               <h3 className="font-semibold">Media Performance</h3>
             </div>
-            <Badge variant="secondary">Operational</Badge>
+            <Badge variant="outline" className="text-xs border-green-500 text-green-700">Yield + Quality</Badge>
           </div>
           
-          <div className="text-3xl font-bold text-green-600 mb-4">
+          <div className="text-3xl font-bold text-green-600 mb-1">
             {formatCommercialCurrency(mediaTotal)}
             <span className="text-sm font-normal text-muted-foreground ml-2">
               ({formatCommercialCurrency(breakdown.monthly.mediaPerformance)}/mo)
             </span>
           </div>
+          <p className="text-xs text-muted-foreground mb-4">Two distinct mechanisms — both auditable below</p>
 
           <div className="space-y-4">
-            {/* Premium Yield */}
-            <div className="p-3 bg-green-500/5 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">Premium Yield Improvement</span>
+            {/* Premium Yield Uplift — detailed */}
+            <div className="p-4 bg-green-500/5 rounded-lg border border-green-500/15">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-semibold">① Premium Yield Uplift</span>
+                </div>
+                <span className="text-sm font-bold text-green-600">
+                  {formatCurrency((mediaDetails?.premiumYieldMonthly ?? 0) * 12 * (timeframe === '3-year' ? 3 : 1))}/yr
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2">
                 <div>
-                  <span className="block text-muted-foreground/70">Premium Inventory</span>
-                  <span className="font-medium text-foreground">20%</span>
+                  <span className="block text-muted-foreground/70">Premium inventory</span>
+                  <span className="font-medium text-foreground">20% of impressions</span>
                 </div>
                 <div>
-                  <span className="block text-muted-foreground/70">Yield Uplift</span>
+                  <span className="block text-muted-foreground/70">CPM uplift</span>
                   <span className="font-medium text-green-600">+15%</span>
                 </div>
+                <div>
+                  <span className="block text-muted-foreground/70">Monthly value</span>
+                  <span className="font-medium text-foreground">{formatCurrency(mediaDetails?.premiumYieldMonthly ?? 0)}</span>
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong>Mechanism:</strong> Better audience resolution enables more inventory to qualify for premium/PMP deals. Advertisers pay a higher CPM when they can identify and target specific audience segments — addressability is the prerequisite.
+              </p>
             </div>
 
-            {/* Make-Good Reduction */}
-            <div className="p-3 bg-green-500/5 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">Reduced Make-Goods</span>
+            {/* Make-Good Reduction — detailed with direct-sold scoping */}
+            <div className="p-4 bg-green-500/5 rounded-lg border border-green-500/15">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-semibold">② Make-Good Reduction</span>
+                </div>
+                <span className="text-sm font-bold text-green-600">
+                  {formatCurrency((mediaDetails?.makeGoodSavings ?? 0) * 12 * (timeframe === '3-year' ? 3 : 1))}/yr
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2">
                 <div>
-                  <span className="block text-muted-foreground/70">Current Rate</span>
-                  <span className="font-medium text-foreground">
-                    {formatPercentage(mediaDetails?.baselineMakeGoodRate ?? 5, 0)}
-                  </span>
+                  <span className="block text-muted-foreground/70">Applied to</span>
+                  <span className="font-medium text-foreground">Direct-sold only (40%)</span>
                 </div>
                 <div>
-                  <span className="block text-muted-foreground/70">Improved Rate</span>
+                  <span className="block text-muted-foreground/70">Rate: before → after</span>
                   <span className="font-medium text-green-600">
-                    {formatPercentage(mediaDetails?.improvedMakeGoodRate ?? 2, 0)}
+                    {formatPercentage(mediaDetails?.baselineMakeGoodRate ?? 5, 0)} → {formatPercentage(mediaDetails?.improvedMakeGoodRate ?? 2, 0)}
                   </span>
                 </div>
+                <div>
+                  <span className="block text-muted-foreground/70">Monthly savings</span>
+                  <span className="font-medium text-foreground">{formatCurrency(mediaDetails?.makeGoodSavings || 0)}</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Savings: {formatCurrency(mediaDetails?.makeGoodSavings || 0)}/mo
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong>Mechanism:</strong> Make-goods apply only to direct-sold guaranteed inventory (~40% of Vox revenue). With better conversion tracking, campaigns deliver to goal and underdelivery drops — reducing compensatory impressions from 5% to 2% of guaranteed revenue.
               </p>
-            </div>
-
-            {/* Advertiser ROAS */}
-            <div className="p-3 bg-green-500/5 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">Better Advertiser ROAS</span>
+              <div className="mt-2 p-2 bg-muted/40 rounded text-xs text-muted-foreground">
+                <strong>Base:</strong> {formatCurrency(mediaDetails?.directSoldRevenue ?? 0)}/mo direct-sold × 3pp improvement = {formatCurrency(mediaDetails?.makeGoodSavings ?? 0)}/mo recovered
               </div>
-              <p className="text-xs text-muted-foreground">
-                Advertisers see better returns, leading to increased spend and longer commitments.
-              </p>
             </div>
           </div>
 
