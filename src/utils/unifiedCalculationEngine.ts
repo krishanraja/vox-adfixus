@@ -316,10 +316,10 @@ export class UnifiedCalculationEngine {
     
     // Safari-specific addressability (POC KPI)
     // Current: 0% - Safari users unaddressable due to ITP
-    // Target: +20% improvement on Safari inventory
+    // Target: slider-driven or default 35% of Safari unlocked
     const currentSafariAddressability = ADDRESSABILITY_BENCHMARKS.CURRENT_SAFARI_ADDRESSABILITY; // 0%
-    const targetSafariAddressability = ADDRESSABILITY_BENCHMARKS.TARGET_SAFARI_ADDRESSABILITY; // 20%
-    const safariAddressabilityImprovement = targetSafariAddressability - currentSafariAddressability; // +20%
+    const targetSafariAddressability = overrides?.targetSafariAddressability ?? ADDRESSABILITY_BENCHMARKS.TARGET_SAFARI_ADDRESSABILITY;
+    const safariAddressabilityImprovement = targetSafariAddressability - currentSafariAddressability;
     
     // ============ PROJECTED ADDRESSABILITY ============
     // 65% baseline + (35% Safari × 20% improvement) = 65% + 7% = 72%
