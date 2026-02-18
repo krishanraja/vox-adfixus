@@ -1,97 +1,172 @@
 
-# CAPI Tab: Live Campaign Sliders
+# Media Performance $1.1M: Diagnostic, Math Correction, and Communication Fix
 
-## Architecture Understanding
+## Diagnosis: Two Separate Problems
 
-The data flow is already set up for this. `AssumptionOverrides` has `capiYearlyCampaigns` and `capiAvgCampaignSpend` fields. The engine's `calculateCapiConfiguration()` checks for these overrides first before deriving from readiness factors. The only missing piece is that `CapiTab` has no way to set overrides — it is purely read-only today.
+### Problem 1 — The Math Is Inflated (Make-Good Savings)
 
-The pattern to follow is identical to what was done on the Addressability tab: pass `assumptionOverrides` and `onAssumptionOverridesChange` down, run a local `useMemo` recalculation off the slider values, and display the live result.
+The make-good savings are calculated as a percentage of **total monthly revenue** ($3.3M for full portfolio). This is wrong in two ways:
 
----
-
-## What the Sliders Control
-
-**Slider 1 — CAPI Campaigns Per Year**
-- Range: 2 → 50 (step 1)
-- Default: whatever `results.capiCapabilities.capiConfiguration.yearlyCampaigns` is (the engine-calculated value)
-- Label: "CAPI Campaigns / Year"
-- Sublabel: shows monthly average (e.g. "~1.3/month")
-
-**Slider 2 — Average Campaign Spend**
-- Range: $25K → $500K (step $5K)
-- Default: whatever `results.capiCapabilities.capiConfiguration.avgCampaignSpend` is
-- Label: "Avg Campaign Spend"
-- Sublabel: shows current value formatted (e.g. "$79K")
-- Annotation at $600K: "Cap kicks in above this" — but since we cap the slider at $500K, show the annotation at the right edge
-
-Both sliders update the `assumptionOverrides` state instantly, which triggers a recalculation in the CAPI tab's local `useMemo`. The portfolio economics, "Annual Net to Vox" hero number, context card, and alignment model cards all update live.
-
----
-
-## What Updates Live
-
-When either slider moves:
-1. `capiYearlyCampaigns` and/or `capiAvgCampaignSpend` are written into `assumptionOverrides`
-2. `calculateCampaignPortfolio(localCampaigns, localAvgSpend)` re-runs via `useMemo` → updates hero card + campaign economics table
-3. `generateAllScenarios(results)` still uses `results` from the engine — but the hero card and portfolio stats use the local slider values directly, so they respond instantly without a full engine recalculation
-4. A note is shown when slider values diverge from the engine defaults: "You are modelling X campaigns at $Y avg spend (engine default: A campaigns at $B avg spend)"
-
-**Important design decision**: The alignment model cards at the bottom use `results` from the engine (which requires a full recalculation). To avoid complexity, the sliders will update `assumptionOverrides` which gets passed back up to `ScenarioModeler`, and `ScenarioModeler` will call `setAssumptionOverrides` which already triggers a full recalculation via `useScenarioCalculator`. This means ALL outputs (including the alignment models) update correctly.
-
-The local state in `CapiTab` tracks the slider display values, and writes them to `assumptionOverrides` on change.
-
----
-
-## Layout of the New Slider Section
-
-The sliders sit inside the existing "Your CAPI Configuration" hero card, replacing the static badge at the top right and the static 3-stat grid, with an interactive version:
-
-```text
-┌─ Your CAPI Configuration ─────────────────────────────────────┐
-│                                                                │
-│  CAPI Campaigns / Year                        [16]            │
-│  2 ────────────────●──────────────────────── 50               │
-│  ~1.3/month                        ~4.2/month                 │
-│                                                                │
-│  Avg Campaign Spend                        [$79K]             │
-│  $25K ─────────●─────────────────────── $500K                 │
-│  Below cap                    Approaching cap ($600K)         │
-│                                                                │
-│  ┌────────────┐ ┌────────────┐ ┌────────────────────────────┐ │
-│  │ 16         │ │ $79K       │ │ $XXX,XXX                   │ │
-│  │ Campaigns  │ │ Avg Spend  │ │ Annual Net to Vox          │ │
-│  └────────────┘ └────────────┘ └────────────────────────────┘ │
-└────────────────────────────────────────────────────────────────┘
+**Current code (line 643-645 of unifiedCalculationEngine.ts):**
 ```
+baselineMakeGoods = currentMonthlyRevenue × 5%   → $165K/month
+improvedMakeGoods = currentMonthlyRevenue × 2%   → $66K/month  
+makeGoodSavings   = $99K/month
+```
+
+**Why this is wrong:**
+1. Make-goods only apply to **direct-sold, guaranteed inventory** — not programmatic. For a publisher like Vox, roughly 40% of revenue is direct-sold at most. The rest is programmatic/open market and doesn't have make-good obligations.
+2. A 5% baseline make-good rate applied to ALL $3.3M/month generates $99K in savings. But if make-goods only apply to the $1.3M direct-sold portion, the savings are $39K — less than half.
+3. The improvement (5% → 2%) is credible, but the base it applies to needs to be defensible.
+
+**Corrected calculation:**
+- `directSoldShare = 0.40` (40% of inventory is direct-sold guaranteed — standard industry figure for premium publisher)
+- `directSoldRevenue = currentMonthlyRevenue × 0.40`
+- Make-good savings = `directSoldRevenue × (5% - 2%)` = $1.32M × 3% = **$39.6K/month** (vs current $99K)
+
+**Premium Yield Uplift — this part is sound:**
+- 20% of impressions classified as premium
+- 15% CPM uplift on premium inventory
+- This generates ~$54K/month base before risk adjustments
+- This is defensible: it's based on impression count × CPM delta, not revenue percentage
+
+**Annual Media Performance after fix:**
+- Make-good savings: ~$39.6K/month (was ~$99K)
+- Premium yield: ~$54K/month (unchanged)
+- Combined base: ~$93.6K/month (was ~$153K/month)
+- After deployment (1.2×), risk, adoption: **~$650-700K/year** instead of $1.1M
+
+That's still significant — and now it's a number a CFO can interrogate without embarrassing anyone.
+
+### Problem 2 — The Communication Is Too Thin
+
+The current description "Operational improvements from better data - fewer make-goods, higher yield" is a single line that makes a $1.1M claim with zero mechanism. A CFO will immediately ask: "Where does $1.1M come from?" and there's nowhere to look.
+
+The fix is to expose the calculation components explicitly in the UI, not just the total, and give each component a clean narrative anchor.
+
+---
+
+## What the $1.1M Actually Consists Of (Current)
+
+| Component | Monthly | Annual (12mo) | Driver |
+|-----------|---------|--------------|--------|
+| Premium Yield | ~$54K | ~$648K | 20% of impressions × 15% CPM uplift |
+| Make-Good Savings | ~$99K | ~$1.19M | 5%→2% of ALL $3.3M monthly revenue |
+| After risk + adoption | ~$92K | ~$1.1M | moderate scenario multipliers |
+
+The premium yield is defensible. The make-good savings are not — they're applied to all revenue, not just direct-sold.
+
+---
+
+## Proposed Fix: Three-Part Plan
+
+### Part 1 — Engine Fix: Scope Make-Good Savings to Direct-Sold Inventory
+
+**File: `src/constants/industryBenchmarks.ts`**
+
+Add one constant to `MEDIA_PERFORMANCE_BENCHMARKS`:
+```typescript
+DIRECT_SOLD_INVENTORY_SHARE: 0.40,  // 40% of publisher revenue is direct-sold (industry standard for premium publishers)
+```
+
+**File: `src/utils/unifiedCalculationEngine.ts`** — `calculateMediaPerformance()` lines 643-645:
+
+Change from:
+```typescript
+const baselineMakeGoods = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_MAKEGOOD_RATE;
+const improvedMakeGoods = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_MAKEGOOD_RATE;
+```
+
+To:
+```typescript
+const directSoldRevenue = currentMonthlyRevenue * MEDIA_PERFORMANCE_BENCHMARKS.DIRECT_SOLD_INVENTORY_SHARE;
+const baselineMakeGoods = directSoldRevenue * MEDIA_PERFORMANCE_BENCHMARKS.BASELINE_MAKEGOOD_RATE;
+const improvedMakeGoods = directSoldRevenue * MEDIA_PERFORMANCE_BENCHMARKS.IMPROVED_MAKEGOOD_RATE;
+```
+
+This brings the make-good savings from ~$99K/month to ~$39K/month for the full portfolio — a 60% reduction in that component, bringing total Media Performance from ~$1.1M to ~$650-700K annually (still the largest component, still compelling, but defensible).
+
+### Part 2 — AddressabilityTab UI: Show the Breakdown, Not Just the Total
+
+Currently the Addressability tab shows Media Performance as a single number. The fix is to expose the two sub-components with their logic visible:
+
+**In `src/components/AddressabilityTab.tsx`**, replace the current Media Performance single-number card with a two-row breakdown:
+
+```
+┌─ Media Performance ──────────────────────────────────────────────┐
+│  $XXX,XXX / year              Operational                        │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────┐            │
+│  │  Premium Yield Uplift             $XXX,XXX/yr   │            │
+│  │  20% of impressions sold as premium             │            │
+│  │  15% CPM uplift vs standard inventory           │            │
+│  │  Mechanism: Better audience data → higher       │            │
+│  │  advertiser willingness to pay for premium PMP  │            │
+│  └─────────────────────────────────────────────────┘            │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────┐            │
+│  │  Make-Good Reduction              $XXX,XXX/yr   │            │
+│  │  Direct-sold inventory: 40% of total revenue    │            │
+│  │  Make-good rate: 5% → 2% (3pp improvement)     │            │
+│  │  Mechanism: Better conversion tracking means    │            │
+│  │  campaigns deliver to goal, fewer compensations │            │
+│  └─────────────────────────────────────────────────┘            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+This converts a vague "$1.1M from operational stuff" into two specific, quantified mechanisms that a CFO can interrogate and agree or disagree with independently.
+
+### Part 3 — SummaryTab: Fix the "How This Works" Description
+
+**In `src/components/SummaryTab.tsx`**, the "How This Works" paragraph currently says:
+
+> "Media Performance ($1.1M): Operational improvements from better data - fewer make-goods, higher yield."
+
+Change this to a two-part explanation that matches the actual components:
+
+> **"Media Performance ($XXX,XXX):** Two distinct revenue effects — (1) **Premium Yield**: Better audience data enables 15% CPM uplift on ~20% of inventory sold into premium or performance deals. (2) **Make-Good Reduction**: Direct-sold campaigns deliver more accurately against goals, reducing compensations from 5% to 2% of guaranteed revenue. Together, these generate $XXX,XXX in recovered value annually."
+
+This description should be dynamic — it pulls the actual component values from `results.mediaPerformance` so it always reflects the current scenario.
 
 ---
 
 ## Files to Change
 
-| File | Change |
-|------|--------|
-| `src/components/CapiTab.tsx` | Add local slider state, accept `assumptionOverrides` + `onAssumptionOverridesChange` props, add two sliders in hero card, recalculate portfolio live |
-| `src/pages/ScenarioModeler.tsx` | Pass `assumptionOverrides` and `onAssumptionOverridesChange` down to `<CapiTab>` |
-
-That is all. Two files. No engine changes needed — `capiYearlyCampaigns` and `capiAvgCampaignSpend` override support already exists in the engine.
-
----
-
-## Slider Initialization Logic
-
-On mount, read from `assumptionOverrides.capiYearlyCampaigns` if set, else fall back to `results.capiCapabilities.capiConfiguration.yearlyCampaigns`. Same for avg spend. This ensures if the user has already set overrides (e.g. from a previous session), the slider starts at the right value.
+| File | Change | Why |
+|------|--------|-----|
+| `src/constants/industryBenchmarks.ts` | Add `DIRECT_SOLD_INVENTORY_SHARE: 0.40` | Scope make-goods to direct-sold only |
+| `src/utils/unifiedCalculationEngine.ts` | Scope make-good calc to `directSoldRevenue` | Fix inflated savings number |
+| `src/components/AddressabilityTab.tsx` | Expand Media Performance card to show Premium Yield + Make-Good separately with mechanism text | Make the number auditable |
+| `src/components/SummaryTab.tsx` | Rewrite "How This Works" Media Performance description to be component-specific and dynamic | Make the narrative defensible |
 
 ---
 
-## One Edge Case
+## Expected Impact on Numbers
 
-The `CampaignEconomicsTable` currently uses a hardcoded `EXAMPLE_CAMPAIGNS` array and doesn't respond to slider changes. That table shows the cap mechanics at different spend levels — it's intentionally illustrative, not portfolio-specific. It will remain static (the fixed example campaigns at $79K, $150K, $300K etc.) since its purpose is to explain the cap mechanic, not model the user's specific portfolio. The **portfolio hero card** and **"Annual Net to Vox"** are the live-updating outputs.
+With the 40% direct-sold scoping fix:
+
+| Scenario | Current Media Performance (12mo) | After Fix (12mo) |
+|----------|----------------------------------|------------------|
+| Conservative | ~$800K | ~$480K |
+| Moderate | ~$1.1M | ~$660K |
+| Optimistic | ~$1.3M | ~$780K |
+
+The total deal value drops by roughly $400-440K in the moderate scenario. This is the right trade: a number that gets torn apart in a CFO meeting costs more than losing $400K from the headline. The remaining $660K is defensible line by line.
 
 ---
 
-## Regression Check
+## What Stays the Same
 
-- Summary tab totals: Will update correctly when slider moves (because `onAssumptionOverridesChange` triggers `useScenarioCalculator.updateAssumptionOverrides` which recalculates `results`)
-- Addressability tab: Unaffected (different override keys)
-- PDF export: Will reflect whatever campaign values are set when user clicks Download (already reads from `results`)
-- Alignment models: Will update because they read from `results` which recalculates
+- ID Infrastructure calculation: unchanged
+- CAPI calculation: unchanged
+- Safari addressability slider: unchanged
+- CAPI sliders: unchanged
+- Risk multiplier logic: unchanged
+- PDF export config: unchanged
+- All other tabs: unchanged
+
+---
+
+## On the Communication Side (No-Code Fix)
+
+The label "Operational" in the card badge is also contributing to the problem — it sounds like cost savings, not revenue. Consider relabeling this card's badge from "Operational" to "Yield + Quality" which is more accurate (premium yield improvement + quality-driven make-good reduction). This is a one-word change in the AddressabilityTab component.
