@@ -1,124 +1,97 @@
 
-# Plan: Safari Addressability Slider + Bug Fix + Underlying Logic Clarification
+# CAPI Tab: Live Campaign Sliders
 
-## Confirming the Underlying Logic (You Are Correct)
+## Architecture Understanding
 
-The engine is correctly structured. Here is the exact chain:
+The data flow is already set up for this. `AssumptionOverrides` has `capiYearlyCampaigns` and `capiAvgCampaignSpend` fields. The engine's `calculateCapiConfiguration()` checks for these overrides first before deriving from readiness factors. The only missing piece is that `CapiTab` has no way to set overrides — it is purely read-only today.
 
-- **Safari = 35% of all Vox visitors** (browser share — this is a traffic composition number, not an addressability number). Chrome = 48%, Other = 17%.
-- **Today**: Chrome + Other users are 100% addressable. Safari users are 0% addressable (ITP blocks all identity).
-- **Today's total addressability**: (48% Chrome × 100%) + (17% Other × 100%) + (35% Safari × 0%) = **65%** baseline. This is correct.
-- **With AdFixus**: If we unlock X% of Safari traffic to be addressable, total addressability = 65% + (35% Safari × X%).
-  - At X = 20%: total = 65% + 7% = **72%**
-  - At X = 60%: total = 65% + 21% = **86%**
-  - At X = 86%: total = 65% + 30% = **95%** (the target maximum)
-
-So to go from 65% to 95% overall addressability, you need to unlock 86% of Safari traffic. The slider should express this as **"Target overall addressability: 65% → 95%"** but internally drive `targetSafariAddressability` (i.e., what fraction of Safari users we can resolve). This is the most honest framing — it shows total portfolio addressability, not a Safari-specific %, which avoids confusion.
-
-The **revenue math is already correct** (CPM delta model, not net-new). The slider purely changes how many Safari impressions shift from contextual → addressable CPM, and the incremental revenue updates accordingly.
+The pattern to follow is identical to what was done on the Addressability tab: pass `assumptionOverrides` and `onAssumptionOverridesChange` down, run a local `useMemo` recalculation off the slider values, and display the live result.
 
 ---
 
-## Bug Fix: Double-Multiplied Percentages in AddressabilityTab.tsx
+## What the Sliders Control
 
-The display component calls `formatPercentage(value * 100, 0)` but `details` values from the engine are **already stored as whole-number percentages** (e.g., `35` not `0.35`). This causes:
+**Slider 1 — CAPI Campaigns Per Year**
+- Range: 2 → 50 (step 1)
+- Default: whatever `results.capiCapabilities.capiConfiguration.yearlyCampaigns` is (the engine-calculated value)
+- Label: "CAPI Campaigns / Year"
+- Sublabel: shows monthly average (e.g. "~1.3/month")
 
-- `35 × 100 = 3500%` for Safari traffic share
-- `35 × 100 = 3500%` for addressability improvement
-- `8 × 100 = 800%` for make-good rate
+**Slider 2 — Average Campaign Spend**
+- Range: $25K → $500K (step $5K)
+- Default: whatever `results.capiCapabilities.capiConfiguration.avgCampaignSpend` is
+- Label: "Avg Campaign Spend"
+- Sublabel: shows current value formatted (e.g. "$79K")
+- Annotation at $600K: "Cap kicks in above this" — but since we cap the slider at $500K, show the annotation at the right edge
 
-Four lines to fix in `AddressabilityTab.tsx`:
-
-| Line | Before | After |
-|------|--------|-------|
-| Safari Traffic | `(idDetails?.safariShare \|\| 0.35) * 100` | `idDetails?.safariShare ?? 35` |
-| Safari Improvement | `(idDetails?.safariAddressabilityImprovement \|\| 0.30) * 100` | `idDetails?.safariAddressabilityImprovement ?? 35` |
-| Make-Good Current | `(mediaDetails?.baselineMakeGoodRate \|\| 0.08) * 100` | `mediaDetails?.baselineMakeGoodRate ?? 8` |
-| Make-Good Improved | `(mediaDetails?.improvedMakeGoodRate \|\| 0.03) * 100` | `mediaDetails?.improvedMakeGoodRate ?? 3` |
-
----
-
-## New Feature: Safari Addressability Target Slider
-
-### What it controls
-A slider on the **Addressability tab** that lets the user set the target overall addressability (65% → 95%). The slider label should read clearly:
-
-> **"Overall Addressability Target"**
-> Currently 65% of inventory is addressable. Drag to model what happens as AdFixus unlocks Safari traffic.
-
-Underneath the slider, show two stats that update live:
-- `Safari traffic unlocked: X%` (what % of Safari visitors are now resolved)
-- `Total addressable inventory: Y%` (the resulting portfolio-level number)
-
-### Data flow
-
-The slider value (expressed as target overall addressability, e.g. `0.86`) gets stored in `AssumptionOverrides` as a new field — the cleanest approach given the existing override pattern. We use `overrides?.targetSafariAddressability` in the engine (already a named field in the type just not yet wired to the slider).
-
-The engine already has the structure to accept this — `calculateIdInfrastructure` reads from `overrides`. We just need to:
-1. Wire up the new slider field to override `targetSafariAddressability`
-2. Have the engine use `overrides?.targetSafariAddressability ?? ADDRESSABILITY_BENCHMARKS.TARGET_SAFARI_ADDRESSABILITY` instead of the fixed constant
-3. Pass `setAssumptionOverrides` up to the Addressability tab (currently read-only)
-
-### Slider design
-- Range: 35% to 95% (overall addressability — the slider moves in the total addressability space)
-- Default: 72% (current default — 35% Safari share × 35% of Safari unlocked + 65% baseline = 77%; need to check actual default target)
-- Actually, default target = 77% (35% Safari × 35% target + 65% baseline)
-- Step: 1%
-- Labels: "65% (baseline)" at left, "95% (full)" at right
-- Visual annotation at ~72% = "POC Target" and ~95% = "Full deployment"
-
-Internally: when user drags to overall target `T`, engine computes `safariTargetFraction = (T - 0.65) / 0.35`. This is what drives impression count and revenue.
-
-### ROI breakeven indicator
-Below the slider, add a breakeven callout: "Positive ROI from addressability alone starts at X% overall addressability" — calculated by finding where incremental revenue covers the platform fee. This is what the user is asking for: "I want to know where we start to show positive ROI."
+Both sliders update the `assumptionOverrides` state instantly, which triggers a recalculation in the CAPI tab's local `useMemo`. The portfolio economics, "Annual Net to Vox" hero number, context card, and alignment model cards all update live.
 
 ---
 
-## Files to Change
+## What Updates Live
 
-| File | What Changes |
-|------|-------------|
-| `src/components/AddressabilityTab.tsx` | 1) Fix 4 double-multiply bugs; 2) Add Safari slider with live revenue preview; 3) Add ROI breakeven callout; 4) Accept `onAssumptionOverridesChange` prop |
-| `src/utils/unifiedCalculationEngine.ts` | Wire `overrides?.targetSafariAddressability` into `calculateIdInfrastructure()` instead of fixed constant |
-| `src/types/scenarios.ts` | Add `targetSafariAddressability?: number` to `AssumptionOverrides` (it already exists in the interface as a comment; just needs to be added as a live field) |
-| `src/pages/ScenarioModeler.tsx` | Pass `setAssumptionOverrides` and `assumptionOverrides` to `AddressabilityTab` |
+When either slider moves:
+1. `capiYearlyCampaigns` and/or `capiAvgCampaignSpend` are written into `assumptionOverrides`
+2. `calculateCampaignPortfolio(localCampaigns, localAvgSpend)` re-runs via `useMemo` → updates hero card + campaign economics table
+3. `generateAllScenarios(results)` still uses `results` from the engine — but the hero card and portfolio stats use the local slider values directly, so they respond instantly without a full engine recalculation
+4. A note is shown when slider values diverge from the engine defaults: "You are modelling X campaigns at $Y avg spend (engine default: A campaigns at $B avg spend)"
+
+**Important design decision**: The alignment model cards at the bottom use `results` from the engine (which requires a full recalculation). To avoid complexity, the sliders will update `assumptionOverrides` which gets passed back up to `ScenarioModeler`, and `ScenarioModeler` will call `setAssumptionOverrides` which already triggers a full recalculation via `useScenarioCalculator`. This means ALL outputs (including the alignment models) update correctly.
+
+The local state in `CapiTab` tracks the slider display values, and writes them to `assumptionOverrides` on change.
 
 ---
 
-## What the Slider Looks Like in Context
+## Layout of the New Slider Section
 
-The Addressability tab currently says "READ-ONLY — all controls on Summary tab." We will add a **single, focused control** — the addressability target slider — directly on this tab because it is a core modelling decision specific to this view. The Summary tab controls (risk scenario, timeframe, domain selection) remain there. This one slider lives here because it is about "what addressability outcome are we targeting" — a question that belongs to this analysis view.
-
-The layout will be:
+The sliders sit inside the existing "Your CAPI Configuration" hero card, replacing the static badge at the top right and the static 3-stat grid, with an interactive version:
 
 ```text
-┌────────────────────────────────────────────────────────────────┐
-│  OVERALL ADDRESSABILITY TARGET                           [?]   │
+┌─ Your CAPI Configuration ─────────────────────────────────────┐
 │                                                                │
-│  65% ─────────────────●────────────────────── 95%             │
-│       Baseline      72% POC       86%        Full             │
-│                     Target     Optimistic                      │
+│  CAPI Campaigns / Year                        [16]            │
+│  2 ────────────────●──────────────────────── 50               │
+│  ~1.3/month                        ~4.2/month                 │
 │                                                                │
-│  Safari traffic unlocked:  20% of Safari users                │
-│  Total addressable inventory:  72%  (+7pp from baseline)      │
-│  Incremental revenue impact:  +$X,XXX/month                   │
-└────────────────────────────────────────────────────────────────┘
-
-┌─ ROI Breakeven ───────────────────────────────────────────────┐
-│  Addressability alone covers platform fee at: 71% target      │
-│  ██████████████░░░░░░░░░░ You are at 72% — above breakeven ✓  │
+│  Avg Campaign Spend                        [$79K]             │
+│  $25K ─────────●─────────────────────── $500K                 │
+│  Below cap                    Approaching cap ($600K)         │
+│                                                                │
+│  ┌────────────┐ ┌────────────┐ ┌────────────────────────────┐ │
+│  │ 16         │ │ $79K       │ │ $XXX,XXX                   │ │
+│  │ Campaigns  │ │ Avg Spend  │ │ Annual Net to Vox          │ │
+│  └────────────┘ └────────────┘ └────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Scope Summary
+## Files to Change
 
-This is a tightly scoped change:
-- **4 bug fixes** (display only, no calculation impact)
-- **1 new slider** + live revenue update on Addressability tab
-- **1 engine line change** to read override instead of constant
-- **1 type addition** in `AssumptionOverrides`
-- **1 prop addition** in ScenarioModeler to thread overrides to Addressability tab
+| File | Change |
+|------|--------|
+| `src/components/CapiTab.tsx` | Add local slider state, accept `assumptionOverrides` + `onAssumptionOverridesChange` props, add two sliders in hero card, recalculate portfolio live |
+| `src/pages/ScenarioModeler.tsx` | Pass `assumptionOverrides` and `onAssumptionOverridesChange` down to `<CapiTab>` |
 
-No changes to PDF, Summary tab math, CAPI tab, or any other calculations.
+That is all. Two files. No engine changes needed — `capiYearlyCampaigns` and `capiAvgCampaignSpend` override support already exists in the engine.
+
+---
+
+## Slider Initialization Logic
+
+On mount, read from `assumptionOverrides.capiYearlyCampaigns` if set, else fall back to `results.capiCapabilities.capiConfiguration.yearlyCampaigns`. Same for avg spend. This ensures if the user has already set overrides (e.g. from a previous session), the slider starts at the right value.
+
+---
+
+## One Edge Case
+
+The `CampaignEconomicsTable` currently uses a hardcoded `EXAMPLE_CAMPAIGNS` array and doesn't respond to slider changes. That table shows the cap mechanics at different spend levels — it's intentionally illustrative, not portfolio-specific. It will remain static (the fixed example campaigns at $79K, $150K, $300K etc.) since its purpose is to explain the cap mechanic, not model the user's specific portfolio. The **portfolio hero card** and **"Annual Net to Vox"** are the live-updating outputs.
+
+---
+
+## Regression Check
+
+- Summary tab totals: Will update correctly when slider moves (because `onAssumptionOverridesChange` triggers `useScenarioCalculator.updateAssumptionOverrides` which recalculates `results`)
+- Addressability tab: Unaffected (different override keys)
+- PDF export: Will reflect whatever campaign values are set when user clicks Download (already reads from `results`)
+- Alignment models: Will update because they read from `results` which recalculates
